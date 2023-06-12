@@ -1,7 +1,7 @@
-from fastapi import FastAPI
+from fastapi import APIRouter
 from time import sleep
 
-app = FastAPI()
+app= APIRouter()
 
 @app.get("/sum/")
 def sum(a: int, b: int):
