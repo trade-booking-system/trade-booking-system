@@ -1,17 +1,23 @@
 version: '3.8'
 
 services:
-  redis:
-    image: redis
+  frontend:
+    image: nginx-frontend
+    build: 
+      context: ./html
     ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-  main:
-    build: ./python/api
-    ports:
-      - "8000:8000"
-    depends_on:
-      - redis
-volumes:
-  redis_data:
+      - "80:80"
+    networks: 
+      - frontend
+      - backend
+  
+  backend:
+    image: nginx-backend
+    build:
+      context: ./python/api
+    networks: 
+      - backend
+
+networks: 
+  frontend:
+  backend:
