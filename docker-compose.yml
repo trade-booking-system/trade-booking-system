@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  frontend:
+    image: nginx-frontend
+    build: 
+      context: ./html
+    ports:
+      - "80:80"
+    networks: 
+      - frontend
+      - backend
+  
+  backend:
+    image: nginx-backend
+    build:
+      context: ./python/api
+    networks: 
+      - backend
+
+networks: 
+  frontend:
+  backend:
