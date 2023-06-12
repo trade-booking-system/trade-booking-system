@@ -1,7 +1,9 @@
-from fastapi import APIRouter
+from fastapi import FastAPI
 from time import sleep
+import trading
 
-app= APIRouter()
+app= FastAPI()
+app.include_router(trading.app)
 
 @app.get("/sum/")
 def sum(a: int, b: int):

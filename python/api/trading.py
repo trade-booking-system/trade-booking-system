@@ -1,10 +1,8 @@
-from fastapi import FastAPI
+from fastapi import APIRouter
 import redis
 import os
-import main
 
-app= FastAPI()
-app.include_router(main.app)
+app= APIRouter()
 r= redis.Redis(host= os.getenv("REDIS_HOST"), port= 6379, db= 0)
 
 @app.put("/put/{key}/{val}")

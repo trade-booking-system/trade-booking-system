@@ -7,7 +7,7 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
-  trading:
+  main:
     build: ./python/api
     ports:
       - "8000:8000"
