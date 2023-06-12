@@ -4,6 +4,7 @@ EXPOSE 8000
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+ENV REDIS_HOST=redis
 
 COPY requirements.txt .
 RUN python -m pip install -r requirements.txt
