@@ -13,3 +13,7 @@ def sum(a: int, b: int):
 def echo(text: str, delay: int):
     sleep(delay / 1000.0)
     return {"text": text}
+
+@app.get("/hello")
+async def hello():
+    return {"hello": "hello"}
