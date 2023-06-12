@@ -1,7 +1,9 @@
 # to run the frontend
 cd svelte-frontend
+
 npm install
-npm run dev (or prod)
+
+npm run dev (or buid or preview)
 # Svelte + Vite
 This template should help get you started developing with Svelte in Vite.
 ## Recommended IDE Setup
