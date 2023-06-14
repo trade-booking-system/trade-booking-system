@@ -6,14 +6,17 @@
     let SumData;
 
     async function getSum(){
+        event.preventDefault(); //prevents page reload getting rid of the result, delete this to see what i mean
         try{
-        const sum = await fetch('/api/sum/?a=${number1}&b=${number2}')
+            console.log('number1:', number1);
+            console.log('number2:', number2);
+            const sum = await fetch(`/api/sum/?a=${number1}&b=${number2}`)
         
-        if (sum.ok) {
-            SumData = await sum.json();
-        } else {
-            console.error('Error:', sum.status);
-        }
+            if (sum.ok) {
+                SumData = await sum.json();
+            } else {
+             console.error('Error:', sum.status);
+            }
         } catch (error) {
         console.error('Error:', error);
         }
