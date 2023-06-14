@@ -1,8 +1,10 @@
 <script>
   import Accountpicker from './Dropdown.svelte'
+  import HelloButton from './HelloButton.svelte'
 </script>
 
 <Accountpicker/> 
+<HelloButton/>
 
 <!-- <main>
   <div class = "card logo">
