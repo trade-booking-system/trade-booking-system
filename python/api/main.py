@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 from time import sleep
+from utils import redis_initializer
 import routes
+
+redis_initializer.initialize_redis()
 
 app= FastAPI()
 app.include_router(routes.app)
