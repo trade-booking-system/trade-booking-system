@@ -1,34 +1,29 @@
 <script>
-  import Accountpicker from './Dropdown.svelte'
-  import HelloButton from './HelloButton.svelte'
+  import Accountpicker from "./Dropdown.svelte";
+  import HelloButton from "./HelloButton.svelte";
+  import SumSearch from "./SumSearch.svelte";
 </script>
 
-<Accountpicker/> 
-<HelloButton/>
-
-<!-- <main>
-  <div class = "card logo">
-    <button>Get</button>
+<div class="container">
+  <div class="accountpicker">
+    <Accountpicker />
   </div>
-  <div class = "card logo">
-    <button>Post</button>
+  <div class="hellobutton">
+    <HelloButton />
   </div>
-</main>
+  <div class="sumsearch">
+    <SumSearch />
+  </div>
+</div>
 
 <style>
-  .logo {
-    height: 6em;
-    padding: 1.5em;
-    will-change: filter;
-    transition: filter 300ms;
+  .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
-  .logo:hover {
-    filter: drop-shadow(0 0 2em #646cffaa);
+
+  .accountpicker {
+    margin-bottom: 10%;
   }
-  /* .logo.svelte:hover {
-    filter: drop-shadow(0 0 2em #ff3e00aa);
-  }
-  .read-the-docs {
-    color: #888;
-  } */
-</style> -->
+</style>
