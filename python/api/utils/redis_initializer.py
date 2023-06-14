@@ -1,7 +1,7 @@
 import redis
 import os
 
-r
+r= None
 
 def initialize_redis():
     global r

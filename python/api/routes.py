@@ -18,4 +18,9 @@ async def get(key : str):
 
 @app.put("/put")
 async def put(trade: schema.Trade):
-    tradebooker.booktrade(trade)
+    print(trade)
+    return tradebooker.booktrade(trade)
+
+@app.get("/get/")
+async def get():
+    return tradebooker.getTrades()

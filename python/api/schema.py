@@ -5,7 +5,7 @@ from uuid import uuid4
 # prices represented as 1 penny = 1 and 1 dollar = 100
 # dates represented as YYYYMMDD
 
-def date_parser(cls, timedate: str):
+def create_calendar(timedate: str):
     if not timedate.isalnum():
         raise ValueError("date is not made up of only numbers")
     if len(timedate) != 8:
@@ -15,21 +15,31 @@ def date_parser(cls, timedate: str):
     day= int(timedate[6:])
     return date(year, month, day)
 
+def date_validator(cls, timedate: str):
+    create_calendar(timedate)
+    return timedate
+
 def validate_is_positive(cls, value):
     if value >= 0:
         return value
     raise ValueError("value is negative")
 
 class Trade(BaseModel):
-    id: int= int(uuid4())
+    id: int= None
     account: str
     type: str
     stock_ticker: str
     amount: int
-    date: date
+    date: str
 
     _amount_validator= validator("amount", allow_reuse= True)(validate_is_positive)
-    _date_validator= validator("date", allow_reuse= True, pre= True)(date_parser)
+    _date_validator= validator("date", allow_reuse= True)(date_validator)
+
+    @validator("id", pre= True, always= True)
+    def create_id(id):
+        if id != None:
+            return id
+        return int(uuid4())
 
     @validator("type")
     def validate_type(cls, type):
@@ -46,8 +56,8 @@ class Position(BaseModel):
 
 class Price(BaseModel):
     stock_ticker: str
-    date: date
+    date: str
     price: int
 
-    _date_validator= validator("date", allow_reuse= True, pre= True)(date_parser)
+    _date_validator= validator("date", allow_reuse= True)(date_validator)
     _price_validator= validator("price", allow_reuse= True)(validate_is_positive)
