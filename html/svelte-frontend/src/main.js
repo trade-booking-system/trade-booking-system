@@ -1,8 +1,13 @@
-import './app.css'
-import App from './App.svelte'
+import "./app.postcss";
+import App from "./App.svelte";
+import Dropdown from "./Dropdown.svelte"
 
 const app = new App({
-  target: document.getElementById('app'),
-})
+  target: document.getElementById("app"),
+});
 
-export default app
+const dropdown = new Dropdown({
+  target: document.getElementById("dropdown"),
+});
+
+export default app;
