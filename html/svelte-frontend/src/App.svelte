@@ -2,6 +2,7 @@
   import Accountpicker from "./Dropdown.svelte";
   import HelloButton from "./HelloButton.svelte";
   import SumSearch from "./SumSearch.svelte";
+  import TradeGrid from "./TradeGrid.svelte"
 </script>
 
 <div class="container">
@@ -14,6 +15,10 @@
   <div class="sumsearch">
     <SumSearch />
   </div>
+  <div id = "tradeGrid">
+    <TradeGrid/>
+  </div>
+  
 </div>
 
 <style>
