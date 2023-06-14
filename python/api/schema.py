@@ -1,5 +1,6 @@
 from pydantic import BaseModel, validator
 from datetime import date
+from uuid import uuid4
 
 # prices represented as 1 penny = 1 and 1 dollar = 100
 # dates represented as YYYYMMDD
@@ -20,7 +21,7 @@ def validate_is_positive(cls, value):
     raise ValueError("value is negative")
 
 class Trade(BaseModel):
-    id: int
+    id: int= int(uuid4())
     account: str
     type: str
     stock_ticker: str
