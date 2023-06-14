@@ -1,6 +1,7 @@
 <script>
   import Accountpicker from "./Dropdown.svelte";
   import HelloButton from "./HelloButton.svelte";
+  import SumSearch from "./SumSearch.svelte";
 </script>
 
 <div class="container">
@@ -9,6 +10,9 @@
   </div>
   <div class="hellobutton">
     <HelloButton />
+  </div>
+  <div class="sumsearch">
+    <SumSearch />
   </div>
 </div>
 
