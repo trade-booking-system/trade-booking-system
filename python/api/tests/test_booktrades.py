@@ -1,8 +1,9 @@
+import json
 import random
 import datetime
+import fnmatch, re
 from typing import Tuple
-import sys
-import os
+import sys, os
 
 import pytest
 from fastapi.testclient import TestClient
@@ -14,25 +15,39 @@ from utils.redis_initializer import get_redis_client
 
 class FakeClient:
     def __init__(self):
-        self.trades = {}
+        self.data = {}
     
     def hget(self, name, key):
-        return self.trades[key]
+        return self.data[name][key]
     
     def hset(self, name, key, value):
-        self.trades[key] = value
+        if name not in self.data:
+            self.data[name] = {}
+        self.data[name][key] = value
     
-    def hvals(self, name):
-        return self.trades.values()
+    def hgetall(self, name):
+        return self.data[name]
     
     def keys(self, pattern):
-        return ["trades"]
+        keys = []
+        regex = re.compile(fnmatch.translate(pattern))
+        for key in self.data.keys():
+            if regex.match(key):
+                keys.append(key)
+        return keys
 
-def trades_equal(trade1: schema.Trade, trade2: schema.Trade) -> bool:
+def trade_to_dict(trade: schema.Trade):
+    trade_dict = trade.dict()
+    for key in ["date", "time"]:
+        trade_dict[key] = str(trade_dict[key])
+    return trade_dict
+
+def trades_equal(trade1, trade2):
+    keys = []
     for key in ["account", "user", "type", "stock_ticker", "amount", "date", "time"]:
-        if trade1.dict()[key] != trade2.dict()[key]:
-            return False
-    return True
+        if trade1[key] != trade2[key]:
+            keys.append(key)
+    assert len(keys) == 0, "keys not equal: " + ", ".join(keys) + f" {keys[0]} {type(trade1[keys[0]])} {type(trade2[keys[0]])}"
 
 def initialize() -> Tuple[TestClient, FakeClient]:
     redis_client = FakeClient()
@@ -55,25 +70,30 @@ def generate_trade(seed: int) -> schema.Trade:
                         amount=amount, date=date, time=time)
 
 @pytest.mark.parametrize("trade", [generate_trade(x) for x in range(1000, 1025)])
-def test_put(trade: schema.Trade, monkeypatch: pytest.MonkeyPatch):
+def test_put(trade: schema.Trade):
     client, redis = initialize()
-    result = client.put("/put/", json=trade.dict())
-    assert result["key"] == "trades:" + trade.account + ":" + trade.date # TODO: format
-    # TODO: result["value"] should be in uuid4 format
-    trade2 = redis.hget("trades", result["key"])
-    assert trades_equal(trade, trade2)
+    response = client.put("/put/", json=trade_to_dict(trade))
+    assert response.status_code == 200
+    result = response.json()
+    assert result["Key"] == "trades:" + trade.account + ":" + str(trade.date)
+    trade2 = redis.hget(result["Key"], result["Field"])
+    trades_equal(trade_to_dict(trade), json.loads(trade2))
 
 @pytest.mark.parametrize("trade1,trade2",
                          [(generate_trade(x), generate_trade(x + 500)) for x in range(1025, 1050)])
-def test_get(trade1: schema.Trade, trade2: schema.Trade, monkeypatch: pytest.MonkeyPatch):
+def test_get(trade1: schema.Trade, trade2: schema.Trade):
     client, redis = initialize()
-    redis.hset("trades", "test1", trade1)
-    redis.hset("trades", "test2", trade2)
-    trades = client.get("/get/")
+    redis.hset("trades:a", "test1", trade1.json())
+    redis.hset("trades:a", "test2", trade2.json())
+    response = client.get("/get/")
+    assert response.status_code == 200
+    trades = response.json()
     assert len(trades) == 2
-    if trades[0].account == "account1":
-        assert trades_equal(trades[0], trade1)
-        assert trades_equal(trades[1], trade2)
+    dict1 = trade_to_dict(trade1)
+    dict2 = trade_to_dict(trade2)
+    if trades[0]["account"] == trade1.account:
+        trades_equal(trades[0], dict1)
+        trades_equal(trades[1], dict2)
     else:
-        assert trades_equal(trades[0], trade2)
-        assert trades_equal(trades[1], trade1)
+        trades_equal(trades[0], dict2)
+        trades_equal(trades[1], dict1)
