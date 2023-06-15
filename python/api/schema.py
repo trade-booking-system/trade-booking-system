@@ -12,7 +12,7 @@ def validate_is_positive(cls, value):
     raise ValueError("value is negative")
 
 class Trade(BaseModel):
-    id: int= None
+    id: str= None
     account: str
     type: str
     stock_ticker: str
@@ -27,7 +27,7 @@ class Trade(BaseModel):
     def create_id(id):
         if id != None:
             return id
-        return int(uuid4())
+        return str(uuid4())
 
     @validator("type")
     def validate_type(cls, type):

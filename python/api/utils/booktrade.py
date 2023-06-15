@@ -3,7 +3,6 @@ import schema
 import json
 
 def booktrade(trade: schema.Trade):
-    print(trade)
     key = f"trades:{trade.account}:{trade.date.isoformat()}"
     json_data= trade.json()
     redis.r.hset(key, trade.id, json_data)
