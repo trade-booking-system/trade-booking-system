@@ -1,11 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from time import sleep
-from utils import redis_initializer
+from utils.redis_initializer import get_redis_client
 import routes
 
-redis_initializer.initialize_redis()
-
-app= FastAPI()
+app = FastAPI(dependencies=[Depends(get_redis_client)])
 app.include_router(routes.app)
 
 @app.get("/sum/")

@@ -1,5 +1,7 @@
-from fastapi import APIRouter
+import redis
+from fastapi import APIRouter, Depends
 from utils import booktrade as tradebooker
+from utils.redis_initializer import get_redis_client
 import schema
 
 app= APIRouter()
@@ -17,10 +19,10 @@ async def get(key : str):
 """
 
 @app.put("/put")
-async def put(trade: schema.Trade):
+async def put(trade: schema.Trade, client: redis.Redis = Depends(get_redis_client)):
     print(trade)
-    return tradebooker.booktrade(trade)
+    return tradebooker.booktrade(client, trade)
 
 @app.get("/get/")
-async def get():
-    return tradebooker.getTrades()
+async def get(client: redis.Redis = Depends(get_redis_client)):
+    return tradebooker.getTrades(client)
