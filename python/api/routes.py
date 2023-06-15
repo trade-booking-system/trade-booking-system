@@ -14,3 +14,7 @@ async def put(trade: Trade, client: redis.Redis = Depends(get_redis_client)) -> 
 @app.get("/get/")
 async def get(client: redis.Redis = Depends(get_redis_client)) -> List[Trade]:
     return tradebooker.getTrades(client)
+
+@app.get("/accounts/")
+async def get_accounts(client: redis.Redis = Depends(get_redis_client)) -> List[str]:
+    return tradebooker.get_accounts(client)
