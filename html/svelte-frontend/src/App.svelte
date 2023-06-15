@@ -3,6 +3,7 @@
   import HelloButton from "./HelloButton.svelte";
   import SumSearch from "./SumSearch.svelte";
   import TradeGrid from "./TradeGrid.svelte"
+  import PositionsGrid from "./PositionsGrid.svelte";
 </script>
 
 <div class="container">
@@ -15,10 +16,12 @@
   <div class="sumsearch">
     <SumSearch />
   </div>
-  <div id = "tradeGrid">
+  <div id = "tradeGrid" class = "bottomPadding">
     <TradeGrid/>
   </div>
-  
+  <div id = "positionsGrid" class = "bottomPadding">
+    <PositionsGrid/>
+  </div>
 </div>
 
 <style>
@@ -30,5 +33,9 @@
 
   .accountpicker {
     margin-bottom: 10%;
+  }
+
+  .bottomPadding{
+    padding-bottom: 5vh;
   }
 </style>
