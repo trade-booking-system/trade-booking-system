@@ -9,4 +9,12 @@ def booktrade(client: redis.Redis, trade: schema.Trade):
     return {"Key": key, "Field": trade.id}
 
 def getTrades(client: redis.Redis):
-    return (client.hgetall(key) for key in client.keys("*"))
+    trades = []
+    for key in client.keys("*"):
+        trade = client.hgetall(key)
+        for trade_object in trade.items():
+            trade_object = trade_object.decode("utf-8")
+            trade_object = json.loads(trade_object)
+            trades.append(trade_object)
+    return trades
+
