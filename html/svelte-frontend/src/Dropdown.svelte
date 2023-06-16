@@ -35,7 +35,7 @@
 
 <div class="allign_with_top">
   <Button><Chevron>Accounts</Chevron></Button>
-  <Dropdown class="w-48 overflow-y-auto py-1 h-48">
+  <Dropdown class="w-58 overflow-y-auto py-1 h-48">
     {#each accounts as account}
       <DropdownItem
         class="flex items-center text-base font-semibold gap-2"
