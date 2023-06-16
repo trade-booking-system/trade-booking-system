@@ -2,7 +2,7 @@ import json
 import random
 import datetime
 import fnmatch, re
-from typing import Tuple
+from typing import List, Tuple
 import sys, os
 
 import pytest
@@ -97,3 +97,17 @@ def test_get(trade1: schema.Trade, trade2: schema.Trade):
     else:
         trades_equal(trades[0], dict2)
         trades_equal(trades[1], dict1)
+
+def test_get_accounts():
+    client, redis = initialize()
+    for i in range(25):
+        trade = generate_trade(i + 500)
+        account = "account" + str(i % 3)
+        trade.account = account
+        redis.hset("trades:" + account + ":" + str(trade.date), "test" + str(i), trade.json())
+    response = client.get("/accounts/")
+    assert response.status_code == 200
+    accounts = response.json()
+    assert len(accounts) == 3
+    for i in range(3):
+        assert "account" + str(i) in accounts
