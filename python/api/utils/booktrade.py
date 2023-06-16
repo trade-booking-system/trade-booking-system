@@ -7,7 +7,7 @@ def booktrade(client: redis.Redis, trade: Trade):
     client.hset(key, trade.id, json_data)
     return {"Key": key, "Field": trade.id}
 
-def getTrades(client: redis.Redis):
+def get_trades(client: redis.Redis):
     trades= []
     for key in client.keys("trades:*"):
         data= client.hgetall(key)
@@ -18,7 +18,7 @@ def getTrades(client: redis.Redis):
 
 def get_accounts(client: redis.Redis):
     keys = client.keys("trades:*")
-    accounts = []
+    accounts = set()
     for key in keys:
-        accounts.append(key.split(":")[1])
+        accounts.add(key.split(":")[1])
     return accounts

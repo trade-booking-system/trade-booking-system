@@ -2,7 +2,7 @@ import redis
 from fastapi import APIRouter, Depends
 from utils import booktrade as tradebooker
 from utils.redis_initializer import get_redis_client
-from typing import List, Dict
+from typing import List, Dict, Set
 from schema import Trade
 
 app= APIRouter()
@@ -13,8 +13,8 @@ async def put(trade: Trade, client: redis.Redis = Depends(get_redis_client)) -> 
 
 @app.get("/get/")
 async def get(client: redis.Redis = Depends(get_redis_client)) -> List[Trade]:
-    return tradebooker.getTrades(client)
+    return tradebooker.get_trades(client)
 
 @app.get("/accounts/")
-async def get_accounts(client: redis.Redis = Depends(get_redis_client)) -> List[str]:
+async def get_accounts(client: redis.Redis = Depends(get_redis_client)) -> Set[str]:
     return tradebooker.get_accounts(client)
