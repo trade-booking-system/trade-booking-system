@@ -2,9 +2,11 @@ from fastapi import FastAPI, Depends
 from time import sleep
 from utils.redis_initializer import get_redis_client
 import routes
+import positions
 
 app = FastAPI(dependencies=[Depends(get_redis_client)])
 app.include_router(routes.app)
+app.include_router(positions.router, prefix="/positions")
 
 @app.get("/sum/")
 def sum(a: int, b: int):
