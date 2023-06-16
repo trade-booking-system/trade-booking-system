@@ -5,6 +5,7 @@
   let gridContainer;
   let grid;
 
+  //this is where column headers are defined
   const columnDefs = [
     { field: "Account" },
     { field: "Ticker" },
@@ -13,10 +14,19 @@
     { field: "SystemLastAggregationProcessHost_Id" },
   ];
 
+  //this allows you to drag and resize columns 
   const defaultColDef = {
     resizable: true,
   };
 
+/**
+ * This is where the rows are created
+ * the format for data is {field:data}
+ * {
+ * Account:"account1"
+ * price: 100
+ * }
+ */
   const rowData = [
     {
       Account: "Account 1",
@@ -55,10 +65,9 @@
       defaultMinWidth: 100,
     });
   }
-
   onMount(() => {
-    window.addEventListener("resize", sizeToFit); //handles auto resizing
-    grid = new Grid(gridContainer, gridOptions);
+    window.addEventListener("resize", sizeToFit); //handles auto resizing: any time the window resizes at all it makes the grid resized to fit screen 
+    grid = new Grid(gridContainer, gridOptions); //creates the actual ag-grid
     sizeToFit();
   });
 
