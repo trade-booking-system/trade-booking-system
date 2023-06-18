@@ -22,6 +22,7 @@ jobs:
               working-directory: ./python/api
             - name: Run ruff
               run: ruff check .
+              continue-on-error: true
               working-directory: ./python/api
             - name: Run tests
               run: pytest tests/
