@@ -16,6 +16,14 @@ def get_trades(client: redis.Redis):
             trades.append(trade_object)
     return trades
 
+def query_trades(account: str, year: str, month: str, day: str, client: redis.Redis):
+    trades = []
+    for key in client.keys(f"trades:{account}:{year}-{month}-{day}"):
+        data = client.hgetall(key)
+        for json_object in data.values():
+            trades.append(Trade.parse_raw(json_object))
+    return trades
+
 def get_accounts(client: redis.Redis):
     keys = client.keys("trades:*")
     accounts = set()
