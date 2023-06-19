@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, WebSocket
 from time import sleep
 from utils.redis_initializer import get_redis_client
 import routes
@@ -20,3 +20,11 @@ def echo(text: str, delay: int):
 @app.get("/hello")
 async def hello():
     return {"hello": "hello"}
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    while True:
+        data = await websocket.receive_text()
+        await websocket.send_text(f"Message text was: {data}")
+
