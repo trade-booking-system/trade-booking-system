@@ -72,7 +72,7 @@ def generate_trade(seed: int) -> schema.Trade:
 @pytest.mark.parametrize("trade", [generate_trade(x) for x in range(1000, 1025)])
 def test_put(trade: schema.Trade):
     client, redis = initialize()
-    response = client.put("/put/", json=trade_to_dict(trade))
+    response = client.put("/bookTrade/", json=trade_to_dict(trade))
     assert response.status_code == 200
     result = response.json()
     assert result["Key"] == "trades:" + trade.account + ":" + str(trade.date)
@@ -85,7 +85,7 @@ def test_get(trade1: schema.Trade, trade2: schema.Trade):
     client, redis = initialize()
     redis.hset("trades:a", "test1", trade1.json())
     redis.hset("trades:a", "test2", trade2.json())
-    response = client.get("/get/")
+    response = client.get("/getTrades/")
     assert response.status_code == 200
     trades = response.json()
     assert len(trades) == 2
@@ -105,7 +105,7 @@ def test_get_accounts():
         account = "account" + str(i % 3)
         trade.account = account
         redis.hset("trades:" + account + ":" + str(trade.date), "test" + str(i), trade.json())
-    response = client.get("/accounts/")
+    response = client.get("/getAccounts/")
     assert response.status_code == 200
     accounts = response.json()
     assert len(accounts) == 3
