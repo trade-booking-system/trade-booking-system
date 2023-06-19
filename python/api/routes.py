@@ -7,21 +7,21 @@ from schema import Trade
 
 app= APIRouter()
 
-@app.put("/put")
-async def put(trade: Trade, client: redis.Redis = Depends(get_redis_client)) -> Dict[str, str]:
+@app.put("/bookTrade/")
+async def book_trade(trade: Trade, client: redis.Redis = Depends(get_redis_client)) -> Dict[str, str]:
     return tradebooker.booktrade(client, trade)
 
-@app.get("/get/")
-async def get(client: redis.Redis = Depends(get_redis_client)) -> List[Trade]:
+@app.get("/getTrades/")
+async def get_trades(client: redis.Redis = Depends(get_redis_client)) -> List[Trade]:
     return tradebooker.get_trades(client)
 
-@app.get("/query/")
+@app.get("/queryTrades/")
 async def query_trades(account: str = "*", year: int = 0, month: int = 0, day: int = 0,
                        client: redis.Redis = Depends(get_redis_client)) -> List[Trade]:
     def default(value: int, pad: int) -> str:
         return "*" if value == 0 else str(value).zfill(pad)
     return tradebooker.query_trades(account, default(year, 4), default(month, 2), default(day, 2), client)
 
-@app.get("/accounts/")
+@app.get("/getAccounts/")
 async def get_accounts(client: redis.Redis = Depends(get_redis_client)) -> Set[str]:
     return tradebooker.get_accounts(client)
