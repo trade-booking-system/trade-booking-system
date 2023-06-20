@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends, WebSocket
 from time import sleep
-from utils.redis_initializer import get_redis_client_zero, get_redis_client_one
+from ..utils.redis_initializer import get_redis_client_zero, get_redis_client_one
 from api import routes
 from api import positions
 
