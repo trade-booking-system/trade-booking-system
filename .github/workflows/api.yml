@@ -5,7 +5,6 @@ on:
         paths:
             - 'python/api/**.py'
     workflow_dispatch:
-permissions: write-all
 
 jobs:
     test:
@@ -33,7 +32,7 @@ jobs:
               with:
                 registry: ghcr.io
                 username: ${{ github.actor }}
-                password: ${{ secrets.GITHUB_TOKEN }}
+                password: ${{ secrets.ACCESS_TOKEN }}
             - name: Extract metadata (tags, labels) for Docker
               id: meta
               uses: docker/metadata-action
