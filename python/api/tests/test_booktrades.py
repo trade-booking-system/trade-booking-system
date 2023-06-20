@@ -2,7 +2,7 @@ import json
 import random
 import datetime
 import fnmatch, re
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 import sys, os
 
 import pytest
@@ -97,6 +97,48 @@ def test_get(trade1: schema.Trade, trade2: schema.Trade):
     else:
         trades_equal(trades[0], dict2)
         trades_equal(trades[1], dict1)
+
+def test_query_trades():
+    client, redis = initialize()
+    trades: List[schema.Trade] = []
+    def try_pattern(client: TestClient, rules: Dict[str, str]):
+        response = client.get("/queryTrades/", params=rules)
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 625 / (5 ** len(rules))
+        for item in data:
+            if "account" in rules:
+                assert item["account"] == rules["account"]
+            date = datetime.datetime.strptime(item["date"], "%Y-%m-%d").date()
+            for key in ["year", "month", "day"]:
+                if key in rules:
+                    assert getattr(date, key) == int(rules[key])
+    for i in range(625):
+        trade = generate_trade(i + 3000)
+        account = "account" + str(i % 5)
+        i //= 5
+        year = 2000 + (i % 5) * 7
+        i //= 5 
+        month = 1 + (i % 5)
+        i //= 5
+        day = 1 + (i % 5) * 3
+        trade.account = account
+        date = datetime.date(year, month, day)
+        trade.date = date
+        redis.hset("trades:" + account + ":" + str(date), "test" + str(i), trade.json())
+    for i in range(25):
+        random_gen = random.Random(i + 4000)
+        rules: Dict[str, str] = {}
+        if (random_gen.choice([True, False])):
+            rules["account"] = "account" + str(random_gen.randrange(0, 5))
+        if (random_gen.choice([True, False])):
+            rules["year"] = str(2000 + random_gen.randrange(0, 5) * 7)
+        if (random_gen.choice([True, False])):
+            rules["month"] = str(1 + random_gen.randrange(0, 5))
+        if (random_gen.choice([True, False])):
+            rules["day"] = str(1 + random_gen.randrange(0, 5) * 3)
+        try_pattern(client, rules)
+
 
 def test_get_accounts():
     client, redis = initialize()
