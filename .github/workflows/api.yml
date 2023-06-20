@@ -1,10 +1,11 @@
-name: API Test and Lint
+name: API Check and Build
 
 on:
     push:
         paths:
             - 'python/api/**.py'
     workflow_dispatch:
+permissions: write-all
 
 jobs:
     test:
