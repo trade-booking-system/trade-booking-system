@@ -47,22 +47,36 @@ jobs:
                   title: Python API Checks Run
                   summary: ${{ join(steps.test.outputs.*, '\n') }}
               if: github.event_name == 'push' && steps.test.outcome == 'failure'
+    build:
+        runs-on: ubuntu-latest
+        needs: test
+        strategy:
+          matrix:
+            include:
+              - component: api
+                file: api
+                name: API
+              - component: service
+                file: aggr
+                name: Aggregation Service
+        name: Built and Push ${{ matrix.name }}
+        steps:
             - name: Login to GitHub Container Registry
               uses: docker/login-action@v2
               with:
                 registry: ghcr.io
                 username: ${{ github.actor }}
                 password: ${{ secrets.GITHUB_TOKEN }}
-            - name: Extract metadata (tags, labels) for Docker
+            - name: Extract metadata for ${{ matrix.name }} Image
               id: meta
               uses: docker/metadata-action@v4
               with:
-                images: ghcr.io/trade-booking-system/api
-            - name: Build and Push Image
+                images: ghcr.io/trade-booking-system/${{ matrix.component }}
+            - name: Build and Push ${{ matrix.name }} Image
               uses: docker/build-push-action@v4
               with:
                 push: true
                 context: ./python
-                file: ./python/Dockerfile.api
+                file: ./python/Dockerfile.${{ matrix.file }}
                 labels: ${{ steps.meta.outputs.labels }}
                 tags: ${{ steps.meta.outputs.tags }}
