@@ -23,7 +23,8 @@ services:
   backend:
     image: nginx-backend
     build:
-      context: ./python/api
+      context: ./python
+      dockerfile: Dockerfile.api
     ports:
       - "8000:8000"
     networks: 
@@ -35,7 +36,8 @@ services:
 
   script:
     build:
-      context: ./python/api/scripts
+      context: ./python
+      dockerfile: Dockerfile.aggr
     depends_on:
       - redis
     networks: 

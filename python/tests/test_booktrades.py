@@ -3,15 +3,13 @@ import random
 import datetime
 import fnmatch, re
 from typing import Dict, List, Tuple
-import sys, os
 
 import pytest
 from fastapi.testclient import TestClient
 
-sys.path.append(os.path.abspath("."))
-import main
-import schema
+from api import main
 from utils.redis_initializer import get_redis_client_zero, get_redis_client_one
+import schema
 
 class FakeClient:
     def __init__(self):
