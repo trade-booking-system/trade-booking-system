@@ -22,17 +22,17 @@ jobs:
             - name: Install dependencies
               run: |
                 python -m pip install --upgrade pip
-                pip install -r requirements_dev.txt
-              working-directory: ./python/api
+                pip install -r api/requirements_dev.txt
+              working-directory: ./python
             - name: Run ruff
               id: lint
               run: ruff check .
               continue-on-error: true
-              working-directory: ./python/api
+              working-directory: ./python
             - name: Run tests
               id: test
               run: pytest tests/
-              working-directory: ./python/api
+              working-directory: ./python
             - name: Comment on Commit
               uses: octokit/request-action@v2.x
               with:
@@ -57,11 +57,11 @@ jobs:
               id: meta
               uses: docker/metadata-action@v4
               with:
-                images: ghcr.io/${{ github.repository }}
+                images: ghcr.io/trade-booking-system/api
             - name: Build and Push Image
               uses: docker/build-push-action@v4
               with:
                 push: true
-                context: ./python/api
+                context: ./python
                 labels: ${{ steps.meta.outputs.labels }}
                 tags: ${{ steps.meta.outputs.tags }}
