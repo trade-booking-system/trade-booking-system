@@ -63,5 +63,6 @@ jobs:
               with:
                 push: true
                 context: ./python
+                file: ./python/Dockerfile.api
                 labels: ${{ steps.meta.outputs.labels }}
                 tags: ${{ steps.meta.outputs.tags }}
