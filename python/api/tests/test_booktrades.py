@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 sys.path.append(os.path.abspath("."))
 import main
 import schema
-from utils.redis_initializer import get_redis_client
+from utils.redis_initializer import get_redis_client_zero, get_redis_client_one
 
 class FakeClient:
     def __init__(self):
@@ -35,6 +35,9 @@ class FakeClient:
             if regex.match(key):
                 keys.append(key)
         return keys
+    
+    def publish(self, channel, message):
+        pass
 
 def trade_to_dict(trade: schema.Trade):
     trade_dict = trade.dict()
@@ -51,7 +54,8 @@ def trades_equal(trade1, trade2):
 
 def initialize() -> Tuple[TestClient, FakeClient]:
     redis_client = FakeClient()
-    main.app.dependency_overrides[get_redis_client] = lambda: redis_client
+    main.app.dependency_overrides[get_redis_client_zero] = lambda: redis_client
+    main.app.dependency_overrides[get_redis_client_one] = lambda: redis_client
     web_client = TestClient(main.app)
     return web_client, redis_client
 
