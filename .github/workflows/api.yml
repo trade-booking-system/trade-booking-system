@@ -3,7 +3,7 @@ name: API Check and Build
 on:
     push:
         paths:
-            - 'python/api/**'
+            - 'python/**'
     workflow_dispatch:
 
 permissions:
