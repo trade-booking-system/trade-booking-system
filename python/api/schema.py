@@ -54,8 +54,23 @@ class Price(BaseModel):
     _price_validator= validator("price", allow_reuse= True)(validate_is_positive)
 
 class History(BaseModel):
-    trades: List[Trade]= dict()
-    current_trade: int
+    trades: List[Trade]= list()
+    current_trade: int= 1
+
+    def get_current_trade(cls):
+        return cls.trades[cls.current_trade-1]
+    
+    def update_trade(cls, updated_type: str, updated_amount: str, old_trade: Trade):
+        updates= dict()
+        if updated_amount:
+            updates["amount"]= updated_amount
+        if updated_type:
+            updates["type"]= updated_type
+        trade= old_trade.copy(update= updates)
+        trade.version= trade.version+1
+        cls.trades.append(trade)
+        cls.current_trade+= 1
+        return trade
 
 class PositionResponse(BaseModel):
     positions: List[Position]
