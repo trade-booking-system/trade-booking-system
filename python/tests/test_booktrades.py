@@ -78,15 +78,15 @@ def test_put(trade: schema.Trade):
     assert response.status_code == 200
     result = response.json()
     assert result["Key"] == "trades:" + trade.account + ":" + str(trade.date)
-    trade2 = redis.hget(result["Key"], result["Field"])
-    trades_equal(trade_to_dict(trade), json.loads(trade2))
+    history = redis.hget(result["Key"], result["Field"])
+    trades_equal(trade_to_dict(trade), json.loads(history)["trades"][0])
 
 @pytest.mark.parametrize("trade1,trade2",
                          [(generate_trade(x), generate_trade(x + 500)) for x in range(1025, 1050)])
 def test_get(trade1: schema.Trade, trade2: schema.Trade):
     client, redis = initialize()
-    redis.hset("trades:a", "test1", trade1.json())
-    redis.hset("trades:a", "test2", trade2.json())
+    redis.hset("trades:a", "test1", schema.History(trades=[trade1]).json())
+    redis.hset("trades:a", "test2", schema.History(trades=[trade2]).json())
     response = client.get("/getTrades/")
     assert response.status_code == 200
     trades = response.json()
@@ -102,7 +102,6 @@ def test_get(trade1: schema.Trade, trade2: schema.Trade):
 
 def test_query_trades():
     client, redis = initialize()
-    trades: List[schema.Trade] = []
     def try_pattern(client: TestClient, rules: Dict[str, str]):
         response = client.get("/queryTrades/", params=rules)
         assert response.status_code == 200
@@ -127,7 +126,8 @@ def test_query_trades():
         trade.account = account
         date = datetime.date(year, month, day)
         trade.date = date
-        redis.hset("trades:" + account + ":" + str(date), "test" + str(i), trade.json())
+        history = schema.History(trades=[trade])
+        redis.hset("trades:" + account + ":" + str(date), "test" + str(i), history.json())
     for i in range(25):
         random_gen = random.Random(i + 4000)
         rules: Dict[str, str] = {}
