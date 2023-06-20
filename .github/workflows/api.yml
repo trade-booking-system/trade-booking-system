@@ -1,4 +1,4 @@
-name: API Test and Lint
+name: API Check and Build
 
 on:
     push:
@@ -27,3 +27,21 @@ jobs:
             - name: Run tests
               run: pytest tests/
               working-directory: ./python/api
+            - name: Login to GitHub Container Registry
+              uses: docker/login-action@v2
+              with:
+                registry: ghcr.io
+                username: ${{ github.actor }}
+                password: ${{ secrets.GITHUB_TOKEN }}
+            - name: Extract metadata (tags, labels) for Docker
+              id: meta
+              uses: docker/metadata-action
+              with:
+                images: ghcr.io/${{ github.repository }}
+            - name: Build and Push Image
+              uses: docker/build-push-action@v4
+              with:
+                push: true
+                context: ./python/api
+                labels: ${{ steps.meta.outputs.labels }}
+                tags: ${{ steps.meta.outputs.tags }}
