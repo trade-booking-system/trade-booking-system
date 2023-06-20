@@ -5,6 +5,7 @@ def booktrade(client: redis.Redis, trade: Trade):
     key = f"trades:{trade.account}:{trade.date.isoformat()}"
     json_data= trade.json()
     client.hset(key, trade.id, json_data)
+    client.publish("updatePositions", f"{trade.account}:{trade.stock_ticker}:{get_amount(trade)}")
     return {"Key": key, "Field": trade.id}
 
 def get_trades(client: redis.Redis):
@@ -30,3 +31,6 @@ def get_accounts(client: redis.Redis):
     for key in keys:
         accounts.add(key.split(":")[1])
     return accounts
+
+def get_amount(trade: Trade):
+    return trade.amount if trade.type == "buy" else -trade.amount

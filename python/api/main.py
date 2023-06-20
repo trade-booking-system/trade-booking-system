@@ -1,10 +1,10 @@
 from fastapi import FastAPI, Depends, WebSocket
 from time import sleep
-from utils.redis_initializer import get_redis_client
+from utils.redis_initializer import get_redis_client_zero, get_redis_client_one
 import routes
 import positions
 
-app = FastAPI(dependencies=[Depends(get_redis_client)])
+app = FastAPI(dependencies=[Depends(get_redis_client_zero), Depends(get_redis_client_one)])
 app.include_router(routes.app)
 app.include_router(positions.router, prefix="/positions")
 

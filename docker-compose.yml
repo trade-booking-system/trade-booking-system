@@ -33,6 +33,16 @@ services:
     environment:
       - REDIS_HOST=redis
 
+  script:
+    build:
+      context: ./python/api/scripts
+    depends_on:
+      - redis
+    networks: 
+      - backend
+    environment:
+      - REDIS_HOST=redis
+
 networks: 
   frontend:
   backend:
