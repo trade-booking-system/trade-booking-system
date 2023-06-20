@@ -17,8 +17,7 @@ def update_trade(trade_id, account, date, updated_type, updated_amount, client: 
     if json_history == None:
         raise HTTPException(status_code= 404, detail= "trade does not exist")
     history= History.parse_raw(json_history)
-    old_trade= history.get_current_trade()
-    trade= history.update_trade(updated_type, updated_amount, old_trade)
+    trade, old_trade= history.update_trade(updated_type, updated_amount)
     # undo previous version of trade and add new trade
     amount= get_amount(trade) - get_amount(old_trade)
     client.publish("updatePositions", f"{trade.account}:{trade.stock_ticker}:{amount}")

@@ -1,6 +1,6 @@
-from typing import List
 from pydantic import BaseModel, validator
 from datetime import date, time, datetime
+from typing import List
 from uuid import uuid4
 
 # prices represented as 1 penny = 1 and 1 dollar = 100
@@ -13,13 +13,13 @@ def validate_is_positive(cls, value):
     raise ValueError("value is negative")
 
 class Trade(BaseModel):
-    id: str= None
+    id: str | None
     account: str
     type: str
     stock_ticker: str
     amount: int
-    date: date
-    time: time
+    date: date | None
+    time: time | None
     user: str
     version: int= 1
 
@@ -30,6 +30,18 @@ class Trade(BaseModel):
         if id != None:
             return id
         return str(uuid4())
+    
+    @validator("date", pre= True, always= True)
+    def create_date(date_of_trade):
+        if date_of_trade != None:
+            return date_of_trade
+        return date.today()
+    
+    @validator("time", pre= True, always= True)
+    def create_time(time_of_trade) -> time:
+        if time_of_trade != None:
+            return time_of_trade
+        return datetime.now().time()
 
     @validator("type")
     def validate_type(cls, type):
@@ -55,22 +67,25 @@ class Price(BaseModel):
 
 class History(BaseModel):
     trades: List[Trade]= list()
-    current_trade: int= 1
+    current_version: int= 1
 
     def get_current_trade(cls):
-        return cls.trades[cls.current_trade-1]
+        return cls.trades[cls.current_version-1]
     
-    def update_trade(cls, updated_type: str, updated_amount: str, old_trade: Trade):
+    def update_trade(cls, updated_type: str, updated_amount: str):
+        old_trade= cls.get_current_trade()
         updates= dict()
         if updated_amount:
             updates["amount"]= updated_amount
         if updated_type:
             updates["type"]= updated_type
+        updates["date"]= date.today()
+        updates["time"]= datetime.now().time()
         trade= old_trade.copy(update= updates)
         trade.version= trade.version+1
         cls.trades.append(trade)
-        cls.current_trade+= 1
-        return trade
+        cls.current_version+= 1
+        return (trade, old_trade)
 
 class PositionResponse(BaseModel):
     positions: List[Position]
