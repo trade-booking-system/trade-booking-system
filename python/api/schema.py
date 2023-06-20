@@ -21,6 +21,7 @@ class Trade(BaseModel):
     date: date
     time: time
     user: str
+    version: int= 1
 
     _amount_validator= validator("amount", allow_reuse= True)(validate_is_positive)
 
@@ -51,6 +52,10 @@ class Price(BaseModel):
     price: int
 
     _price_validator= validator("price", allow_reuse= True)(validate_is_positive)
+
+class History(BaseModel):
+    trades: List[Trade]= dict()
+    current_trade: int
 
 class PositionResponse(BaseModel):
     positions: List[Position]

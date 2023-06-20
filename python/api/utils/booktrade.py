@@ -1,5 +1,6 @@
-import redis
+from fastapi import HTTPException
 from schema import Trade
+import redis
 
 def booktrade(client: redis.Redis, trade: Trade):
     key = f"trades:{trade.account}:{trade.date.isoformat()}"
@@ -7,6 +8,23 @@ def booktrade(client: redis.Redis, trade: Trade):
     client.hset(key, trade.id, json_data)
     client.publish("updatePositions", f"{trade.account}:{trade.stock_ticker}:{get_amount(trade)}")
     return {"Key": key, "Field": trade.id}
+
+def update_trade(trade_id, account, date, updated_type, updated_amount, client: redis.Redis):
+    key= f"trades:{account}:{date}"
+    json_trade= client.hget(key, trade_id)
+    if json_trade == None:
+        raise HTTPException(status_code= 404, detail= "trade does not exist")
+    trade= Trade.parse_raw(json_trade)
+    # undo previous version of trade
+    amount= -get_amount(trade)
+    if updated_amount:
+        trade.amount= updated_amount
+    if updated_type:
+        trade.type= updated_type
+    amount+= get_amount(trade)
+    client.publish("updatePositions", f"{trade.account}:{trade.stock_ticker}:{amount}")
+    trade.version= trade.version+1
+    client.hset(key, trade_id, trade.json())
 
 def get_trades(client: redis.Redis):
     trades= []

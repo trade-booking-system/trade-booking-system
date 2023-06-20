@@ -11,6 +11,11 @@ app= APIRouter()
 async def book_trade(trade: Trade, client: redis.Redis = Depends(get_redis_client_zero)) -> Dict[str, str]:
     return tradebooker.booktrade(client, trade)
 
+@app.post("/updateTrade")
+def update_trade(trade_id: str, account: str, date: str, updated_type: str= None, updated_amount: int= None, 
+                 client: redis.Redis = Depends(get_redis_client_zero)):
+    tradebooker.update_trade(trade_id, account, date, updated_type, updated_amount, client) 
+
 @app.get("/getTrades/")
 async def get_trades(client: redis.Redis = Depends(get_redis_client_zero)) -> List[Trade]:
     return tradebooker.get_trades(client)
