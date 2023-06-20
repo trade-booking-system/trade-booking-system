@@ -6,6 +6,10 @@ on:
             - 'python/api/**.py'
     workflow_dispatch:
 
+permissions:
+  packages: write
+  contents: read
+
 jobs:
     test:
         runs-on: ubuntu-latest
