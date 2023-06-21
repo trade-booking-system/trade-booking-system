@@ -72,20 +72,9 @@ class History(BaseModel):
     def get_current_trade(cls):
         return cls.trades[cls.current_version-1]
     
-    def update_trade(cls, updated_type: str, updated_amount: str):
-        old_trade= cls.get_current_trade()
-        updates= dict()
-        if updated_amount:
-            updates["amount"]= updated_amount
-        if updated_type:
-            updates["type"]= updated_type
-        updates["date"]= date.today()
-        updates["time"]= datetime.now().time()
-        trade= old_trade.copy(update= updates)
-        trade.version= trade.version+1
+    def add_updated_trade(cls, trade: Trade):
         cls.trades.append(trade)
-        cls.current_version+= 1
-        return (trade, old_trade)
+        cls.current_version= trade.version
 
 class PositionResponse(BaseModel):
     positions: List[Position]

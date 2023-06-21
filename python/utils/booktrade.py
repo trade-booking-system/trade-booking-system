@@ -17,12 +17,23 @@ def update_trade(trade_id, account, date, updated_type, updated_amount, client: 
     if json_history == None:
         raise HTTPException(status_code= 404, detail= "trade does not exist")
     history= History.parse_raw(json_history)
-    trade, old_trade= history.update_trade(updated_type, updated_amount)
+    old_trade= history.get_current_trade()
+    trade= create_updated_trade(updated_amount, updated_type, old_trade)
+    history.add_updated_trade(trade)
     # undo previous version of trade and add new trade
     amount= get_amount(trade) - get_amount(old_trade)
     client.publish("updatePositions", f"{trade.account}:{trade.stock_ticker}:{amount}")
     client.hset(key, trade_id, history.json())
     return {"Key": key, "Field": trade.id, "Version": trade.version}
+
+def create_updated_trade(updated_amount, updated_type, old_trade: Trade) -> Trade:
+        if updated_amount == None:
+            updated_amount= old_trade.amount
+        if updated_type == None:
+            updated_type= old_trade.type
+        version= old_trade.version+1
+        return Trade(id= old_trade.id, account= old_trade.account, stock_ticker= old_trade.stock_ticker, 
+                     user= old_trade.user, version= version, type= updated_type, amount= updated_amount)
 
 def get_trades(client: redis.Redis):
     trades= []
