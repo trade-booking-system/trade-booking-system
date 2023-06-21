@@ -5,9 +5,8 @@ from schema import Position
 
 def get_positions(client: Redis, account: str) -> List[Position]:
     positions: List[Position] = []
-    positions_dict = client.hgetall("positions:" + account)
-    for data in positions_dict.values():
-        positions.append(Position.parse_raw(data))
+    for _, value in client.hscan_iter("positions:" + account):
+        positions.append(Position.parse_raw(value))
     return positions
 
 def get_position(client: Redis, account: str, ticker: str) -> Position:

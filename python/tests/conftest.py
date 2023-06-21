@@ -24,10 +24,10 @@ class FakeClient:
             self.data[name] = {}
         self.data[name][key] = value
     
-    def hgetall(self, name):
-        return self.data[name]
+    def hscan_iter(self, name):
+        return self.data[name].items()
     
-    def keys(self, pattern):
+    def scan_iter(self, pattern):
         keys = []
         regex = re.compile(fnmatch.translate(pattern))
         for key in self.data.keys():

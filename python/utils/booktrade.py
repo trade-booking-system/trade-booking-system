@@ -37,18 +37,16 @@ def create_updated_trade(updated_amount, updated_type, old_trade: Trade) -> Trad
 
 def get_trades(client: redis.Redis):
     trades= []
-    for key in client.keys("trades:*"):
-        data= client.hgetall(key)
-        for json_object in data.values():
+    for key in client.scan_iter("trades:*"):
+        for _, json_object in client.hscan_iter(key):
             trade_object= History.parse_raw(json_object).get_current_trade()
             trades.append(trade_object)
     return trades
 
 def query_trades(account: str, year: str, month: str, day: str, client: redis.Redis):
     trades = []
-    for key in client.keys(f"trades:{account}:{year}-{month}-{day}"):
-        data = client.hgetall(key)
-        for json_object in data.values():
+    for key in client.scan_iter(f"trades:{account}:{year}-{month}-{day}"):
+        for _, json_object in client.hscan_iter(key):
             trade_object= History.parse_raw(json_object).get_current_trade()
             trades.append(trade_object)
     return trades
@@ -61,7 +59,7 @@ def get_trade_history(trade_id, account, date, client: redis.Redis):
     return History.parse_raw(json_history)
 
 def get_accounts(client: redis.Redis):
-    keys = client.keys("trades:*")
+    keys = client.scan_iter("trades:*")
     accounts = set()
     for key in keys:
         accounts.add(key.split(":")[1])
