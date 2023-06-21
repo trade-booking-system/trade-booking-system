@@ -14,7 +14,7 @@
 
   async function fetchData() {
     try {
-      const response = await fetch("/api/accounts/");
+      const response = await fetch("/api/getAccounts");
 
       if (response.ok) {
         responseData = await response.json();
