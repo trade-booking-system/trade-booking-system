@@ -26,13 +26,8 @@ async def hello():
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     try:
-        ptime = time()
         while True:
-            if time() > ptime + 1:
-                await websocket.send_text(f"current time: {ptime}")
-                ptime = time()
-            await asyncio.sleep(0.1)
+            await websocket.send_text(f"current time: {time()}")
+            await asyncio.sleep(1)
     except WebSocketDisconnect:
         print("Client disconnected")
-
-
