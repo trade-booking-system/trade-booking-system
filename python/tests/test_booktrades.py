@@ -7,34 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 import schema
-from .conftest import System
-
-def trade_to_dict(trade: schema.Trade):
-    trade_dict = trade.dict()
-    for key in ["date", "time"]:
-        trade_dict[key] = str(trade_dict[key])
-    return trade_dict
-
-def trades_equal(trade1, trade2):
-    keys = []
-    for key in ["account", "user", "type", "stock_ticker", "amount", "date", "time"]:
-        if trade1[key] != trade2[key]:
-            keys.append(key)
-    assert len(keys) == 0, "keys not equal: " + ", ".join(keys) + f" {keys[0]} {type(trade1[keys[0]])} {type(trade2[keys[0]])}"
-
-def generate_trade(seed: int) -> schema.Trade:
-    random_gen = random.Random(seed)
-    account = "account" + str(random_gen.randrange(1, 4))
-    user = "user" + str(random_gen.randrange(1, 4))
-    type = random_gen.choice(["buy", "sell"])
-    stock_ticker = random_gen.choice(["ABC", "XYZ", "LMNOP"])
-    amount = random_gen.randrange(1, 1000)
-    date = datetime.date(random_gen.randrange(1900, 2100), random_gen.randrange(1, 13),
-                         random_gen.randrange(1, 29))
-    time = datetime.time(random_gen.randrange(0, 24), random_gen.randrange(0, 60),
-                         random_gen.randrange(0, 60))
-    return schema.Trade(account=account, user=user, type=type, stock_ticker=stock_ticker,
-                        amount=amount, date=date, time=time)
+from .conftest import System, generate_trade, trade_to_dict, assert_trades_equal
 
 @pytest.mark.parametrize("trade", [generate_trade(x) for x in range(1000, 1025)])
 def test_put(test_server: System, trade: schema.Trade):
@@ -45,7 +18,7 @@ def test_put(test_server: System, trade: schema.Trade):
     result = response.json()
     assert result["Key"] == "trades:" + trade.account + ":" + str(trade.date)
     history = redis.hget(result["Key"], result["Field"])
-    trades_equal(trade_to_dict(trade), json.loads(history)["trades"][0])
+    assert_trades_equal(trade_to_dict(trade), json.loads(history)["trades"][0])
 
 @pytest.mark.parametrize("trade1,trade2",
                          [(generate_trade(x), generate_trade(x + 500)) for x in range(1025, 1050)])
@@ -61,11 +34,11 @@ def test_get(test_server: System, trade1: schema.Trade, trade2: schema.Trade):
     dict1 = trade_to_dict(trade1)
     dict2 = trade_to_dict(trade2)
     if trades[0]["account"] == trade1.account:
-        trades_equal(trades[0], dict1)
-        trades_equal(trades[1], dict2)
+        assert_trades_equal(trades[0], dict1)
+        assert_trades_equal(trades[1], dict2)
     else:
-        trades_equal(trades[0], dict2)
-        trades_equal(trades[1], dict1)
+        assert_trades_equal(trades[0], dict2)
+        assert_trades_equal(trades[1], dict1)
 
 def test_query_trades(test_server: System):
     client = test_server.web
