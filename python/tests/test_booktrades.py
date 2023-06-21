@@ -1,41 +1,13 @@
 import json
 import random
 import datetime
-import fnmatch, re
-from typing import Dict, List, Tuple
+from typing import Dict
 
 import pytest
 from fastapi.testclient import TestClient
 
-from api import main
-from utils.redis_initializer import get_redis_client_zero, get_redis_client_one
 import schema
-
-class FakeClient:
-    def __init__(self):
-        self.data = {}
-    
-    def hget(self, name, key):
-        return self.data[name][key]
-    
-    def hset(self, name, key, value):
-        if name not in self.data:
-            self.data[name] = {}
-        self.data[name][key] = value
-    
-    def hgetall(self, name):
-        return self.data[name]
-    
-    def keys(self, pattern):
-        keys = []
-        regex = re.compile(fnmatch.translate(pattern))
-        for key in self.data.keys():
-            if regex.match(key):
-                keys.append(key)
-        return keys
-    
-    def publish(self, channel, message):
-        pass
+from .conftest import System
 
 def trade_to_dict(trade: schema.Trade):
     trade_dict = trade.dict()
@@ -49,13 +21,6 @@ def trades_equal(trade1, trade2):
         if trade1[key] != trade2[key]:
             keys.append(key)
     assert len(keys) == 0, "keys not equal: " + ", ".join(keys) + f" {keys[0]} {type(trade1[keys[0]])} {type(trade2[keys[0]])}"
-
-def initialize() -> Tuple[TestClient, FakeClient]:
-    redis_client = FakeClient()
-    main.app.dependency_overrides[get_redis_client_zero] = lambda: redis_client
-    main.app.dependency_overrides[get_redis_client_one] = lambda: redis_client
-    web_client = TestClient(main.app)
-    return web_client, redis_client
 
 def generate_trade(seed: int) -> schema.Trade:
     random_gen = random.Random(seed)
@@ -72,8 +37,9 @@ def generate_trade(seed: int) -> schema.Trade:
                         amount=amount, date=date, time=time)
 
 @pytest.mark.parametrize("trade", [generate_trade(x) for x in range(1000, 1025)])
-def test_put(trade: schema.Trade):
-    client, redis = initialize()
+def test_put(test_server: System, trade: schema.Trade):
+    client = test_server.web
+    redis = test_server.redis[0]
     response = client.put("/bookTrade/", json=trade_to_dict(trade))
     assert response.status_code == 200
     result = response.json()
@@ -83,8 +49,9 @@ def test_put(trade: schema.Trade):
 
 @pytest.mark.parametrize("trade1,trade2",
                          [(generate_trade(x), generate_trade(x + 500)) for x in range(1025, 1050)])
-def test_get(trade1: schema.Trade, trade2: schema.Trade):
-    client, redis = initialize()
+def test_get(test_server: System, trade1: schema.Trade, trade2: schema.Trade):
+    client = test_server.web
+    redis = test_server.redis[0]
     redis.hset("trades:a", "test1", schema.History(trades=[trade1]).json())
     redis.hset("trades:a", "test2", schema.History(trades=[trade2]).json())
     response = client.get("/getTrades/")
@@ -100,8 +67,9 @@ def test_get(trade1: schema.Trade, trade2: schema.Trade):
         trades_equal(trades[0], dict2)
         trades_equal(trades[1], dict1)
 
-def test_query_trades():
-    client, redis = initialize()
+def test_query_trades(test_server: System):
+    client = test_server.web
+    redis = test_server.redis[0]
     def try_pattern(client: TestClient, rules: Dict[str, str]):
         response = client.get("/queryTrades/", params=rules)
         assert response.status_code == 200
@@ -142,8 +110,9 @@ def test_query_trades():
         try_pattern(client, rules)
 
 
-def test_get_accounts():
-    client, redis = initialize()
+def test_get_accounts(test_server: System):
+    client = test_server.web
+    redis = test_server.redis[0]
     for i in range(25):
         trade = generate_trade(i + 500)
         account = "account" + str(i % 3)
