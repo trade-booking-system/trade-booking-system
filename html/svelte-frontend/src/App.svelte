@@ -2,8 +2,9 @@
   import Accountpicker from "./Dropdown.svelte";
   import HelloButton from "./HelloButton.svelte";
   import SumSearch from "./SumSearch.svelte";
-  import TradeGrid from "./TradeGrid.svelte"
+  import TradeGrid from "./TradeGrid.svelte";
   import PositionsGrid from "./PositionsGrid.svelte";
+  import WebSocketTest from "./WebSocketTest.svelte";
 </script>
 
 <div class="container">
@@ -15,6 +16,9 @@
   </div>
   <div class="sumsearch">
     <SumSearch />
+  </div>
+  <div class="WebSocketTest">
+    <WebSocketTest />
   </div>
   <div id = "tradeGrid" class = "bottomPadding">
     <TradeGrid/>
