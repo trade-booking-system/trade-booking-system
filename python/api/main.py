@@ -3,6 +3,7 @@ from time import sleep, time
 from utils.redis_initializer import get_redis_client_zero, get_redis_client_one
 from api import routes
 from api import positions
+import asyncio
 
 app = FastAPI(dependencies=[Depends(get_redis_client_zero), Depends(get_redis_client_one)])
 app.include_router(routes.app)
@@ -30,6 +31,7 @@ async def websocket_endpoint(websocket: WebSocket):
             if time() > ptime + 1:
                 await websocket.send_text(f"current time: {ptime}")
                 ptime = time()
+            await asyncio.sleep(0.1)
     except WebSocketDisconnect:
         print("Client disconnected")
 
