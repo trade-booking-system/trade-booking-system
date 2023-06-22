@@ -1,6 +1,6 @@
 <script>
   import { onMount } from "svelte";
-  import { Button, Dropdown, DropdownItem, Chevron } from "flowbite-svelte";
+  import { Button, Dropdown, DropdownItem, Chevron, Checkbox } from "flowbite-svelte";
 
   const accounts = [];
 
@@ -37,10 +37,10 @@
   <Button><Chevron>Accounts</Chevron></Button>
   <Dropdown class="w-58 overflow-y-auto py-1 h-48">
     {#each accounts as account}
-      <DropdownItem
-        class="flex items-center text-base font-semibold gap-2"
-        on:click={() => selectAccount(account)}>{account}</DropdownItem
-      >
+      <Checkbox
+        class="w-58 p-3 space-y-3 text-sm"
+        checked={selectedAccount === account}
+        on:click={() => selectAccount(account)}>{account}</Checkbox>
     {/each}
   </Dropdown>
   {#if selectedAccount !== undefined}
