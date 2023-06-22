@@ -4,10 +4,13 @@ from utils.redis_initializer import get_redis_client_zero, get_redis_client_one
 from api import routes
 from api import positions
 import asyncio
+from api import websocket
 
 app = FastAPI(dependencies=[Depends(get_redis_client_zero), Depends(get_redis_client_one)])
 app.include_router(routes.app)
 app.include_router(positions.router, prefix="/positions")
+app.include_router(websocket.router, prefix="/ws")
+
 
 @app.get("/sum/")
 def sum(a: int, b: int):
