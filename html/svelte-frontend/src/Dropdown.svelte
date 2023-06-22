@@ -8,7 +8,7 @@
     Checkbox,
   } from "flowbite-svelte";
 
-  const accounts = ["acc1", "acc2", "acc3", "acc4"];
+  const accounts = [];
 
   let checkedAccounts = [];
 
