@@ -6,70 +6,66 @@
   let grid;
 
   const columnDefs = [
-    { field: "TradeId" },
-    { field: "TradeDate" },
-    { field: "Account" },
-    { field: "Ticker" },
-    { field: "Buy_Sell_Indicator" },
-    { field: "Quantity" },
-	{ field: "Price" },
-	{ field: "Version" },
-	{ field: "EnteredBy" },
-	{ field: "EnteredDateTime" },
-	{ field: "SystemProcessHost_Id" },
+    { field: "id" },
+    { field: "account" },
+    { field: "type" },
+    { field: "stock_ticker" },
+    { field: "amount" },
+    { field: "date" },
+    { field: "time" },
+    { field: "user" },
+    { field: "version" },
   ];
 
   const defaultColDef = {
     resizable: true,
   };
 
-  const rowData = [
-    {
-		TradeId: "0001",
-		TradeDate: "1/1/23",
-		Account:"Account1",
-		Ticker:"AMA",
-		Buy_Sell_Indicator:"",
-		Quantity: 5,
-		Price: "$100.00",
-		Version: "1.0",
-		EnteredBy:"Account 1",
-		EnteredDateTime:"10-00-00",
-		SystemProcessHost_Id: "00001",
-    },
-    {
-		TradeId: "0001",
-		TradeDate: "1/1/23",
-		Account:"Account1",
-		Ticker:"AMA",
-		Buy_Sell_Indicator:"",
-		Quantity: 5,
-		Price: "$100.00",
-		Version: "1.0",
-		EnteredBy:"Account 1",
-		EnteredDateTime:"10-00-00",
-		SystemProcessHost_Id: "00001",
-    },
-    {
-		TradeId: "0001",
-		TradeDate: "1/1/23",
-		Account:"Account1",
-		Ticker:"AMA",
-		Buy_Sell_Indicator:"",
-		Quantity: 5,
-		Price: "$100.00",
-		Version: "1.0",
-		EnteredBy:"Account 1",
-		EnteredDateTime:"10-00-00",
-		SystemProcessHost_Id: "00001",
-    },
-  ];
+  // const rowData = [
+  //   {
+	// 	TradeId: "0001",
+	// 	TradeDate: "1/1/23",
+	// 	Account:"Account1",
+	// 	Ticker:"AMA",
+	// 	Buy_Sell_Indicator:"",
+	// 	Quantity: 5,
+	// 	Price: "$100.00",
+	// 	Version: "1.0",
+	// 	EnteredBy:"Account 1",
+	// 	EnteredDateTime:"10-00-00",
+	// 	SystemProcessHost_Id: "00001",
+  //   },
+  //   {
+	// 	TradeId: "0001",
+	// 	TradeDate: "1/1/23",
+	// 	Account:"Account1",
+	// 	Ticker:"AMA",
+	// 	Buy_Sell_Indicator:"",
+	// 	Quantity: 5,
+	// 	Price: "$100.00",
+	// 	Version: "1.0",
+	// 	EnteredBy:"Account 1",
+	// 	EnteredDateTime:"10-00-00",
+	// 	SystemProcessHost_Id: "00001",
+  //   },
+  //   {
+	// 	TradeId: "0001",
+	// 	TradeDate: "1/1/23",
+	// 	Account:"Account1",
+	// 	Ticker:"AMA",
+	// 	Buy_Sell_Indicator:"",
+	// 	Quantity: 5,
+	// 	Price: "$100.00",
+	// 	Version: "1.0",
+	// 	EnteredBy:"Account 1",
+	// 	EnteredDateTime:"10-00-00",
+	// 	SystemProcessHost_Id: "00001",
+  //   },
+  // ];
 
-  const gridOptions = {
-    defaultColDef: defaultColDef,
-    columnDefs: columnDefs,
-    rowData: rowData,
-  };
+
+
+  
 
   function sizeToFit() {
     gridOptions.api.sizeColumnsToFit({
@@ -77,7 +73,36 @@
     });
   }
 
-  onMount(() => {
+  let rowData = [];
+
+  let responseData;
+
+  async function fetchData() {
+    try {
+      const response = await fetch("/api/getTrades");
+
+      if (response.ok) {
+        responseData = await response.json();
+        console.log(responseData);
+        responseData.forEach((element) => {
+          rowData.push(element);
+        });
+      } else {
+        console.error("Error:", response.status);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  }
+
+  const gridOptions = {
+    defaultColDef: defaultColDef,
+    columnDefs: columnDefs,
+    rowData: rowData,
+  };
+
+  onMount(async () => {
+    await fetchData();
     window.addEventListener("resize", sizeToFit); //handles auto resizing
     grid = new Grid(gridContainer, gridOptions);
     sizeToFit();
