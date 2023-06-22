@@ -46,6 +46,7 @@ services:
     environment:
       - REDIS_HOST=redis
       - TZ=America/New_York
+    stop_signal: SIGTERM
 
 networks: 
   frontend:
