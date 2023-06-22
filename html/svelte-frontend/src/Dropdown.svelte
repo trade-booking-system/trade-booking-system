@@ -1,14 +1,42 @@
 <script>
   import { onMount } from "svelte";
-  import { Button, Dropdown, DropdownItem, Chevron, Checkbox } from "flowbite-svelte";
+  import {
+    Button,
+    Dropdown,
+    DropdownItem,
+    Chevron,
+    Checkbox,
+  } from "flowbite-svelte";
 
-  const accounts = [];
+  const accounts = ["acc1", "acc2", "acc3", "acc4"];
+
+  let checkedAccounts = [];
 
   let selectedAccount;
 
   const selectAccount = (account) => {
-    selectedAccount = account;
+    checkedAccounts.push(account);
+    displayAccounts();
   };
+
+  function displayAccounts() {
+    selectedAccount = "";
+    checkedAccounts.forEach((element) => {
+      selectedAccount += element + ", ";
+    });
+  }
+
+  function dealWithAccountSelection(account) {
+    if (checkedAccounts.includes(account)) {
+      const index = checkedAccounts.indexOf(account);
+      if (index > -1) {
+        checkedAccounts.splice(index, 1);
+        displayAccounts();
+      }
+    } else {
+      selectAccount(account);
+    }
+  }
 
   let responseData;
 
@@ -35,17 +63,18 @@
 
 <div class="allign_with_top">
   <Button><Chevron>Accounts</Chevron></Button>
-  <Dropdown class="w-58 overflow-y-auto py-1 h-48">
+  <Dropdown class="w-58 overflow-y-auto py-1 h-30">
     {#each accounts as account}
       <Checkbox
-        class="w-58 p-3 space-y-3 text-sm"
-        checked={selectedAccount === account}
-        on:click={() => selectAccount(account)}>{account}</Checkbox>
+        class="w-44 p-3 space-y-3 text-sm overflow-y-auto center"
+        checked={checkedAccounts.includes(account)}
+        on:click={() => dealWithAccountSelection(account)}>{account}</Checkbox
+      >
     {/each}
   </Dropdown>
   {#if selectedAccount !== undefined}
     <div>
-      Current Account selected: <div class="selected_account">
+      Current Accounts selected: <div class="selected_account">
         {selectedAccount}
       </div>
     </div>
