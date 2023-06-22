@@ -66,7 +66,7 @@
   <Dropdown class="w-58 overflow-y-auto py-1 h-30">
     {#each accounts as account}
       <Checkbox
-        class="w-44 p-3 space-y-3 text-sm overflow-y-auto center"
+        class="w-58 p-3 space-y-3 text-sm overflow-y-auto center"
         checked={checkedAccounts.includes(account)}
         on:click={() => dealWithAccountSelection(account)}>{account}</Checkbox
       >
