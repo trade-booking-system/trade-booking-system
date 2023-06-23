@@ -1,6 +1,5 @@
 from pydantic import BaseModel, validator
 from datetime import date, time, datetime
-from typing import List
 from uuid import uuid4
 
 # prices represented as 1 penny = 1 and 1 dollar = 100
@@ -66,7 +65,7 @@ class Price(BaseModel):
     _price_validator= validator("price", allow_reuse= True)(validate_is_positive)
 
 class History(BaseModel):
-    trades: List[Trade]= list()
+    trades: list[Trade]= list()
     current_version: int= 1
 
     def get_current_trade(cls):
@@ -77,7 +76,7 @@ class History(BaseModel):
         cls.current_version= trade.version
 
 class PositionResponse(BaseModel):
-    positions: List[Position]
+    positions: list[Position]
     count: int
     
     _count_validator = validator("count", allow_reuse=True)(validate_is_positive)
