@@ -2,7 +2,6 @@ import datetime
 import fnmatch
 import random
 import re
-from typing import List
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -12,9 +11,28 @@ from api.main import app
 from utils.redis_initializer import get_redis_client_zero, get_redis_client_one
 import schema
 
+class Channel:
+    def __init__(self):
+        self.messages = []
+        self.handlers = []
+    
+    def add_handler(self, handler):
+        for message in self.messages:
+            handler(message)
+        self.messages = []
+        self.handlers.append(handler)
+    
+    def add_message(self, message):
+        if len(self.handlers) == 0:
+            self.messages.append(message)
+        else:
+            for handler in self.handlers:
+                handler(message)
+
 class FakeClient:
     def __init__(self):
         self.data = {}
+        self.channels: dict[str, Channel] = {}
     
     def hget(self, name, key):
         return self.data[name][key]
@@ -36,11 +54,29 @@ class FakeClient:
         return keys
     
     def publish(self, channel, message):
-        pass
+        if channel not in self.channels:
+            self.channels[channel] = Channel()
+        self.channels[channel].add_message(message)
+    
+    def pubsub(self, ignore_subscribe_messages = True):
+        class PubSub:
+            def __init__(self, channels):
+                self.channels = channels
+            
+            def subscribe(self, **handlers):
+                for channel in handlers:
+                    self.channels[channel].add_handler(handlers[channel])
+            
+            def run_in_thread(self, daemon = True):
+                pass
+        return PubSub(self.channels)
+    
+    def _add_channel(self, name):
+        self.channels[name] = Channel()
 
 class System:
     web: TestClient
-    redis: List[FakeClient]
+    redis: list[FakeClient]
 
     def __init__(self, app: FastAPI):
         self.redis = [FakeClient(), FakeClient()]
@@ -79,8 +115,8 @@ def generate_trade(seed: int) -> schema.Trade:
     return schema.Trade(account=account, user=user, type=type, stock_ticker=stock_ticker,
                         amount=amount, date=date, time=time)
 
-def generate_trades(count: int, seed: int) -> List[schema.Trade]:
-    trades: List[schema.Trade] = []
+def generate_trades(count: int, seed: int) -> list[schema.Trade]:
+    trades: list[schema.Trade] = []
     for i in range(count):
         trades.append(generate_trade(seed + i))
     return trades

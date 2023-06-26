@@ -1,7 +1,6 @@
 import json
 import random
 import datetime
-from typing import Dict
 
 import pytest
 from fastapi.testclient import TestClient
@@ -43,7 +42,7 @@ def test_get(test_server: System, trade1: schema.Trade, trade2: schema.Trade):
 def test_query_trades(test_server: System):
     client = test_server.web
     redis = test_server.redis[0]
-    def try_pattern(client: TestClient, rules: Dict[str, str]):
+    def try_pattern(client: TestClient, rules: dict[str, str]):
         response = client.get("/queryTrades/", params=rules)
         assert response.status_code == 200
         data = response.json()
@@ -71,7 +70,7 @@ def test_query_trades(test_server: System):
         redis.hset("trades:" + account + ":" + str(date), "test" + str(i), history.json())
     for i in range(25):
         random_gen = random.Random(i + 4000)
-        rules: Dict[str, str] = {}
+        rules: dict[str, str] = {}
         if (random_gen.choice([True, False])):
             rules["account"] = "account" + str(random_gen.randrange(0, 5))
         if (random_gen.choice([True, False])):
@@ -82,6 +81,18 @@ def test_query_trades(test_server: System):
             rules["day"] = str(1 + random_gen.randrange(0, 5) * 3)
         try_pattern(client, rules)
 
+@pytest.mark.parametrize("trade", [generate_trade(x) for x in range(3400, 3425)])
+def test_booktrade_channel(trade: schema.Trade, test_server: System):
+    client = test_server.web
+    redis = test_server.redis[0]
+    handled = False
+    def handler(message):
+        nonlocal handled
+        assert message == f"create: {trade.json()}"
+        handled = True
+    client.put("/bookTrade", json=trade_to_dict(trade))
+    redis.pubsub().subscribe(**{"tradeUpdates": handler})
+    assert handled
 
 def test_get_accounts(test_server: System):
     client = test_server.web
