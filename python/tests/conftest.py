@@ -23,11 +23,16 @@ class Channel:
         self.handlers.append(handler)
     
     def add_message(self, message):
+        print(self.handlers)
+        print(message)
         if len(self.handlers) == 0:
             self.messages.append(message)
         else:
             for handler in self.handlers:
+                print("handler start")
+                print(handler)
                 handler(message)
+                print("handler done")
 
 class FakeClient:
     def __init__(self):
@@ -56,7 +61,7 @@ class FakeClient:
     def publish(self, channel, message):
         if channel not in self.channels:
             self.channels[channel] = Channel()
-        self.channels[channel].add_message(message)
+        self.channels[channel].add_message({"data": message})
     
     def pubsub(self, ignore_subscribe_messages = True):
         class PubSub:
@@ -74,6 +79,15 @@ class FakeClient:
     def _add_channel(self, name):
         self.channels[name] = Channel()
 
+class AsyncSystem:
+    web: TestClient
+    redis: list[FakeClient]
+    def __init__(self, app: FastAPI, backend_name, backend_options):
+        self.redis = [FakeClient(), FakeClient()]
+        app.dependency_overrides[get_redis_client_zero] = lambda: self.redis[0]
+        app.dependency_overrides[get_redis_client_one] = lambda: self.redis[1]
+        self.web = TestClient(app, backend=backend_name, backend_options=backend_options)
+
 class System:
     web: TestClient
     redis: list[FakeClient]
@@ -88,6 +102,10 @@ class System:
 def test_server() -> System:
     return System(app)
 
+@pytest.fixture()
+def async_server(anyio_backend_name, anyio_backend_options) -> AsyncSystem:
+    return AsyncSystem(app, anyio_backend_name, anyio_backend_options)
+
 def trade_to_dict(trade: schema.Trade):
     trade_dict = trade.dict()
     for key in ["date", "time"]:
@@ -96,7 +114,7 @@ def trade_to_dict(trade: schema.Trade):
 
 def assert_trades_equal(trade1, trade2):
     keys = []
-    for key in ["account", "user", "type", "stock_ticker", "amount", "date", "time"]:
+    for key in ["account", "user", "type", "stock_ticker", "amount", "price", "date", "time"]:
         if trade1[key] != trade2[key]:
             keys.append(key)
     assert len(keys) == 0, "keys not equal: " + ", ".join(keys) + f" {keys[0]} {type(trade1[keys[0]])} {type(trade2[keys[0]])}"
@@ -108,12 +126,13 @@ def generate_trade(seed: int) -> schema.Trade:
     type = random_gen.choice(["buy", "sell"])
     stock_ticker = random_gen.choice(["ABC", "XYZ", "LMNOP"])
     amount = random_gen.randrange(1, 1000)
+    price = random_gen.randrange(1, 10000)
     date = datetime.date(random_gen.randrange(1900, 2100), random_gen.randrange(1, 13),
                          random_gen.randrange(1, 29))
     time = datetime.time(random_gen.randrange(0, 24), random_gen.randrange(0, 60),
                          random_gen.randrange(0, 60))
     return schema.Trade(account=account, user=user, type=type, stock_ticker=stock_ticker,
-                        amount=amount, date=date, time=time)
+                        amount=amount, date=date, time=time, price=price)
 
 def generate_trades(count: int, seed: int) -> list[schema.Trade]:
     trades: list[schema.Trade] = []
