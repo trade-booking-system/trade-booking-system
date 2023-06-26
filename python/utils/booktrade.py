@@ -13,14 +13,14 @@ def booktrade(client: redis.Redis, trade: Trade):
     return {"Key": key, "Field": trade.id}
 
 
-def update_trade(trade_id, account, date, updated_type, updated_amount, client: redis.Redis):
+def update_trade(trade_id, account, date, updated_type, updated_amount, updated_price, client: redis.Redis):
     key= f"trades:{account}:{date}"
     json_history= client.hget(key, trade_id)
     if json_history == None:
         raise HTTPException(status_code= 404, detail= "trade does not exist")
     history= History.parse_raw(json_history)
     old_trade= history.get_current_trade()
-    trade= create_updated_trade(updated_amount, updated_type, old_trade)
+    trade= create_updated_trade(updated_amount, updated_type, updated_price, old_trade)
     history.add_updated_trade(trade)
     # undo previous version of trade and add new trade
     amount= get_amount(trade) - get_amount(old_trade)
@@ -29,14 +29,16 @@ def update_trade(trade_id, account, date, updated_type, updated_amount, client: 
     client.hset(key, trade_id, history.json())
     return {"Key": key, "Field": trade.id, "Version": trade.version}
 
-def create_updated_trade(updated_amount, updated_type, old_trade: Trade) -> Trade:
+def create_updated_trade(updated_amount, updated_type, updated_price, old_trade: Trade) -> Trade:
         if updated_amount == None:
             updated_amount= old_trade.amount
         if updated_type == None:
             updated_type= old_trade.type
+        if updated_price == None:
+            updated_price= old_trade.price
         version= old_trade.version+1
-        return Trade(id= old_trade.id, account= old_trade.account, stock_ticker= old_trade.stock_ticker, 
-                     user= old_trade.user, version= version, type= updated_type, amount= updated_amount)
+        return Trade(id= old_trade.id, account= old_trade.account, stock_ticker= old_trade.stock_ticker, user= old_trade.user,
+                      version= version, type= updated_type, amount= updated_amount, price= updated_price)
 
 def get_trades(client: redis.Redis):
     trades= []

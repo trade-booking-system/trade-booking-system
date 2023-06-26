@@ -20,6 +20,7 @@ class Trade(BaseModel):
     date: date | None
     time: time | None
     user: str
+    price: int
     version: int= 1
 
     _amount_validator= validator("amount", allow_reuse= True)(validate_is_positive)
