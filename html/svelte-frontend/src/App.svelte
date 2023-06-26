@@ -5,9 +5,13 @@
   import TradeGrid from "./TradeGrid.svelte";
   import PositionsGrid from "./PositionsGrid.svelte";
   import WebSocketTest from "./WebSocketTest.svelte";
+  //import BulkBookingTabs from "./BulkBookingTabs.svelte";
 </script>
 
 <div class="container">
+  <!-- <div id="bulkBookingTabs" class = "bottomPadding">
+    <BulkBookingTabs/>
+  </div> -->
   <div class="accountpicker">
     <Accountpicker />
   </div>
