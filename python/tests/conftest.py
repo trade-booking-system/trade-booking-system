@@ -2,6 +2,7 @@ import datetime
 import fnmatch
 import random
 import re
+from asyncio import get_event_loop
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -10,6 +11,11 @@ import pytest
 from api.main import app
 from utils.redis_initializer import get_redis_client_zero, get_redis_client_one
 import schema
+from .asyncclient import AsyncioTestClient
+
+@pytest.fixture
+def anyio_backend():
+    return 'asyncio'
 
 class Channel:
     def __init__(self):
@@ -78,13 +84,13 @@ class FakeClient:
         self.channels[name] = Channel()
 
 class AsyncSystem:
-    web: TestClient
+    web: AsyncioTestClient
     redis: list[FakeClient]
-    def __init__(self, app: FastAPI, backend_name, backend_options):
+    def __init__(self, app: FastAPI):
         self.redis = [FakeClient(), FakeClient()]
         app.dependency_overrides[get_redis_client_zero] = lambda: self.redis[0]
         app.dependency_overrides[get_redis_client_one] = lambda: self.redis[1]
-        self.web = TestClient(app, backend=backend_name, backend_options=backend_options)
+        self.web = AsyncioTestClient(app=app, event_loop=get_event_loop())
 
 class System:
     web: TestClient
@@ -101,8 +107,8 @@ def test_server() -> System:
     return System(app)
 
 @pytest.fixture()
-def async_server(anyio_backend_name, anyio_backend_options) -> AsyncSystem:
-    return AsyncSystem(app, anyio_backend_name, anyio_backend_options)
+def async_server() -> AsyncSystem:
+    return AsyncSystem(app)
 
 def trade_to_dict(trade: schema.Trade):
     trade_dict = trade.dict()
