@@ -110,12 +110,25 @@ def trade_to_dict(trade: schema.Trade):
         trade_dict[key] = str(trade_dict[key])
     return trade_dict
 
+def position_to_dict(position: schema.Position):
+    position_dict = position.dict()
+    for key in ["last_aggregation_time"]:
+        position_dict[key] = str(position_dict[key])
+    return position_dict
+
 def assert_trades_equal(trade1, trade2):
     keys = []
     for key in ["account", "user", "type", "stock_ticker", "amount", "price", "date", "time"]:
         if trade1[key] != trade2[key]:
             keys.append(key)
     assert len(keys) == 0, "keys not equal: " + ", ".join(keys) + f" {keys[0]} {type(trade1[keys[0]])} {type(trade2[keys[0]])}"
+
+def assert_positions_equal(position1, position2):
+    keys = []
+    for key in ["account", "stock_ticker", "amount", "last_aggregation_time", "last_aggregation_host"]:
+        if position1[key] != position2[key]:
+            keys.append(key)
+    assert len(keys) == 0, "keys not equal: " + ", ".join(keys)
 
 def generate_trade(seed: int) -> schema.Trade:
     random_gen = random.Random(seed)
@@ -137,3 +150,21 @@ def generate_trades(count: int, seed: int) -> list[schema.Trade]:
     for i in range(count):
         trades.append(generate_trade(seed + i))
     return trades
+
+def generate_position(seed: int) -> schema.Position:
+    random_gen = random.Random(seed)
+    account = "account" + str(random_gen.randrange(1, 4))
+    stock_ticker = random_gen.choice(["ABC", "XYZ", "LMNOP"])
+    amount = random_gen.randrange(1, 1000)
+    last_time = datetime.datetime(random_gen.randrange(1900, 2100), random_gen.randrange(1, 13),
+        random_gen.randrange(1, 29), random_gen.randrange(0, 24), random_gen.randrange(0, 60),
+        random_gen.randrange(0, 60))
+    host = "host" + str(random_gen.randrange(1, 5))
+    return schema.Position(account=account, stock_ticker=stock_ticker, amount=amount,
+        last_aggregation_time=last_time, last_aggregation_host=host)
+
+def generate_positions(count: int, seed: int) -> list[schema.Position]:
+    positions: list[schema.Position] = []
+    for i in range(count):
+        positions.append(generate_position(seed + i))
+    return positions
