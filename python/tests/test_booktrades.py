@@ -88,7 +88,7 @@ def test_booktrade_channel(trade: schema.Trade, test_server: System):
     handled = False
     def handler(message):
         nonlocal handled
-        assert message == f"create: {trade.json()}"
+        assert message == {"data": f"create: {trade.json()}"}
         handled = True
     client.put("/bookTrade", json=trade_to_dict(trade))
     redis.pubsub().subscribe(**{"tradeUpdates": handler})

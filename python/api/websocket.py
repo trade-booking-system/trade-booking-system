@@ -25,7 +25,7 @@ async def websocket_endpoint_watchTrade(websocket: WebSocket, redis: redis.Redis
 
     def handler(message):
         type, trade = message["data"].split(":", 1)
-        data = {"type": type, "trade": trade}
+        data = {"type": type, "trade": trade.strip()}
         queue.put_nowait(data)
     
     pubsub.subscribe(**{"tradeUpdates":handler})
@@ -33,7 +33,6 @@ async def websocket_endpoint_watchTrade(websocket: WebSocket, redis: redis.Redis
 
     try:
         while True:
-            await websocket.send_text(f"current time: {time()}")
             while not queue.empty():
                 data = queue.get_nowait()
                 await websocket.send_json(data)

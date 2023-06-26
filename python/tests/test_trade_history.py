@@ -16,7 +16,8 @@ def test_trade_history(trades: list[schema.Trade], test_server: System, monkeypa
             "account": trades[i].account,
             "date": str(trades[i].date),
             "updated_type": trades[i].type,
-            "updated_amount": trades[i].amount
+            "updated_amount": trades[i].amount,
+            "updated_price": trades[i].price
         })
         assert response.status_code == 200
         assert response.json()["Version"] == str(i + 1)
@@ -32,6 +33,6 @@ def test_trade_history(trades: list[schema.Trade], test_server: System, monkeypa
     assert history.current_version == len(trades)
     assert len(history.trades) == len(trades)
     for i in range(len(trades)):
-        for key in ["account", "type", "amount"]:
+        for key in ["account", "type", "amount", "price"]:
             assert getattr(trades[i], key) == getattr(history.trades[i], key)
         assert history.trades[i].version == i + 1
