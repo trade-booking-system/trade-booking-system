@@ -23,16 +23,11 @@ class Channel:
         self.handlers.append(handler)
     
     def add_message(self, message):
-        print(self.handlers)
-        print(message)
         if len(self.handlers) == 0:
             self.messages.append(message)
         else:
             for handler in self.handlers:
-                print("handler start")
-                print(handler)
                 handler(message)
-                print("handler done")
 
 class FakeClient:
     def __init__(self):
@@ -40,7 +35,10 @@ class FakeClient:
         self.channels: dict[str, Channel] = {}
     
     def hget(self, name, key):
-        return self.data[name][key]
+        if name in self.data and key in self.data[name]:
+            return self.data[name][key]
+        else:
+            return None
     
     def hset(self, name, key, value):
         if name not in self.data:
