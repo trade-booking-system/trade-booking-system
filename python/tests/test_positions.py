@@ -6,7 +6,7 @@ from .conftest import System, generate_positions, assert_positions_equal, positi
 @pytest.mark.parametrize("positions", [generate_positions(6, x) for x in range(2300, 2500, 10)])
 def test_get_positions(test_server: System, positions: list[schema.Position]):
     web = test_server.web
-    redis = test_server.redis[1]
+    redis = test_server.redis[0]
     for i in range(len(positions)):
         if i % 2 == 0:
             positions[i].account = "us"
@@ -27,7 +27,7 @@ def test_get_positions(test_server: System, positions: list[schema.Position]):
 @pytest.mark.parametrize("positions", [generate_positions(6, x) for x in range(2500, 2700, 10)])
 def test_get_position(test_server: System, positions: list[schema.Position]):
     web = test_server.web
-    redis = test_server.redis[1]
+    redis = test_server.redis[0]
     for i in range(len(positions)):
         if i % 2 == 0:
             positions[i].account = "us"

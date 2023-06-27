@@ -62,6 +62,11 @@ class FakeClient:
                 keys.append(key)
         return keys
     
+    def sadd(self, key, element):
+        if key not in self.data:
+            self.data[key] = set()
+        self.data[key].add(element)
+    
     def publish(self, channel, message):
         if channel not in self.channels:
             self.channels[channel] = Channel()
