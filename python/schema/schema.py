@@ -56,8 +56,6 @@ class Position(BaseModel):
     last_aggregation_time: datetime
     last_aggregation_host: str
 
-    _amount_validator= validator("amount", allow_reuse= True)(validate_is_positive)
-
 class Price(BaseModel):
     stock_ticker: str
     date: date

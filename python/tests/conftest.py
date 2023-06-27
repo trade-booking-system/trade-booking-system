@@ -139,6 +139,21 @@ def assert_positions_equal(position1, position2):
             keys.append(key)
     assert len(keys) == 0, "keys not equal: " + ", ".join(keys)
 
+def assert_positions_lists_equal(positions1: list[schema.Position], positions2: list[schema.Position]):
+    iters = 0
+    for i in range(len(positions1)):
+        for j in range(len(positions2)):
+            keys = []
+            for key in ["account", "stock_ticker", "amount", "last_aggregation_time", "last_aggregation_host"]:
+                if getattr(positions1[i], key) != getattr(positions2[j], key):
+                    keys.append(key)
+            if len(keys) == 0:
+                del positions2[j]
+                iters += 1
+                break
+    assert len(positions1) == iters
+    assert len(positions2) == 0
+
 def generate_trade(seed: int) -> schema.Trade:
     random_gen = random.Random(seed)
     account = "account" + str(random_gen.randrange(1, 4))

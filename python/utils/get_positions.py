@@ -1,10 +1,16 @@
-from typing import List
 from redis import Redis
 from fastapi import HTTPException
 from schema import Position
 
-def get_positions(client: Redis, account: str) -> List[Position]:
-    positions: List[Position] = []
+def get_all_positions(client: Redis) -> list[Position]:
+    positions: list[Position] = []
+    for key in client.scan_iter("positions:*"):
+        for _, value in client.hscan_iter(key):
+            positions.append(Position.parse_raw(value))
+    return positions
+
+def get_positions(client: Redis, account: str) -> list[Position]:
+    positions: list[Position] = []
     for _, value in client.hscan_iter("positions:" + account):
         positions.append(Position.parse_raw(value))
     return positions

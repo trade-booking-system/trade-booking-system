@@ -1,7 +1,22 @@
 import pytest
 
 import schema
-from .conftest import System, generate_positions, assert_positions_equal, position_to_dict
+from .conftest import System, generate_positions, assert_positions_equal, assert_positions_lists_equal, position_to_dict
+
+@pytest.mark.parametrize("positions", [generate_positions(9, x) for x in range(2100, 2300, 10)])
+def test_get_all_positions(test_server: System, positions: list[schema.Position]):
+    web = test_server.web
+    redis = test_server.redis[0]
+    for i in range(9):
+        positions[i].account = "account" + str(i % 3)
+        positions[i].stock_ticker = "ABC" + str(i // 3)
+    for position in positions:
+        redis.hset("positions:" + position.account, position.stock_ticker, position.json())
+    response = web.get("/positions")
+    assert response.status_code == 200
+    position_response = schema.PositionResponse(**response.json())
+    assert position_response.count == 9
+    assert_positions_lists_equal(position_response.positions, positions)
 
 @pytest.mark.parametrize("positions", [generate_positions(6, x) for x in range(2300, 2500, 10)])
 def test_get_positions(test_server: System, positions: list[schema.Position]):
