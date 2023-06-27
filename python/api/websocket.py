@@ -1,6 +1,5 @@
 from fastapi import WebSocket, WebSocketDisconnect, APIRouter, Depends
-from utils.redis_initializer import get_redis_client_zero
-import json
+from utils.redis_initializer import get_redis_client
 from time import time
 import asyncio
 import redis
@@ -18,7 +17,7 @@ async def websocket_endpoint(websocket: WebSocket):
         print("Client disconnected")
 
 @router.websocket("/watchTrades")
-async def websocket_endpoint_watchTrade(websocket: WebSocket, redis: redis.Redis = Depends(get_redis_client_zero)):
+async def websocket_endpoint_watchTrade(websocket: WebSocket, redis: redis.Redis = Depends(get_redis_client)):
     await websocket.accept()
     pubsub = redis.pubsub(ignore_subscribe_messages= True)
     queue = asyncio.Queue()

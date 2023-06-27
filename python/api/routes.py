@@ -1,7 +1,7 @@
 import redis
 from fastapi import APIRouter, Depends
 from utils import booktrade as tradebooker
-from utils.redis_initializer import get_redis_client_zero as get_redis_client
+from utils.redis_initializer import get_redis_client
 from schema import Trade, History
 
 router= APIRouter()

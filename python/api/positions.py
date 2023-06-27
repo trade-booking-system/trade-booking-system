@@ -2,7 +2,7 @@ from redis import Redis
 from fastapi import APIRouter, Depends
 
 from schema import Position, PositionResponse
-from utils.redis_initializer import get_redis_client_one as get_redis_client
+from utils.redis_initializer import get_redis_client
 from utils.get_positions import get_positions, get_position
 
 router = APIRouter()

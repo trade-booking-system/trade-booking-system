@@ -38,7 +38,7 @@ def update_stock_prices():
         client.set(live_price_key, stock_price)
         client.hset(snapshot_key, time, stock_price)
 
-client = redis.Redis(host = os.getenv("REDIS_HOST"), port = 6379, db = 1, decode_responses= True)
+client = redis.Redis(host = os.getenv("REDIS_HOST"), port = 6379, db = 0, decode_responses= True)
 signal.signal(signal.SIGTERM, termination_handler)
 
 while True:

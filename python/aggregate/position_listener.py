@@ -43,7 +43,7 @@ def termination_handler(signum, frame):
     client.close()
 
 if __name__ == "__main__":
-    client = Redis(host = os.getenv("REDIS_HOST"), port = 6379, db = 1, decode_responses = True)
+    client = Redis(host = os.getenv("REDIS_HOST"), port = 6379, db = 0, decode_responses = True)
     handler = TradeHandler(client)
     sub= client.pubsub(ignore_subscribe_messages= True)
     sub.subscribe(**{"updatePositions": handler.get_trade_handler()})
