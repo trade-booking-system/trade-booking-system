@@ -1,10 +1,15 @@
+from yahoo_fin.stock_info import get_live_price
 from fastapi import HTTPException
 from schema import Trade, History
-import redis
-from typing import List
 
+import redis
 
 def booktrade(client: redis.Redis, trade: Trade):
+    try:
+        trade.price= get_live_price(trade.stock_ticker)
+    except AssertionError:
+        raise HTTPException(status_code= 500, detail= "stock ticker does not exist trade booking unsuccessful")
+    client.sadd("stockTickers", trade.stock_ticker)
     key = f"trades:{trade.account}:{trade.date.isoformat()}"
     history= History()
     history.trades.append(trade)
@@ -14,11 +19,10 @@ def booktrade(client: redis.Redis, trade: Trade):
     client.publish("tradeUpdates", f"create: {trade.json()}")
     return {"Key": key, "Field": trade.id}
 
-def booktrades_bulk(client: redis.Redis, trades: List[Trade]):
+def booktrades_bulk(client: redis.Redis, trades: list[Trade]):
     for trade in trades:
         booktrade(client, trade)
-    return {"message": "Trades with BUlk worked!"}
-
+    return {"message": "Trades with Bulk worked!"}
 
 def update_trade(trade_id, account, date, updated_type, updated_amount, updated_price, client: redis.Redis):
     key= f"trades:{account}:{date}"

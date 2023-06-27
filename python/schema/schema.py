@@ -2,7 +2,6 @@ from pydantic import BaseModel, validator
 from datetime import date, time, datetime
 from uuid import uuid4
 
-# prices represented as 1 penny = 1 and 1 dollar = 100
 # dates represented as YYYY-MM-DD
 # time represented as HH:MM:SS
 
@@ -20,7 +19,7 @@ class Trade(BaseModel):
     date: date | None
     time: time | None
     user: str
-    price: int
+    price: float | None
     version: int= 1
 
     _amount_validator= validator("amount", allow_reuse= True)(validate_is_positive)
