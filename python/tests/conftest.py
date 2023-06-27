@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 import pytest
 
 from api.main import app
-from utils.redis_initializer import get_redis_client_zero, get_redis_client_one
+from utils.redis_initializer import get_redis_client
 import schema
 from .asyncclient import AsyncioTestClient
 
@@ -88,8 +88,7 @@ class AsyncSystem:
     redis: list[FakeClient]
     def __init__(self, app: FastAPI):
         self.redis = [FakeClient(), FakeClient()]
-        app.dependency_overrides[get_redis_client_zero] = lambda: self.redis[0]
-        app.dependency_overrides[get_redis_client_one] = lambda: self.redis[1]
+        app.dependency_overrides[get_redis_client] = lambda: self.redis[0]
         self.web = AsyncioTestClient(app=app, event_loop=get_event_loop())
 
 class System:
@@ -98,8 +97,7 @@ class System:
 
     def __init__(self, app: FastAPI):
         self.redis = [FakeClient(), FakeClient()]
-        app.dependency_overrides[get_redis_client_zero] = lambda: self.redis[0]
-        app.dependency_overrides[get_redis_client_one] = lambda: self.redis[1]
+        app.dependency_overrides[get_redis_client] = lambda: self.redis[0]
         self.web = TestClient(app)
 
 @pytest.fixture()

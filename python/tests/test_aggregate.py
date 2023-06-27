@@ -1,6 +1,6 @@
 import random
 
-from aggregate.aggregate import TradeHandler
+from aggregate.position_listener import TradeHandler
 import schema
 from .conftest import FakeClient
 
