@@ -2,7 +2,6 @@ import redis
 from fastapi import APIRouter, Depends
 from utils import booktrade as tradebooker
 from utils.redis_initializer import get_redis_client
-from typing import List
 from schema import Trade, History
 
 router= APIRouter()
@@ -12,7 +11,7 @@ async def book_trade(trade: Trade, client: redis.Redis = Depends(get_redis_clien
     return tradebooker.booktrade(client, trade)
 
 @router.post("/bookTradesBulk")
-async def book_trades_bulk(trades: List[Trade], client: redis.Redis = Depends(get_redis_client)) -> dict[str, str]:
+async def book_trades_bulk(trades: list[Trade], client: redis.Redis = Depends(get_redis_client)) -> dict[str, str]:
     return tradebooker.booktrades_bulk(client, trades)
 
 @router.post("/updateTrade")
