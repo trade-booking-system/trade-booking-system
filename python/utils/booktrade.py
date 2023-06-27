@@ -1,6 +1,8 @@
 from fastapi import HTTPException
 from schema import Trade, History
 import redis
+from typing import List
+
 
 def booktrade(client: redis.Redis, trade: Trade):
     key = f"trades:{trade.account}:{trade.date.isoformat()}"
@@ -11,6 +13,11 @@ def booktrade(client: redis.Redis, trade: Trade):
     client.publish("updatePositions", f"{trade.account}:{trade.stock_ticker}:{get_amount(trade)}")
     client.publish("tradeUpdates", f"create: {trade.json()}")
     return {"Key": key, "Field": trade.id}
+
+def booktrades_bulk(client: redis.Redis, trades: List[Trade]):
+    for trade in trades:
+        booktrade(client, trade)
+    return {"message": "Trades with BUlk worked!"}
 
 
 def update_trade(trade_id, account, date, updated_type, updated_amount, updated_price, client: redis.Redis):
