@@ -59,6 +59,9 @@ jobs:
               - component: service
                 file: aggr
                 name: Aggregation Service
+              - component: websocket
+                file: ws
+                name: WebSocket
         name: Built and Push ${{ matrix.name }}
         steps:
             - uses: actions/checkout@v3

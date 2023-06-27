@@ -60,6 +60,20 @@ services:
       - REDIS_HOST=redis
       - TZ=America/New_York
     stop_signal: SIGTERM
+  
+  websocket:
+    image: websocket
+    build:
+      context: ./python
+      dockerfile: Dockerfile.ws
+    ports:
+      - "8080:8000"
+    networks:
+      - backend
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
 
 networks: 
   frontend:

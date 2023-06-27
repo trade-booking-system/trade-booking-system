@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 import pytest
 
 from api.main import app
+from websocket.main import app as ws
 from utils.redis_initializer import get_redis_client
 import schema
 from .asyncclient import AsyncioTestClient
@@ -110,8 +111,8 @@ def test_server() -> System:
     return System(app)
 
 @pytest.fixture()
-def async_server() -> AsyncSystem:
-    return AsyncSystem(app)
+def ws_server() -> AsyncSystem:
+    return AsyncSystem(ws)
 
 def trade_to_dict(trade: schema.Trade):
     trade_dict = trade.dict()
