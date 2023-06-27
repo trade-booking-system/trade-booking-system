@@ -25,9 +25,11 @@ class TradeHandler:
         old_amount= stock_tickers.get(stock_ticker)
         if old_amount == None:
             position_json= self.client.hget(key, stock_ticker)
-            old_amount= 0
             if position_json != None:
                 old_amount= Position.parse_raw(position_json).amount
+            else:
+                old_amount= 0
+                self.client.sadd("stockTickers", stock_ticker)
         new_amount= old_amount+amount
         stock_tickers[stock_ticker]= new_amount
         position= Position(account= account, stock_ticker= stock_ticker, amount= new_amount, 

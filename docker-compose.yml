@@ -48,6 +48,19 @@ services:
       - TZ=America/New_York
     stop_signal: SIGTERM
 
+  stocks:
+    build:
+      context: ./python/stocks
+      dockerfile: Dockerfile
+    depends_on:
+      - redis
+    networks: 
+      - backend
+    environment:
+      - REDIS_HOST=redis
+      - TZ=America/New_York
+    stop_signal: SIGTERM
+
 networks: 
   frontend:
   backend:

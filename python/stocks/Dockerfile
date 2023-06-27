@@ -1,17 +1,16 @@
 FROM python:3.10-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1
+
 ENV PYTHONUNBUFFERED=1
 
-COPY aggregate/requirements.txt .
+COPY requirements.txt .
 RUN python -m pip install -r requirements.txt
 
 WORKDIR /app
-COPY aggregate /app/service
-COPY schema /app/schema
+COPY . /app
 
 RUN adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /app
 USER appuser
 
-ENV PYTHONPATH /app
-CMD ["python", "service/position_listener.py"]
+CMD ["python", "price_listener.py"]
