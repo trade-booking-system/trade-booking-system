@@ -18,9 +18,15 @@
 
   let amountOfTradesPerGrouping = 0;
 
-  let tradeData =  [];
+  let tradeData = [];
 
   let fileUpload;
+
+  let buttonName;
+
+  let deleteCall = false;
+
+  $: deletebuttonTitle = buttonName;
 
   function handleAdd(){
     event.preventDefault();
@@ -39,16 +45,15 @@
     }))
 
     tradeData = [...tradeData, ...tradeJson];
-  }
-
-  function handleReplace(){
-    event.preventDefault();
 
   }
+
+function handleDelete() {
+  deleteCall = true;
+}
 
   function submitTrades(){
     event.preventDefault();
-
   }
 
   function handleFileChange(event) {
@@ -67,6 +72,7 @@
       fileUpload = file;
       return;
     } else {
+      fileUpload = null;
       alert("File must be xls or csv");
       throw new Error("File is not xls or csv");
     }
@@ -163,7 +169,11 @@
       </Helper>
 
       <GradientButton color="tealToLime" on:click = {handleAdd}>Add</GradientButton>
-      <GradientButton color="pinkToOrange" on:click = {handleReplace}>Replace</GradientButton>
+      {#if buttonName != 'Please Select to Delete'}
+      <GradientButton color="pinkToOrange" on:click = {handleDelete}>{deletebuttonTitle}</GradientButton>
+    {:else}
+      <GradientButton color="pinkToOrange" on:click disabled = {handleDelete}>{deletebuttonTitle}</GradientButton>
+    {/if}
     </form>
   </TabItem>
 </Tabs>
@@ -184,7 +194,7 @@
   <GradientButton color="purpleToBlue" on:click = {submitTrades}>Bulk Book</GradientButton>
 </div>
 
-<BulkBookingGrid {tradeData}/>
+<BulkBookingGrid bind:tradeData = {tradeData} bind:deleteCall = {deleteCall} bind:buttonName = {buttonName}/>
 
 <style>
   .orange {

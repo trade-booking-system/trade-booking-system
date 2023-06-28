@@ -4,11 +4,28 @@
 
   export let tradeData = [];
 
+  export let deleteCall = false;
+
+  export let buttonName;
+
+  let currentRows = [];
+
   let gridContainer;
   let grid;
 
+  let amountOfSelectedNodes = 0;
+
   //this is where column headers are defined
   const columnDefs = [
+    {
+      headerName: "Delete",
+      field: "Delete",
+      checkboxSelection: true,
+      headerCheckboxSelection: true,
+      headerCheckboxSelectionFilteredOnly: true, 
+
+      width: 80
+    },
     { field: "ID" },
     { field: "Ticker" },
     { field: "Account" },
@@ -32,32 +49,90 @@
  * price: 100
  * }
  */
+
   let rowData = [];
+
+  const rowselection = 'multiple';
 
   const gridOptions = {
     defaultColDef: defaultColDef,
     columnDefs: columnDefs,
     rowData: rowData,
+    rowMultiSelectWithClick: true,
+    rowSelection: rowselection,
+    onSelectionChanged: function() {
+        const selectedNodes = this.api.getSelectedNodes();
+        amountOfSelectedNodes = selectedNodes.length;
+    },
   };
 
-  function populateGrid(){
-        rowData = [];  // Clear rowData
-    tradeData.forEach(element => {
-        rowData.push({
-            Ticker:element.tickers,
-            Account: element.accounts,
-            BuyOrSell: element.buyOrSell,
-            Shares: element.shares,
-            Price: element.price,
-        });
-    });
-    if (gridOptions.api) {
-        gridOptions.api.setRowData(rowData);
+  $:{
+    if (amountOfSelectedNodes === 1){
+      buttonName = 'Delete Selected Row';
     }
-    };
+    else if (amountOfSelectedNodes > 1) {
+      buttonName = 'Delete Selected Rows';
+    }
+    else {
+      buttonName = 'Please Select to Delete';
+    }
+  }
 
-    $: if(tradeData.length > 0){
+  function deleteNodes(){
+      console.log("calls internal delete");
+      const selectedNodes = gridOptions.api.getSelectedNodes();
+      if (selectedNodes.length > 0){
+        gridOptions.api.applyTransaction({ remove: selectedNodes.map(node => node.data) });
+        tradeData = tradeData.filter(trade => !selectedNodes.find(node => node.data === trade));
+        currentRows = getAllRows();
+        rowData = currentRows;
+        console.log({currentRows: currentRows});
+      }
+      console.log(deleteCall);
+      deleteCall = false;
+  }
+
+  function getAllRows(){
+    let rowNodes = [];
+    //gridOptions.apiforEachNode(node => rowNodes.push(node.data));
+    rowNodes = gridOptions.api.getRenderedNodes().map(node => node.data);
+    console.log({rowNodes: rowNodes})
+    return rowNodes;
+  }
+
+  function populateGrid(){
+    // Clear rowData
+    rowData = [];
+    rowData = getAllRows();
+    // Populate rowData with tradeData
+    tradeData.forEach(element => {
+      rowData.push({
+        Ticker: element.tickers,
+        Account: element.accounts,
+        BuyOrSell: element.buyOrSell,
+        Shares: element.shares,
+        Price: element.price,
+      });
+    });
+    // Update the grid with rowData
+    if (gridOptions.api) {
+      gridOptions.api.setRowData(rowData);
+    }
+    console.log({tradeData: tradeData});
+    console.log({rowData:  rowData});
+    currentRows = [...tradeData];
+    tradeData = [];
+  };
+
+    $: {
+      if(tradeData.length > 0 && deleteCall === false){
+      //comment up all of the code
+      //maybe make a specific tradedata object to signify to clear grid
         populateGrid();
+      }
+      if (deleteCall === true){
+        deleteNodes();
+      }
     }
 
   function sizeToFit() {
@@ -67,6 +142,7 @@
   }
   onMount(() => {
     window.addEventListener("resize", sizeToFit); //handles auto resizing: any time the window resizes at all it makes the grid resized to fit screen 
+    // @ts-ignore (this doesnt actually seem to cause any problems in the code it just turns red)
     grid = new Grid(gridContainer, gridOptions); //creates the actual ag-grid
     sizeToFit();
     populateGrid();
