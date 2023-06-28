@@ -8,6 +8,7 @@
 
   export let buttonName;
 
+  //this is in order for the to alway be a store of which data is currently being displayed
   let currentRows = [];
 
   let gridContainer;
@@ -23,7 +24,6 @@
       checkboxSelection: true,
       headerCheckboxSelection: true,
       headerCheckboxSelectionFilteredOnly: true, 
-
       width: 80
     },
     { field: "ID" },
@@ -60,12 +60,14 @@
     rowData: rowData,
     rowMultiSelectWithClick: true,
     rowSelection: rowselection,
+    //this is for the reactive element below
     onSelectionChanged: function() {
         const selectedNodes = this.api.getSelectedNodes();
         amountOfSelectedNodes = selectedNodes.length;
     },
   };
 
+  //in bulkbookingtabs  - this makes the button display there and activate/disable as needed
   $:{
     if (amountOfSelectedNodes === 1){
       buttonName = 'Delete Selected Row';
@@ -78,23 +80,22 @@
     }
   }
 
+
   function deleteNodes(){
       console.log("calls internal delete");
       const selectedNodes = gridOptions.api.getSelectedNodes();
       if (selectedNodes.length > 0){
         gridOptions.api.applyTransaction({ remove: selectedNodes.map(node => node.data) });
-        tradeData = tradeData.filter(trade => !selectedNodes.find(node => node.data === trade));
+        tradeData = tradeData.filter(trade => !selectedNodes.find(node => node.data === trade)); //removes selected rows from tradedata ("deleting them")
         currentRows = getAllRows();
         rowData = currentRows;
-        console.log({currentRows: currentRows});
       }
-      console.log(deleteCall);
       deleteCall = false;
   }
 
+
   function getAllRows(){
     let rowNodes = [];
-    //gridOptions.apiforEachNode(node => rowNodes.push(node.data));
     rowNodes = gridOptions.api.getRenderedNodes().map(node => node.data);
     console.log({rowNodes: rowNodes})
     return rowNodes;
@@ -104,7 +105,7 @@
     // Clear rowData
     rowData = [];
     rowData = getAllRows();
-    // Populate rowData with tradeData
+    // Populate rowData with tradeData (properly formatting it)
     tradeData.forEach(element => {
       rowData.push({
         Ticker: element.tickers,
@@ -118,22 +119,19 @@
     if (gridOptions.api) {
       gridOptions.api.setRowData(rowData);
     }
-    console.log({tradeData: tradeData});
-    console.log({rowData:  rowData});
     currentRows = [...tradeData];
     tradeData = [];
   };
 
-    $: {
-      if(tradeData.length > 0 && deleteCall === false){
-      //comment up all of the code
-      //maybe make a specific tradedata object to signify to clear grid
-        populateGrid();
-      }
-      if (deleteCall === true){
-        deleteNodes();
-      }
+
+  $: {
+    if(tradeData.length > 0 && deleteCall === false){
+      populateGrid();
     }
+    if (deleteCall === true){
+      deleteNodes();
+    }
+  }
 
   function sizeToFit() {
     gridOptions.api.sizeColumnsToFit({

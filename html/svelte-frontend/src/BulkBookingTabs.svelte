@@ -30,6 +30,7 @@
 
   function handleAdd(){
     event.preventDefault();
+    //splits data as needed
     const splitTickers = tickers.split(',').map(ticker => ticker.trim()), 
     splitAccounts = accounts.split(',').map(account => account.trim()),
     splitBuyOrSell = buyOrSell.split(',').map(account => account.trim()),
