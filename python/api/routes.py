@@ -10,6 +10,10 @@ router= APIRouter()
 async def book_trade(trade: Trade, client: redis.Redis = Depends(get_redis_client)) -> dict[str, str]:
     return tradebooker.booktrade(client, trade)
 
+@router.post("/bookTradesBulk")
+async def book_trades_bulk(trades: list[Trade], client: redis.Redis = Depends(get_redis_client)) -> dict[str, str]:
+    return tradebooker.booktrades_bulk(client, trades)
+
 @router.post("/updateTrade")
 def update_trade(trade_id: str, account: str, date: str, updated_type: str= None, updated_amount: int= None, 
                  updated_price: int= None, client: redis.Redis = Depends(get_redis_client)) -> dict[str, str]:
