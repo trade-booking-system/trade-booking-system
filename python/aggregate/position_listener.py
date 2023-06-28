@@ -33,6 +33,7 @@ class TradeHandler:
         position= Position(account= account, stock_ticker= stock_ticker, amount= new_amount, 
                         last_aggregation_time= datetime.now(), last_aggregation_host= "host")
         self.client.hset(key, stock_ticker, position.json())
+        self.client.publish("positionUpdates", f"position:{position.json()}")
 
 def termination_handler(signum, frame):
     thread.stop()
