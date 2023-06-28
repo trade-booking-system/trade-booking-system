@@ -4,7 +4,7 @@ import schema
 from .conftest import System, generate_trades, trade_to_dict, assert_trades_equal
 
 @pytest.mark.parametrize("trades", [generate_trades(3, x) for x in range(7000, 7200, 10)])
-def test_trade_history(trades: list[schema.Trade], test_server: System, monkeypatch: pytest.MonkeyPatch):
+def test_trade_history(trades: list[schema.Trade], test_server: System):
     client = test_server.web
     response = client.put("/bookTrade/", json=trade_to_dict(trades[0]))
     id = response.json()["Field"]
@@ -17,7 +17,7 @@ def test_trade_history(trades: list[schema.Trade], test_server: System, monkeypa
             "date": str(trades[i].date),
             "updated_type": trades[i].type,
             "updated_amount": trades[i].amount,
-            "updated_price": trades[i].price
+            "updated_price": int(trades[i].price)
         })
         assert response.status_code == 200
         assert response.json()["Version"] == str(i + 1)
