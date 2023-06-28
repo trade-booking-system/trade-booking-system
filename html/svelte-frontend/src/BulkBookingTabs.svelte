@@ -7,28 +7,48 @@
     Fileupload,
     Input,
     Helper,
+    Indicator,
   } from "flowbite-svelte";
 
   import BulkBookingGrid from "./BulkBookingGrid.svelte";
 
   let tickers = '', accounts = '', buyOrSell = '', shares = '', price = '';
 
-  const tradeData =  {
-    tickers,
-    accounts,
-    buyOrSell,
-    shares,
-    price
-  };
+  let tradesToGenerate = 0;
+
+  let amountOfTradesPerGrouping = 0;
+
+  let tradeData =  [];
 
   let fileUpload;
 
   function handleAdd(){
+    event.preventDefault();
+    const splitTickers = tickers.split(',').map(ticker => ticker.trim()), 
+    splitAccounts = accounts.split(',').map(account => account.trim()),
+    splitBuyOrSell = buyOrSell.split(',').map(account => account.trim()),
+    splitShares = shares.split(',').map(share => parseFloat(share.trim())),
+    splitPrice = price.split(',').map(price => parseFloat(price.trim()));
 
+    const tradeJson = splitTickers.map((tickers, i) => ({
+      tickers,
+      accounts: splitAccounts[i],
+      buyOrSell : splitBuyOrSell[i],
+      shares: splitShares[i],
+      price: splitPrice[i] 
+    }))
+
+    tradeData = [...tradeData, ...tradeJson];
   }
 
   function handleReplace(){
-    
+    event.preventDefault();
+
+  }
+
+  function submitTrades(){
+    event.preventDefault();
+
   }
 
   function handleFileChange(event) {
@@ -69,13 +89,13 @@
   </TabItem>
   <TabItem>
     <span slot="title">Generate Bulk Trades</span>
-    <form>
+    <form on:submit|preventDefault="{handleAdd}">
       <Label class="block mb-2">
         <div class="orange">
           Ticker Ladder
         </div>
       </Label>
-      <Input label="Ticker-Ladder" id="Ticker-Ladder" name="Ticker-Ladder" required placeholder="AMA,IBM,MSFT"/>
+      <Input label="Ticker-Ladder" id="Ticker-Ladder" name="Ticker-Ladder" required placeholder="AMA,IBM,MSFT" bind:value = "{tickers}"/>
       <Helper class="text-sm mb-2">
         <div class="helper">
           Please enter a comma seperated list of tickers.
@@ -87,7 +107,7 @@
           Account Ladder
         </div>
       </Label>
-      <Input label="Account-Ladder" id="Account-Ladder" name="Account-Ladder" required placeholder="Account-1,Account-2,Account-3"/>
+      <Input label="Account-Ladder" id="Account-Ladder" name="Account-Ladder" required placeholder="Account-1,Account-2,Account-3" bind:value = "{accounts}"/>
       <Helper class="text-sm mb-2">
         <div class="helper">
           Please enter a comma seperated list of accounts.
@@ -99,7 +119,7 @@
           Buy/Sell Ladder
         </div>
       </Label>
-      <Input label="Buy/Sell-Ladder" id="Buy/Sell-Ladder" name="Buy/Sell-Ladder" required placeholder="B,B,S"/>
+      <Input label="Buy/Sell-Ladder" id="Buy/Sell-Ladder" name="Buy/Sell-Ladder" required placeholder="B,B,S" bind:value = "{buyOrSell}"/>
       <Helper class="text-sm mb-2">
         <div class="helper">
           Please enter a comma seperated list of B or S.
@@ -111,7 +131,7 @@
           Shares Ladder
         </div>
       </Label>
-      <Input label="Shares-Ladder" id="Shares-Ladder" name="Shares-Ladder" required placeholder="5,100,50"/>
+      <Input label="Shares-Ladder" id="Shares-Ladder" name="Shares-Ladder" required placeholder="5,100,50" bind:value = "{shares}"/>
       <Helper class="text-sm mb-2">
         <div class="helper">
           Please enter a comma seperated list of the amount of shares.
@@ -123,7 +143,7 @@
           Price Ladder
         </div>
       </Label>
-      <Input label="Price-Ladder" id="Price-Ladder" name="Price-Ladder" required placeholder="10,15.5,32"/>
+      <Input label="Price-Ladder" id="Price-Ladder" name="Price-Ladder" required placeholder="10,15.5,32" bind:value = "{price}"/>
       <Helper class="text-sm mb-2">
         <div class="helper">
           Please enter a comma seperated list of prices.
@@ -135,15 +155,15 @@
           Total Trades
         </div>
       </Label>
-      <Input label="Total-Trades" id="Total-Trades" name="Total-Trades" required placeholder="500"/>
+      <Input label="Total-Trades" id="Total-Trades" name="Total-Trades" required placeholder="500" bind:value = "{tradesToGenerate}"/>
       <Helper class="text-sm mb-2">
         <div class="helper">
           Please enter the total number of trades to book.
         </div>
       </Helper>
 
-      <GradientButton color="tealToLime">Add</GradientButton>
-      <GradientButton color="pinkToOrange">Replace</GradientButton>
+      <GradientButton color="tealToLime" on:click = {handleAdd}>Add</GradientButton>
+      <GradientButton color="pinkToOrange" on:click = {handleReplace}>Replace</GradientButton>
     </form>
   </TabItem>
 </Tabs>
@@ -155,16 +175,16 @@
       Trades Per Bulk Booking
     </div>
   </Label>
-  <Input label="Trades-Per-BulkBooking" id="Trades-Per-BulkBooking" name="Trades-Per-BulkBooking" required placeholder="50"/>
+  <Input label="Trades-Per-BulkBooking" id="Trades-Per-BulkBooking" name="Trades-Per-BulkBooking" required placeholder="50" bind:value = "{amountOfTradesPerGrouping}"/>
   <Helper class="text-sm mb-2">
     <div class="helper">
       Please enter the amount of trades per grouping
     </div>
   </Helper>
-  <GradientButton color="purpleToBlue">Bulk Book</GradientButton>
+  <GradientButton color="purpleToBlue" on:click = {submitTrades}>Bulk Book</GradientButton>
 </div>
 
-<BulkBookingGrid tradeData = {tradeData}/>
+<BulkBookingGrid {tradeData}/>
 
 <style>
   .orange {

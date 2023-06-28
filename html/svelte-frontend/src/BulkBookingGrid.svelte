@@ -2,7 +2,7 @@
   import { Grid } from "ag-grid-community";
   import { onMount, onDestroy } from "svelte";
 
-  export const tradeData = {};
+  export let tradeData = [];
 
   let gridContainer;
   let grid;
@@ -12,7 +12,7 @@
     { field: "ID" },
     { field: "Ticker" },
     { field: "Account" },
-    { field: "Buy/Sell" },
+    { field: "BuyOrSell" },
     { field: "Shares" },
     { field: "Price" },
     { field: "Booked-At" },
@@ -32,13 +32,33 @@
  * price: 100
  * }
  */
-  const rowData = [ ];
+  let rowData = [];
 
   const gridOptions = {
     defaultColDef: defaultColDef,
     columnDefs: columnDefs,
     rowData: rowData,
   };
+
+  function populateGrid(){
+        rowData = [];  // Clear rowData
+    tradeData.forEach(element => {
+        rowData.push({
+            Ticker:element.tickers,
+            Account: element.accounts,
+            BuyOrSell: element.buyOrSell,
+            Shares: element.shares,
+            Price: element.price,
+        });
+    });
+    if (gridOptions.api) {
+        gridOptions.api.setRowData(rowData);
+    }
+    };
+
+    $: if(tradeData.length > 0){
+        populateGrid();
+    }
 
   function sizeToFit() {
     gridOptions.api.sizeColumnsToFit({
@@ -49,6 +69,7 @@
     window.addEventListener("resize", sizeToFit); //handles auto resizing: any time the window resizes at all it makes the grid resized to fit screen 
     grid = new Grid(gridContainer, gridOptions); //creates the actual ag-grid
     sizeToFit();
+    populateGrid();
   });
 
   onDestroy(() => {
