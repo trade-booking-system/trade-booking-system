@@ -1,8 +1,4 @@
-feedparser==6.0.10
 requests-html==0.10.0
 yahoo-fin==0.8.9.1
 redis==4.5.5
-pandas==2.0.2
-requests==2.31.0
 DateTime==5.1
-pyftpdlib==1.5.7
