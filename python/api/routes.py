@@ -1,8 +1,11 @@
 import redis
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, UploadFile, File
 from utils import booktrade as tradebooker
 from utils.redis_initializer import get_redis_client
 from schema import Trade, History
+from typing import IO
+from csv import DictReader
+
 
 router= APIRouter()
 
@@ -13,6 +16,17 @@ async def book_trade(trade: Trade, client: redis.Redis = Depends(get_redis_clien
 @router.post("/bookTradesBulk")
 async def book_trades_bulk(trades: list[Trade], client: redis.Redis = Depends(get_redis_client)) -> dict[str, str]:
     return tradebooker.booktrades_bulk(client, trades)
+
+@router.post("/bookTradesBulkCSV")
+async def book_trades_bulk_csv(file: UploadFile = File(...), client: redis.Redis = Depends(get_redis_client)):
+    data: IO[bytes] = file.file
+    reader = DictReader(data)
+    for row in reader:
+        # map row values to Trade model
+        trade = Trade(**row)
+        # book each trade
+        tradebooker.booktrade(client, trade)
+    return {"message": "Trades with csv file booked successfully"}
 
 @router.post("/updateTrade")
 def update_trade(trade_id: str, account: str, date: str, updated_type: str= None, updated_amount: int= None, 
