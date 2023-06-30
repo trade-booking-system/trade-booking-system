@@ -5,16 +5,14 @@ class ValidTickers:
     def __init__(self, filename: str):
         self.valid_tickers= self.parse_file(filename)
 
-    def parse_file(self, filename) -> set[str]:
-        tickers= set()
+    def parse_file(self, filename) -> list[str]:
         file= open(filename, "r")
-        stock_info= json.load(file)
+        data= file.read()
         file.close()
-        for stock in stock_info:
-            tickers.add(stock["Symbol"])
+        tickers= data.splitlines()
         return tickers
 
-    def get_all_tickers(self) -> set[str]:
+    def get_all_tickers(self) -> list[str]:
         return self.valid_tickers
 
     def is_valid_ticker(self, stock_ticker: str) -> bool:

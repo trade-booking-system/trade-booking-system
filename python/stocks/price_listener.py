@@ -21,7 +21,7 @@ def is_market_open() -> bool:
         return False
     return True
 
-def get_stock_price(stock_ticker):
+def get_stock_price(stock_ticker: str):
     try:
         stock_price= get_live_price(stock_ticker)
     except AssertionError:
@@ -32,7 +32,7 @@ def get_stock_price(stock_ticker):
         print("missing data: "+stock_ticker)
     return stock_price
 
-def update_stock_prices(tickers: set[str]):
+def update_stock_prices(tickers: list[str]):
     if not is_market_open():
         print("markets closed")
         return
@@ -48,7 +48,7 @@ def update_stock_prices(tickers: set[str]):
 
 client = redis.Redis(host = os.getenv("REDIS_HOST"), port = 6379, db = 0, decode_responses= True)
 signal.signal(signal.SIGTERM, termination_handler)
-tickers= ValidTickers("ListOfStocks.json")
+tickers= ValidTickers("ListOfStocks.txt")
 valid_tickers= tickers.get_all_tickers()
 
 while True:
