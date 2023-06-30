@@ -5,12 +5,6 @@ from schema import Trade, History
 import redis
 
 def booktrade(client: redis.Redis, trade: Trade):
-    if trade.price is None:
-        try:
-            trade.price= get_live_price(trade.stock_ticker)
-        except AssertionError:
-            raise HTTPException(status_code= 500, detail= "stock ticker does not exist trade booking unsuccessful")
-        client.sadd("stockTickers", trade.stock_ticker)
     key = f"trades:{trade.account}:{trade.date.isoformat()}"
     history= History()
     history.trades.append(trade)
