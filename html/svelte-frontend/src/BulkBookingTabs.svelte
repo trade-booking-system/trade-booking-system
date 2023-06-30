@@ -14,7 +14,7 @@
 
   let tickers = '', accounts = '', buyOrSell = '', shares = '', price = '';
 
-  let tradesToGenerate = 0;
+  let tradesToGenerate = 1;
 
   let amountOfTradesPerGrouping = 0;
 
@@ -37,21 +37,51 @@
     splitShares = shares.split(',').map(share => parseFloat(share.trim())),
     splitPrice = price.split(',').map(price => parseFloat(price.trim()));
 
-    const tradeJson = splitTickers.map((tickers, i) => ({
-      tickers,
-      accounts: splitAccounts[i],
-      buyOrSell : splitBuyOrSell[i],
-      shares: splitShares[i],
-      price: splitPrice[i] 
-    }))
+    const tradeJson = createRows(splitTickers,splitAccounts,splitBuyOrSell,splitShares,splitPrice);
 
     tradeData = [...tradeData, ...tradeJson];
 
   }
 
-function handleDelete() {
-  deleteCall = true;
-}
+  function createRows(splitTickers, splitAccounts, splitBuyOrSell, splitShares, splitPrice){
+    let amountOfIterations = 0;
+    const createdTrades = [];
+
+  while (amountOfIterations <= tradesToGenerate - 1){
+    let index = amountOfIterations % splitTickers.length;
+    const currentTicker = splitTickers[index];
+    
+    let indexOfAccounts = amountOfIterations % splitAccounts.length;
+    const currentAccount = splitAccounts[indexOfAccounts];
+    
+    let indexOfBuyOrSell = amountOfIterations % splitBuyOrSell.length;
+    const currentBuyOrSell = splitBuyOrSell[indexOfBuyOrSell];
+
+    let indexOfSplitShares = amountOfIterations % splitShares.length;
+    const currentShares = splitShares[indexOfSplitShares];
+    
+    let indexOfPrice = amountOfIterations % splitPrice.length;
+    const currentPrice = splitPrice[indexOfPrice];
+
+    createdTrades.push({
+      tickers: currentTicker,
+      accounts: currentAccount,
+      buyOrSell: currentBuyOrSell,
+      shares: currentShares,
+      price: currentPrice,
+    });
+
+    amountOfIterations++;
+  }
+
+  return createdTrades;
+
+
+  }
+
+  function handleDelete() {
+    deleteCall = true;
+  }
 
   function submitTrades(){
     event.preventDefault();
@@ -126,7 +156,7 @@ function handleDelete() {
           Buy/Sell Ladder
         </div>
       </Label>
-      <Input label="Buy/Sell-Ladder" id="Buy/Sell-Ladder" name="Buy/Sell-Ladder" required placeholder="B,B,S" bind:value = "{buyOrSell}"/>
+      <Input label="Buy/Sell-Ladder" id="Buy/Sell-Ladder" name="Buy/Sell-Ladder" required placeholder="b,b,s" bind:value = "{buyOrSell}"/>
       <Helper class="text-sm mb-2">
         <div class="helper">
           Please enter a comma seperated list of B or S.
