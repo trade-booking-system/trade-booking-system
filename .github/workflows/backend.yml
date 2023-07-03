@@ -62,6 +62,9 @@ jobs:
               - component: websocket
                 file: ws
                 name: WebSocket
+              - component: price-listener
+                file: price
+                name: Price Listener
         name: Built and Push ${{ matrix.name }}
         steps:
             - uses: actions/checkout@v3

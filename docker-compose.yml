@@ -50,8 +50,8 @@ services:
 
   stocks:
     build:
-      context: ./python/stocks
-      dockerfile: Dockerfile
+      context: ./python
+      dockerfile: Dockerfile.price
     depends_on:
       - redis
     networks: 
