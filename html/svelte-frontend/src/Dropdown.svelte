@@ -7,10 +7,12 @@
     Chevron,
     Checkbox,
   } from "flowbite-svelte";
+  import { writable } from 'svelte/store'
 
   const accounts = [];
-
+  
   let checkedAccounts = [];
+  export let checkedAccountsStore;
 
   let selectedAccount;
 
@@ -36,6 +38,8 @@
     } else {
       selectAccount(account);
     }
+    console.log(checkedAccounts);
+    checkedAccountsStore.set(checkedAccounts);
   }
 
   let responseData;

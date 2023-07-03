@@ -5,6 +5,8 @@
   let gridContainer;
   let grid;
 
+  export let checkedAccounts;
+
   //this is where column headers are defined
   const columnDefs = [
     { field: "Account" },
@@ -27,32 +29,70 @@
  * price: 100
  * }
  */
-  const rowData = [
-    {
-      Account: "Account 1",
-      Ticker: "AMA",
-      Quantity: "1000",
-      Time: 12,
-      LastAggregationTime: "10-00-00",
-      SystemLastAggregationProcessHost_Id: "00000000",
-    },
-    {
-      Account: "Account 1",
-      Ticker: "AMA",
-      Quantity: "1000",
-      Time: 12,
-      LastAggregationTime: "10-00-00",
-      SystemLastAggregationProcessHost_Id: "00000000",
-    },
-    {
-      Account: "Account 1",
-      Ticker: "AMA",
-      Quantity: "1000",
-      Time: 12,
-      LastAggregationTime: "10-00-00",
-      SystemLastAggregationProcessHost_Id: "00000000",
-    },
-  ];
+  let positions = [];
+  let rowData = [];
+
+  $: {
+    if(checkedAccounts.length > 0){
+      populatePositionGrid();
+    } else{
+      rowData = [];
+      if (gridOptions.api) {
+      gridOptions.api.setRowData(rowData);
+    }
+    }
+  }
+
+  async function populatePositionGrid() {
+    console.log('checked Acount changed:', checkedAccounts)
+    positions = [];
+    console.log('cleared positions')
+
+    const getPositionPromises = checkedAccounts.map(account => getPosition(account));
+    const positionsArray = await Promise.all(getPositionPromises);
+    positions = positionsArray.flat();
+
+    console.log("positions", positions);
+    
+    //checkedAccounts.forEach(account => {
+    //console.log('calling get position on:', account)
+    //getPosition(account)
+    //});
+
+    console.log("clearing row data");
+    rowData = [];
+    populateRowData();
+    if (gridOptions.api) {
+      gridOptions.api.setRowData(rowData);
+    }
+  }
+
+  async function getPosition(account){
+    const response = await fetch(`api/positions/${account}`)
+    if(response.ok){
+      console.log("return of positions api call:", response);
+      const responseJson = await response.json();
+      console.log("response as a json:", responseJson);
+      const positionsJson = responseJson.positions;
+      console.log("positions as json:", positionsJson);
+      return positionsJson;
+    }
+  }
+
+  function populateRowData(){
+    console.log("now populating row data");
+    positions.forEach(position => {
+      console.log("populating RowData")
+      rowData.push({
+        Account: position.account,
+        Ticker: position.stock_ticker,
+        Quantity: position.amount,
+        LastAggregationTime: position.last_aggregation_time,
+        SystemLastAggregationProcessHost_Id: position.last_aggregation_host
+      })
+    })
+
+  }
 
   const gridOptions = {
     defaultColDef: defaultColDef,
