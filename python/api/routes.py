@@ -1,10 +1,11 @@
 import redis
-from fastapi import APIRouter, Depends, UploadFile, File
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from utils import booktrade as tradebooker
 from utils.redis_initializer import get_redis_client
 from schema import Trade, History
 from typing import IO
 from csv import DictReader
+from pydantic import ValidationError
 
 
 router= APIRouter()
@@ -22,11 +23,24 @@ async def book_trades_bulk_csv(file: UploadFile = File(...), client: redis.Redis
     data: IO[bytes] = file.file
     reader = DictReader(data)
     for row in reader:
-        # map row values to Trade model
         trade = Trade(**row)
-        # book each trade
         tradebooker.booktrade(client, trade)
     return {"message": "Trades with csv file booked successfully"}
+
+@router.post("/csvToJson", response_model=list[Trade])
+async def csv_to_json(file: UploadFile = File(...)):
+    data: IO[bytes] = file.file
+    reader = DictReader(data)
+
+    trades = []
+    for row in reader:
+        try:
+            trade = Trade(**row)
+            trades.append(trade)
+        except ValidationError as e:
+            raise HTTPException(status_code=400, detail="Invalid trade data in CSV file.")
+
+    return trades
 
 @router.post("/updateTrade")
 def update_trade(trade_id: str, account: str, date: str, updated_type: str= None, updated_amount: int= None, 
