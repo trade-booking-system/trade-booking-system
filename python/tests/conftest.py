@@ -39,8 +39,15 @@ class Channel:
 class FakeClient:
     def __init__(self):
         self.data = {}
+        self.simple = {}
         self.channels: dict[str, Channel] = {}
     
+    def get(self, name):
+        return self.simple.get(name, None)
+
+    def set(self, name, value):
+        self.simple[name] = value
+
     def hget(self, name, key):
         if name in self.data and key in self.data[name]:
             return self.data[name][key]

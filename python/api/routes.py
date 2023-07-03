@@ -2,6 +2,7 @@ import redis
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from utils import booktrade as tradebooker
 from utils.redis_initializer import get_redis_client
+from utils.tickers import ValidTickers
 from schema import Trade, History
 from typing import IO
 from csv import DictReader
@@ -27,8 +28,8 @@ async def book_trades_bulk_csv(file: UploadFile = File(...), client: redis.Redis
         tradebooker.booktrade(client, trade)
     return {"message": "Trades with csv file booked successfully"}
 
-@router.post("/csvToJson", response_model=list[Trade])
-async def csv_to_json(file: UploadFile = File(...)):
+@router.post("/csvToJson")
+async def csv_to_json(file: UploadFile = File(...)) -> list[Trade]:
     data: IO[bytes] = file.file
     reader = DictReader(data)
 
@@ -65,3 +66,7 @@ def get_trade_history(trade_id: str, account: str, date: str, client: redis.Redi
 @router.get("/getAccounts")
 async def get_accounts(client: redis.Redis = Depends(get_redis_client)) -> set[str]:
     return tradebooker.get_accounts(client)
+
+@router.get("/tickers")
+async def get_tickers(tickers: ValidTickers = Depends(lambda: ValidTickers("utils/ListOfStocks.txt"))) -> list[str]:
+    return tickers.get_all_tickers()
