@@ -11,17 +11,16 @@ class TradeHandler:
 
     def get_trade_handler(self):
         def handler(msg):
-            data= msg["data"]
-            account, stock_ticker, amount= data.split(":")
+            data: str= msg["data"]
+            account, stock_ticker, amount, _ = data.split(":")
             self.update_position(account, stock_ticker, int(amount))
+            self.client.publish("tradeInfo", data)
         return handler
 
     def update_position(self, account: str, stock_ticker: str, amount: int):
         key = "positions:"+account
-        stock_tickers= self.cache.get(account)
-        if stock_tickers == None:
-            stock_tickers= dict()
-            self.cache[account]= stock_tickers
+        stock_tickers= self.cache.get(account, dict())
+        self.cache[account]= stock_tickers
         old_amount= stock_tickers.get(stock_ticker)
         if old_amount == None:
             position_json= self.client.hget(key, stock_ticker)

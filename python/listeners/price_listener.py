@@ -1,11 +1,11 @@
 from yahoo_fin.stock_info import get_live_price
+from utils.tickers import ValidTickers
 from time import sleep
 import signal
 import datetime
 import redis
 import sys
 import os
-from utils.tickers import ValidTickers
 
 class PriceHandler:
     def __init__(self, client: redis.Redis, tickers: list[str], price_getter, now):
@@ -38,16 +38,15 @@ class PriceHandler:
     def update_stock_prices(self):
         if not self.is_market_open():
             print("market is closed")
-            return
+            #return
         for stock_ticker in self.tickers:
             stock_price = self.get_stock_price(stock_ticker)
-            if stock_price is not None:
+            if stock_price != None:
                 current_time = self.now()
                 live_price_key= "livePrices:" + stock_ticker
                 snapshot_key= f"snapshotPrices:{stock_ticker}:{current_time.date().isoformat()}"
                 self.client.set(live_price_key, stock_price)
                 self.client.hset(snapshot_key, current_time.time().isoformat(), stock_price)
-
 
 def termination_handler(signum, frame):
     client.close()
@@ -60,4 +59,5 @@ if __name__ == "__main__":
     handler = PriceHandler(client, tickers.get_all_tickers(), get_live_price, datetime.datetime.now)
     while True:
         handler.update_stock_prices()
+        client.publish("prices", "updated")
         sleep(60)

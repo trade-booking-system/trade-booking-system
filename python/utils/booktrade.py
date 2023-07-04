@@ -10,7 +10,7 @@ def booktrade(client: redis.Redis, trade: Trade):
     history.trades.append(trade)
     json_data= history.json()
     client.hset(key, trade.id, json_data)
-    client.publish("updatePositions", f"{trade.account}:{trade.stock_ticker}:{get_amount(trade)}")
+    client.publish("updatePositions", f"{trade.account}:{trade.stock_ticker}:{get_amount(trade)}:{trade.price}")
     client.publish("tradeUpdates", f"create: {trade.json()}")
     return {"Key": key, "Field": trade.id}
 
@@ -29,8 +29,8 @@ def update_trade(trade_id, account, date, updated_type, updated_amount, updated_
     trade= create_updated_trade(updated_amount, updated_type, updated_price, old_trade)
     history.add_updated_trade(trade)
     # undo previous version of trade and add new trade
-    amount= get_amount(trade) - get_amount(old_trade)
-    client.publish("updatePositions", f"{trade.account}:{trade.stock_ticker}:{amount}")
+    client.publish("updatePositions", f"{trade.account}:{trade.stock_ticker}:{-get_amount(old_trade)}:{old_trade.price}")
+    client.publish("updatePositions", f"{trade.account}:{trade.stock_ticker}:{get_amount(trade)}:{trade.price}")
     client.publish("tradeUpdates", f"update: {trade.json()}")
     client.hset(key, trade_id, history.json())
     return {"Key": key, "Field": trade.id, "Version": trade.version}

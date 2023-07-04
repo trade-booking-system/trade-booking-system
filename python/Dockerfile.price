@@ -4,11 +4,11 @@ ENV PYTHONDONTWRITEBYTECODE=1
 
 ENV PYTHONUNBUFFERED=1
 
-COPY stocks/requirements.txt .
+COPY listeners/requirements.txt .
 RUN python -m pip install -r requirements.txt
 
 WORKDIR /app
-COPY stocks /app/service
+COPY ./listeners/price_listener.py /app/service/
 COPY utils /app/utils
 
 RUN adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /app
