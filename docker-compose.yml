@@ -59,6 +59,7 @@ services:
     environment:
       - REDIS_HOST=redis
       - TZ=America/New_York
+      - DEBUG_MODE=on
     stop_signal: SIGTERM
   
   websocket:
