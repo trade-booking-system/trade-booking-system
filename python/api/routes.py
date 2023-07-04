@@ -13,6 +13,16 @@ from io import StringIO
 
 router= APIRouter()
 
+def create_trade_from_row(row):
+    return Trade(
+        account=row["accounts"],
+        type=row["buyOrSell"],
+        stock_ticker=row["tickers"],
+        amount=int(row["shares"]),
+        user=row["user"],
+        price=float(row["price"]) if row["price"] else None
+    )
+
 @router.put("/bookTrade")
 async def book_trade(trade: Trade, client: redis.Redis = Depends(get_redis_client)) -> dict[str, str]:
     return tradebooker.booktrade(client, trade)
@@ -41,7 +51,7 @@ async def csv_to_json(file: UploadFile = File(...)) -> list[Trade]:
     trades = []
     for row in reader:
         try:
-            trade = Trade(**row)
+            trade = create_trade_from_row(row)  # use the create_trade_from_row function here
             trades.append(trade)
         except ValidationError as e:
             raise HTTPException(status_code=400, detail="Invalid trade data in CSV file.")
