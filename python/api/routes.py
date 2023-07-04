@@ -4,7 +4,7 @@ from utils import booktrade as tradebooker
 from utils.redis_initializer import get_redis_client
 from utils.tickers import ValidTickers
 from schema import Trade, History
-from typing import IO
+from typing import IO, Union
 from csv import DictReader
 from pydantic import ValidationError
 from io import StringIO
@@ -22,6 +22,16 @@ def create_trade_from_row(row):
         user=row.get("user", "101010"),
         price=float(row["price"]) if row["price"] else None
     )
+
+def trade_to_dict(trade: Trade):
+    return {
+        "tickers": trade.stock_ticker,
+        "accounts": trade.account,
+        "buyOrSell": trade.type,
+        "shares": str(trade.amount),
+        "price": str(trade.price)
+    }
+
 
 @router.put("/bookTrade")
 async def book_trade(trade: Trade, client: redis.Redis = Depends(get_redis_client)) -> dict[str, str]:
@@ -43,7 +53,7 @@ async def book_trades_bulk_csv(file: UploadFile = File(...), client: redis.Redis
     return {"message": "Trades with csv file booked successfully"}
 
 @router.post("/csvToJson")
-async def csv_to_json(file: UploadFile = File(...)) -> list[Trade]:
+async def csv_to_json(file: UploadFile = File(...)) -> list[dict[str, Union[str, int, float]]]:
     data: bytes = await file.read()
     text: str = data.decode()
     reader = DictReader(StringIO(text))
@@ -52,7 +62,7 @@ async def csv_to_json(file: UploadFile = File(...)) -> list[Trade]:
     for row in reader:
         try:
             trade = create_trade_from_row(row)  # use the create_trade_from_row function here
-            trades.append(trade)
+            trades.append(trade_to_dict(trade))  # append the dictionary to the list
         except ValidationError as e:
             raise HTTPException(status_code=400, detail="Invalid trade data in CSV file.")
 
