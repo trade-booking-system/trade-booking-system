@@ -8,6 +8,10 @@
 
   export let buttonName;
 
+  export let submitTrade = false;
+
+  export let tradesPosted = [];
+
   //this is in order for the to alway be a store of which data is currently being displayed
   let currentRows = [];
 
@@ -93,13 +97,29 @@
       deleteCall = false;
   }
 
-
   function getAllRows(){
     let rowNodes = [];
     rowNodes = gridOptions.api.getRenderedNodes().map(node => node.data);
     console.log({rowNodes: rowNodes})
     return rowNodes;
   }
+
+  function getAllRowsForTradeSubmission(){
+    let rowNodes = [];
+    rowNodes = gridOptions.api.getRenderedNodes().map(node => {
+      return {
+        account: node.data.Account,
+        type: node.data.BuyOrSell, 
+        stock_ticker: node.data.Ticker, 
+        amount: node.data.Shares,
+        price: node.data.Price, 
+        user: 'BulkBookingPortal',  // User is hardcoded because its always coming from the BulkBooking UI
+      };
+    });
+    console.log({rowNodes: rowNodes})
+    return rowNodes;
+  }
+
 
   function populateGrid(){
     // Clear rowData
@@ -125,13 +145,55 @@
 
 
   $: {
-    if(tradeData.length > 0 && deleteCall === false){
+    if(tradeData.length > 0 && deleteCall === false && submitTrade === false){
       populateGrid();
     }
     if (deleteCall === true){
       deleteNodes();
     }
+    if (submitTrade === true){
+      submitTrades();
+    }
   }
+
+  async function submitTrades(){
+    const currentSubmission = getAllRowsForTradeSubmission();
+    console.log(currentRows);
+
+    try{
+      const response = await fetch('api/bookTradesBulk', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(currentSubmission),
+      });
+
+      if(!response.ok){
+        const errorText = await response.text();
+        throw new Error(`Response not ok: ${errorText}`);
+      }
+
+      const jsonData = await response.json();
+      console.log("made it to jsondata");
+
+      tradeData = jsonData;
+
+      console.log({tradeData: tradeData});
+
+      populateGrid();
+      console.log('why is it not populating grid then?');
+
+      submitTrade = false;
+    } catch (error){
+
+      submitTrade = false;
+      tradeData = [];
+      console.error('Error:', error);
+    }
+
+
+  } 
 
   function sizeToFit() {
     gridOptions.api.sizeColumnsToFit({
