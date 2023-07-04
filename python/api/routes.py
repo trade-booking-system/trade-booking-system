@@ -7,6 +7,8 @@ from schema import Trade, History
 from typing import IO
 from csv import DictReader
 from pydantic import ValidationError
+from io import StringIO
+
 
 
 router= APIRouter()
@@ -21,8 +23,10 @@ async def book_trades_bulk(trades: list[Trade], client: redis.Redis = Depends(ge
 
 @router.post("/bookTradesBulkCSV")
 async def book_trades_bulk_csv(file: UploadFile = File(...), client: redis.Redis = Depends(get_redis_client)):
-    data: IO[bytes] = file.file
-    reader = DictReader(data)
+
+    data: bytes = await file.read()
+    text: str = data.decode()
+    reader = DictReader(StringIO(text))
     for row in reader:
         trade = Trade(**row)
         tradebooker.booktrade(client, trade)
@@ -30,8 +34,9 @@ async def book_trades_bulk_csv(file: UploadFile = File(...), client: redis.Redis
 
 @router.post("/csvToJson")
 async def csv_to_json(file: UploadFile = File(...)) -> list[Trade]:
-    data: IO[bytes] = file.file
-    reader = DictReader(data)
+    data: bytes = await file.read()
+    text: str = data.decode()
+    reader = DictReader(StringIO(text))
 
     trades = []
     for row in reader:
