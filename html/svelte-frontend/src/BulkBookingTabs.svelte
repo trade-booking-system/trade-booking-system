@@ -20,10 +20,6 @@
 
   let tradeData = [];
 
-  let tradesPosted = [];
-
-  let submitTrade = false;
-
   let fileUpload;
 
   let buttonName;
@@ -88,8 +84,7 @@
   }
 
   function submitTrades(){
-    submitTrade = true;
-
+    event.preventDefault();
   }
 
   function handleFileChange(event) {
@@ -114,30 +109,7 @@
     }
   }
 
-  async function uploadFile() {
-    try{
-      let data = new FormData();
-
-      data.append('file', fileUpload);
-
-      const response = await fetch('api/csvToJson', {
-        method: 'POST',
-        body: data,
-      });
-
-      if(!response.ok){
-        throw new Error('Network Response not OK');
-      }
-
-      const jsonData = await response.json();
-
-      tradeData = jsonData;
-
-      console.log({jsonData: jsonData});
-    } catch (error){
-      console.error('this error');
-    }
-  }
+  function upload() {}
 </script>
 
 <Tabs>
@@ -147,9 +119,9 @@
     <Fileupload on:change={handleFileChange}/>
 
     {#if fileUpload != null}
-      <GradientButton color="tealToLime" class="mt-3" on:click={uploadFile}>Upload</GradientButton>
+      <GradientButton color="tealToLime" class="mt-3" on:click={upload}>Upload</GradientButton>
     {:else}
-      <GradientButton color="tealToLime" class="mt-3" on:click={uploadFile} disabled>Upload</GradientButton>
+      <GradientButton color="tealToLime" class="mt-3" on:click={upload} disabled>Upload</GradientButton>
     {/if}
   </TabItem>
   <TabItem>
@@ -253,7 +225,7 @@
   <GradientButton color="purpleToBlue" on:click = {submitTrades}>Bulk Book</GradientButton>
 </div>
 
-<BulkBookingGrid bind:tradeData = {tradeData} bind:deleteCall = {deleteCall} bind:buttonName = {buttonName} bind:tradesPosted = {tradesPosted} bind:submitTrade = {submitTrade}/>
+<BulkBookingGrid bind:tradeData = {tradeData} bind:deleteCall = {deleteCall} bind:buttonName = {buttonName}/>
 
 <style>
   .orange {

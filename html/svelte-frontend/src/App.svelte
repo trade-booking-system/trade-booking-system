@@ -18,9 +18,9 @@
 </script>
 
 <div class="container">
-<div id="bulkBookingTabs" class = "bottomPadding">
+  <!-- <div id="bulkBookingTabs" class = "bottomPadding">
     <BulkBookingTabs/>
-  </div>
+  </div> -->
   <div class="accountpicker">
     <Accountpicker {checkedAccountsStore}/>
   </div>
