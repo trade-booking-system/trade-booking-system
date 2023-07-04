@@ -1,6 +1,6 @@
 import random
 
-from aggregate.position_listener import TradeHandler
+from listeners.position_listener import TradeHandler
 import schema
 from .conftest import FakeClient
 
@@ -18,7 +18,7 @@ def test_aggregate():
         for account in accounts:
             for ticker in tickers:
                 amount = gen.randrange(1, 1000)
-                redis.publish("updatePositions", f"{account}:{ticker}:{amount}")
+                redis.publish("updatePositions", f"{account}:{ticker}:{amount}:dummy")
                 data[account + ticker] = amount + data.get(account + ticker, 0)
     for account in accounts:
         for ticker in tickers:

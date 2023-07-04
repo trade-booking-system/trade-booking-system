@@ -38,7 +38,7 @@ class PriceHandler:
     def update_stock_prices(self):
         if not self.is_market_open():
             print("market is closed")
-            #return
+            return
         for stock_ticker in self.tickers:
             stock_price = self.get_stock_price(stock_ticker)
             if stock_price != None:
