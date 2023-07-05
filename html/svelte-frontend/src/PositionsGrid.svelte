@@ -35,6 +35,25 @@
   $: {
     if(checkedAccounts.length > 0){
       populatePositionGrid();
+      const ws = new WebSocket("ws://" + window.location.hostname + `/ws/positions?accounts=${checkedAccounts.join(',')}`);
+      ws.onmessage = (updatedData) => {
+        let jsonData = updatedData.data.json();
+        let newPosition = jsonData.payload;
+        rowData.forEach(position => {
+          if(position.account == newPosition.account && position.stock_ticker == newPosition.stock_ticker){
+            let index = positions.indexOf(position);
+            if(index > -1){
+              positions.splice(index, 1);
+            }
+            positions.push(position);
+          }
+          rowData = [];
+          populateRowData();
+          if (gridOptions.api) {
+            gridOptions.api.setRowData(rowData);
+          }
+        });
+      }
     } else{
       rowData = [];
       if (gridOptions.api) {
