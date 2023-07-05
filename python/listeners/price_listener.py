@@ -8,16 +8,15 @@ import sys
 import os
 
 class PriceHandler:
-    def __init__(self, client: redis.Redis, tickers: list[str], always_listen):
+    def __init__(self, client: redis.Redis, tickers: list[str], now: datetime.datetime):
         self.client= client
         self.tickers= tickers
         self.tickers_info= Ticker(tickers)
-        self.always_listen= always_listen
-        self.now= datetime.datetime.now
+        self.now= now
     
     def is_market_open(self) -> bool:
         date_time= self.now()
-        if self.always_listen == True:
+        if date_time == None:
             return True
         day= date_time.weekday()
         if day == 5 or day == 6:
@@ -55,7 +54,7 @@ if __name__ == "__main__":
     client = redis.Redis(host = os.getenv("REDIS_HOST"), port = 6379, db = 0, decode_responses= True)
     signal.signal(signal.SIGTERM, termination_handler)
     tickers= ValidTickers("utils/ListOfStocks.txt")
-    handler = PriceHandler(client, tickers.get_all_tickers(), False if os.getenv("DEBUG_MODE", "off") == "off" else True)
+    handler = PriceHandler(client, tickers.get_all_tickers(), datetime.datetime.now if os.getenv("DEBUG_MODE", "off") == "off" else None)
     while True:
         handler.update_stock_prices()
         client.publish("prices", "updated")
