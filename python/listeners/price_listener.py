@@ -1,4 +1,4 @@
-from yahoo_fin.stock_info import get_live_price
+from yahooquery import Ticker
 from utils.tickers import ValidTickers
 from time import sleep
 import signal
@@ -8,27 +8,17 @@ import sys
 import os
 
 class PriceHandler:
-    def __init__(self, client: redis.Redis, tickers: list[str], price_getter, now):
-        self.client = client
-        self.tickers = tickers
-        self.price_getter = price_getter
-        self.now = now
-
-    def get_stock_price(self, stock_ticker: str):
-        try:
-            stock_price = self.price_getter(stock_ticker)
-        except AssertionError:
-            stock_price = None
-            print("invalid ticker: " + stock_ticker)
-        except KeyError:
-            stock_price= None
-            print("missing data: " + stock_ticker)
-        return stock_price
+    def __init__(self, client: redis.Redis, tickers: list[str], always_listen):
+        self.client= client
+        self.tickers= tickers
+        self.tickers_info= Ticker(tickers)
+        self.always_listen= always_listen
+        self.now= datetime.datetime.now
     
     def is_market_open(self) -> bool:
-        if self.now == None:
-            return True
         date_time= self.now()
+        if self.always_listen == True:
+            return True
         day= date_time.weekday()
         if day == 5 or day == 6:
             return False
@@ -41,14 +31,21 @@ class PriceHandler:
         if not self.is_market_open():
             print("market is closed")
             return
+        
+        date= self.now().date()
+        time= self.now().time()
+        prices= self.tickers_info.price
+
         for stock_ticker in self.tickers:
-            stock_price = self.get_stock_price(stock_ticker)
-            if stock_price != None:
-                current_time = self.now()
+            if stock_ticker in prices and "regularMarketPrice" in prices[stock_ticker]:
+                stock_price= prices[stock_ticker]["regularMarketPrice"]
                 live_price_key= "livePrices:" + stock_ticker
-                snapshot_key= f"snapshotPrices:{stock_ticker}:{current_time.date().isoformat()}"
+                snapshot_key= f"snapshotPrices:{stock_ticker}:{date.isoformat()}"
                 self.client.set(live_price_key, stock_price)
-                self.client.hset(snapshot_key, current_time.time().isoformat(), stock_price)
+                self.client.hset(snapshot_key, time.isoformat(), stock_price)
+                print(f"stock: {stock_ticker} price: {stock_price}")
+            else:
+                print("error getting "+stock_ticker+"s price")
 
 def termination_handler(signum, frame):
     client.close()
@@ -58,8 +55,7 @@ if __name__ == "__main__":
     client = redis.Redis(host = os.getenv("REDIS_HOST"), port = 6379, db = 0, decode_responses= True)
     signal.signal(signal.SIGTERM, termination_handler)
     tickers= ValidTickers("utils/ListOfStocks.txt")
-    handler = PriceHandler(client, tickers.get_all_tickers(), get_live_price,
-        datetime.datetime.now if os.getenv("DEBUG_MODE", "off") == "off" else None)
+    handler = PriceHandler(client, tickers.get_all_tickers(), False if os.getenv("DEBUG_MODE", "off") == "off" else True)
     while True:
         handler.update_stock_prices()
         client.publish("prices", "updated")
