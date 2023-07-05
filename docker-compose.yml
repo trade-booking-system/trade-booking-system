@@ -35,7 +35,7 @@ services:
       - REDIS_HOST=redis
       - TZ=America/New_York
 
-  script:
+  position-listener:
     build:
       context: ./python
       dockerfile: Dockerfile.aggr
@@ -48,7 +48,7 @@ services:
       - TZ=America/New_York
     stop_signal: SIGTERM
 
-  stocks:
+  price-listener:
     build:
       context: ./python
       dockerfile: Dockerfile.price
@@ -60,6 +60,19 @@ services:
       - REDIS_HOST=redis
       - TZ=America/New_York
       - DEBUG_MODE=on
+    stop_signal: SIGTERM
+
+  pl-listener:
+    build:
+      context: ./python
+      dockerfile: Dockerfile.pl
+    depends_on:
+      - redis
+    networks: 
+      - backend
+    environment:
+      - REDIS_HOST=redis
+      - TZ=America/New_York
     stop_signal: SIGTERM
   
   websocket:

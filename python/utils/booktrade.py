@@ -1,4 +1,3 @@
-from yahoo_fin.stock_info import get_live_price
 from fastapi import HTTPException
 from schema import Trade, History
 
@@ -29,7 +28,7 @@ def update_trade(trade_id, account, date, updated_type, updated_amount, updated_
     trade= create_updated_trade(updated_amount, updated_type, updated_price, old_trade)
     history.add_updated_trade(trade)
     # undo previous version of trade and add new trade
-    client.publish("updatePositions", f"{trade.account}:{trade.stock_ticker}:{-get_amount(old_trade)}:{old_trade.price}")
+    client.publish("updatePositions", f"{trade.account}:{trade.stock_ticker}:{get_amount(old_trade)}:{-old_trade.price}")
     client.publish("updatePositions", f"{trade.account}:{trade.stock_ticker}:{get_amount(trade)}:{trade.price}")
     client.publish("tradeUpdates", f"update: {trade.json()}")
     client.hset(key, trade_id, history.json())
