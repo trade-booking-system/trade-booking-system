@@ -6,12 +6,16 @@ from utils.tickers import ValidTickers
 from schema import Trade, History
 from typing import IO, Union
 from csv import DictReader
-from pydantic import ValidationError
+from pydantic import ValidationError, BaseModel
 from io import StringIO
+from datetime import datetime
+from uuid import uuid4
+
 
 
 
 router= APIRouter()
+
 
 def create_trade_from_row(row):
     return Trade(
@@ -33,6 +37,7 @@ def trade_to_dict(trade: Trade):
     }
 
 
+
 @router.put("/bookTrade")
 async def book_trade(trade: Trade, client: redis.Redis = Depends(get_redis_client)) -> dict[str, str]:
     return tradebooker.booktrade(client, trade)
@@ -41,6 +46,7 @@ async def book_trade(trade: Trade, client: redis.Redis = Depends(get_redis_clien
 async def book_trades_bulk(trades: list[Trade], client: redis.Redis = Depends(get_redis_client)) -> dict[str, str]:
     return tradebooker.booktrades_bulk(client, trades)
 
+"""
 @router.post("/bookTradesBulkCSV")
 async def book_trades_bulk_csv(file: UploadFile = File(...), client: redis.Redis = Depends(get_redis_client)):
 
@@ -51,6 +57,8 @@ async def book_trades_bulk_csv(file: UploadFile = File(...), client: redis.Redis
         trade = Trade(**row)
         tradebooker.booktrade(client, trade)
     return {"message": "Trades with csv file booked successfully"}
+
+"""
 
 @router.post("/csvToJson")
 async def csv_to_json(file: UploadFile = File(...)) -> list[dict[str, Union[str, int, float]]]:
@@ -67,6 +75,42 @@ async def csv_to_json(file: UploadFile = File(...)) -> list[dict[str, Union[str,
             raise HTTPException(status_code=400, detail="Invalid trade data in CSV file.")
 
     return trades
+
+@router.post("/bookManyTrades")
+async def book_trades(trades: list[dict], client: redis.Redis = Depends(get_redis_client)) -> list[dict]:
+    trade_responses = []
+    request_group = str(uuid4())
+
+    for trade_request in trades:
+        # Create and book the trade
+        trade = Trade(
+            account=trade_request['account'],
+            type=trade_request['type'],
+            stock_ticker=trade_request['stock_ticker'],
+            amount=trade_request['amount'],
+            user="101010",  # Set this as needed
+            price=trade_request['price']
+        )
+
+        tradebooked = tradebooker.booktrade(client, trade)
+        print(type(tradebooked), tradebooked)
+
+
+        # Build the response
+        response = {
+            'id': tradebooked['Field'],  # Replace 'id' with 'Field'
+            'booked_at': datetime.now().isoformat(),  # Current time in ISO 8601
+            'request_group': request_group,
+            'account': trade_request['account'],
+            'type': trade_request['type'],
+            'stock_ticker': trade_request['stock_ticker'],
+            'amount': trade_request['amount'],
+            'price': trade_request['price']
+        }
+
+        trade_responses.append(response)
+
+    return trade_responses
 
 @router.post("/updateTrade")
 def update_trade(trade_id: str, account: str, date: str, updated_type: str= None, updated_amount: int= None, 
