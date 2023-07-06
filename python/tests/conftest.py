@@ -113,6 +113,12 @@ class System:
         app.dependency_overrides[get_redis_client] = lambda: self.redis[0]
         self.web = TestClient(app)
 
+class FakePrices:
+    def __init__(self, data: dict[str, float]):
+        self.price = {}
+        for ticker, price in data.items():
+            self.price[ticker] = {"regularMarketPrice": price}
+
 @pytest.fixture()
 def test_server() -> System:
     return System(app)
