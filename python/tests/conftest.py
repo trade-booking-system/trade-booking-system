@@ -173,7 +173,7 @@ def generate_trade(seed: int) -> schema.Trade:
     account = "account" + str(random_gen.randrange(1, 4))
     user = "user" + str(random_gen.randrange(1, 4))
     type = random_gen.choice(["buy", "sell"])
-    stock_ticker = random_gen.choice(["ABC", "XYZ", "LMNOP"])
+    stock_ticker = random_gen.choice(["AAPL", "MSFT", "GOOGL"])
     amount = random_gen.randrange(1, 1000)
     price = random_gen.randrange(1, 10000)
     date = datetime.date(random_gen.randrange(1900, 2100), random_gen.randrange(1, 13),
