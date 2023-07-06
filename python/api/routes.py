@@ -69,8 +69,8 @@ async def csv_to_json(file: UploadFile = File(...)) -> list[dict[str, Union[str,
     trades = []
     for row in reader:
         try:
-            trade = create_trade_from_row(row)  # use the create_trade_from_row function here
-            trades.append(trade_to_dict(trade))  # append the dictionary to the list
+            trade = create_trade_from_row(row)
+            trades.append(trade_to_dict(trade))
         except ValidationError as e:
             raise HTTPException(status_code=400, detail="Invalid trade data in CSV file.")
 
@@ -82,24 +82,21 @@ async def book_trades(trades: list[dict], client: redis.Redis = Depends(get_redi
     request_group = str(uuid4())
 
     for trade_request in trades:
-        # Create and book the trade
+
         trade = Trade(
             account=trade_request['account'],
             type=trade_request['type'],
             stock_ticker=trade_request['stock_ticker'],
             amount=trade_request['amount'],
-            user="101010",  # Set this as needed
+            user="101010",
             price=trade_request['price']
         )
 
         tradebooked = tradebooker.booktrade(client, trade)
-        print(type(tradebooked), tradebooked)
 
-
-        # Build the response
         response = {
-            'id': tradebooked['Field'],  # Replace 'id' with 'Field'
-            'booked_at': datetime.now().isoformat(),  # Current time in ISO 8601
+            'id': tradebooked['Field'],
+            'booked_at': datetime.now().isoformat(),
             'request_group': request_group,
             'account': trade_request['account'],
             'type': trade_request['type'],
