@@ -1,8 +1,8 @@
 from redis import Redis
 from datetime import datetime
 from schema import Position
+from utils.redis_initializer import get_redis_client
 import signal
-import os
 
 class TradeHandler:
     def __init__(self, client: Redis):
@@ -49,7 +49,7 @@ def termination_handler(signum, frame):
     client.close()
 
 if __name__ == "__main__":
-    client = Redis(host = os.getenv("REDIS_HOST"), port = 6379, db = 0, decode_responses = True)
+    client = get_redis_client()
     handler = TradeHandler(client)
     sub= client.pubsub(ignore_subscribe_messages= True)
     sub.subscribe(**{"updatePositions": handler.get_trade_handler()})

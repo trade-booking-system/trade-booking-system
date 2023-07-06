@@ -1,10 +1,9 @@
 from queue import Queue
-from redis import Redis
 from threading import Thread
 from schema.schema import Position
+from utils.redis_initializer import get_redis_client
 import signal
 import sys
-import os
 
 def termination_handler(signum, frame):
     thread.stop()
@@ -61,7 +60,7 @@ def process_queue():
         queue.task_done()
 
 queue= Queue()
-client = Redis(host = os.getenv("REDIS_HOST"), port = 6379, db = 0, decode_responses = True)
+client = get_redis_client()
 sub= client.pubsub(ignore_subscribe_messages= True)
 sub.subscribe(**{"tradeInfo": trade_updates_handler})
 sub.subscribe(**{"prices": price_updates_handler})
