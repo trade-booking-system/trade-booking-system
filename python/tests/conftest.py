@@ -192,8 +192,9 @@ def generate_position(seed: int) -> schema.Position:
         random_gen.randrange(1, 29), random_gen.randrange(0, 24), random_gen.randrange(0, 60),
         random_gen.randrange(0, 60))
     host = "host" + str(random_gen.randrange(1, 5))
+    total_price = random_gen.randrange(100, 100000)
     return schema.Position(account=account, stock_ticker=stock_ticker, amount=amount,
-        last_aggregation_time=last_time, last_aggregation_host=host)
+        last_aggregation_time=last_time, last_aggregation_host=host, total_price=total_price)
 
 def generate_positions(count: int, seed: int) -> list[schema.Position]:
     positions: list[schema.Position] = []

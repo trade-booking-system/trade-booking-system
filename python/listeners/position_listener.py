@@ -29,7 +29,7 @@ class TradeHandler:
                 position_info= PositionInfo(old_position.amount, old_position.total_price)
             else:
                 position_info= PositionInfo(0, 0)
-                client.sadd("p&lStocks", account+":"+stock_ticker)
+                self.client.sadd("p&lStocks", account+":"+stock_ticker)
             stock_tickers[stock_ticker]= position_info
 
         position_info.amount+= amount
