@@ -1,9 +1,12 @@
 from fastapi import HTTPException
 from schema import Trade, History
+from utils.tickers import ValidTickers
 
 import redis
 
-def booktrade(client: redis.Redis, trade: Trade):
+def booktrade(client: redis.Redis, trade: Trade, tickers: ValidTickers):
+    if not tickers.is_valid_ticker(trade.stock_ticker.upper()):
+        raise HTTPException(status_code= 404, detail= "invalid stock ticker")
     key = f"trades:{trade.account}:{trade.date.isoformat()}"
     history= History()
     history.trades.append(trade)

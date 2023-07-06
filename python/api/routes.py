@@ -6,16 +6,14 @@ from utils.tickers import ValidTickers
 from schema import Trade, History
 from typing import IO, Union
 from csv import DictReader
-from pydantic import ValidationError, BaseModel
+from pydantic import ValidationError
 from io import StringIO
 from datetime import datetime
 from uuid import uuid4
 
 
-
-
 router= APIRouter()
-
+tickers= ValidTickers("utils/ListOfStocks.txt")
 
 def create_trade_from_row(row):
     return Trade(
@@ -36,11 +34,9 @@ def trade_to_dict(trade: Trade):
         "price": str(trade.price)
     }
 
-
-
 @router.put("/bookTrade")
 async def book_trade(trade: Trade, client: redis.Redis = Depends(get_redis_client)) -> dict[str, str]:
-    return tradebooker.booktrade(client, trade)
+    return tradebooker.booktrade(client, trade, tickers)
 
 @router.post("/bookTradesBulk")
 async def book_trades_bulk(trades: list[Trade], client: redis.Redis = Depends(get_redis_client)) -> dict[str, str]:
@@ -92,7 +88,7 @@ async def book_trades(trades: list[dict], client: redis.Redis = Depends(get_redi
             price=trade_request['price']
         )
 
-        tradebooked = tradebooker.booktrade(client, trade)
+        tradebooked = tradebooker.booktrade(client, trade, tickers)
 
         response = {
             'id': tradebooked['Field'],
