@@ -98,10 +98,10 @@ async def book_trades(trades: list[dict], client: redis.Redis = Depends(get_redi
             'id': tradebooked['Field'],
             'booked_at': datetime.now().isoformat(),
             'request_group': request_group,
-            'account': trade_request['account'],
-            'type': trade_request['type'],
-            'stock_ticker': trade_request['stock_ticker'],
-            'amount': trade_request['amount'],
+            'accounts': trade_request['account'],
+            'buyOrSell': trade_request['type'],
+            'tickers': trade_request['stock_ticker'],
+            'shares': trade_request['amount'],
             'price': trade_request['price']
         }
 
