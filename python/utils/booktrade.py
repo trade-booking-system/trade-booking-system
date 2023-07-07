@@ -1,6 +1,11 @@
 from fastapi import HTTPException
 from schema import Trade, History
 from utils.tickers import ValidTickers
+from typing import IO, Union
+from csv import DictReader
+from pydantic import ValidationError
+from io import StringIO
+
 
 import redis
 
@@ -80,3 +85,39 @@ def get_accounts(client: redis.Redis):
 
 def get_amount(trade: Trade):
     return trade.amount if trade.type == "buy" else -trade.amount
+
+def csv_to_json(data: bytes):
+    text: str = data.decode()
+    reader = DictReader(StringIO(text))
+
+    trades = []
+    for row in reader:
+        try:
+            trade = create_trade_from_row(row)
+            trades.append(trade_to_dict(trade))
+        except ValidationError as e:
+            raise HTTPException(status_code=400, detail="Invalid trade data in CSV file.")
+
+    return trades
+
+
+# Existing function
+def create_trade_from_row(row):
+    return Trade(
+        account=row["accounts"],
+        type=row["buyOrSell"],
+        stock_ticker=row["tickers"],
+        amount=int(row["shares"]),
+        user=row.get("user", "101010"),
+        price=float(row["price"]) if row["price"] else None
+    )
+
+# Existing function
+def trade_to_dict(trade: Trade):
+    return {
+        "tickers": trade.stock_ticker,
+        "accounts": trade.account,
+        "buyOrSell": trade.type,
+        "shares": str(trade.amount),
+        "price": str(trade.price)
+    }

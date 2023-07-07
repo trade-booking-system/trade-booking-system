@@ -15,24 +15,6 @@ from uuid import uuid4
 router= APIRouter()
 tickers= ValidTickers("utils/ListOfStocks.txt")
 
-def create_trade_from_row(row):
-    return Trade(
-        account=row["accounts"],
-        type=row["buyOrSell"],
-        stock_ticker=row["tickers"],
-        amount=int(row["shares"]),
-        user=row.get("user", "101010"),
-        price=float(row["price"]) if row["price"] else None
-    )
-
-def trade_to_dict(trade: Trade):
-    return {
-        "tickers": trade.stock_ticker,
-        "accounts": trade.account,
-        "buyOrSell": trade.type,
-        "shares": str(trade.amount),
-        "price": str(trade.price)
-    }
 
 @router.put("/bookTrade")
 async def book_trade(trade: Trade, client: redis.Redis = Depends(get_redis_client)) -> dict[str, str]:
@@ -42,35 +24,10 @@ async def book_trade(trade: Trade, client: redis.Redis = Depends(get_redis_clien
 async def book_trades_bulk(trades: list[Trade], client: redis.Redis = Depends(get_redis_client)) -> dict[str, str]:
     return tradebooker.booktrades_bulk(client, trades)
 
-"""
-@router.post("/bookTradesBulkCSV")
-async def book_trades_bulk_csv(file: UploadFile = File(...), client: redis.Redis = Depends(get_redis_client)):
-
-    data: bytes = await file.read()
-    text: str = data.decode()
-    reader = DictReader(StringIO(text))
-    for row in reader:
-        trade = Trade(**row)
-        tradebooker.booktrade(client, trade)
-    return {"message": "Trades with csv file booked successfully"}
-
-"""
-
 @router.post("/csvToJson")
-async def csv_to_json(file: UploadFile = File(...)) -> list[dict[str, Union[str, int, float]]]:
-    data: bytes = await file.read()
-    text: str = data.decode()
-    reader = DictReader(StringIO(text))
+async def csv_to_json(file: UploadFile = File(...)):
+    return tradebooker.csv_to_json(await file.read())
 
-    trades = []
-    for row in reader:
-        try:
-            trade = create_trade_from_row(row)
-            trades.append(trade_to_dict(trade))
-        except ValidationError as e:
-            raise HTTPException(status_code=400, detail="Invalid trade data in CSV file.")
-
-    return trades
 
 @router.post("/bookManyTrades")
 async def book_trades(trades: list[dict], client: redis.Redis = Depends(get_redis_client)) -> list[dict]:
