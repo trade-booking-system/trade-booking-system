@@ -5,6 +5,8 @@ from typing import IO, Union
 from csv import DictReader
 from pydantic import ValidationError
 from io import StringIO
+from datetime import datetime
+from uuid import uuid4
 
 
 import redis
@@ -101,7 +103,6 @@ def csv_to_json(data: bytes):
     return trades
 
 
-# Existing function
 def create_trade_from_row(row):
     return Trade(
         account=row["accounts"],
@@ -112,7 +113,6 @@ def create_trade_from_row(row):
         price=float(row["price"]) if row["price"] else None
     )
 
-# Existing function
 def trade_to_dict(trade: Trade):
     return {
         "tickers": trade.stock_ticker,
@@ -121,3 +121,37 @@ def trade_to_dict(trade: Trade):
         "shares": str(trade.amount),
         "price": str(trade.price)
     }
+
+def book_many_trades(client: redis.Redis, trades: list[dict], tickers: ValidTickers):
+
+    trade_responses = []
+    request_group = str(uuid4())
+
+    for trade_request in trades:
+        trade = Trade(
+            account=trade_request['account'],
+            type=trade_request['type'],
+            stock_ticker=trade_request['stock_ticker'],
+            amount=trade_request['amount'],
+            user="101010",
+            price=trade_request['price']
+        )
+
+        tradebooked = booktrade(client, trade, tickers)
+
+        response = {
+            'id': tradebooked['Field'],
+            'booked_at': datetime.now().isoformat(),
+            'request_group': request_group,
+            'accounts': trade_request['account'],
+            'buyOrSell': trade_request['type'],
+            'tickers': trade_request['stock_ticker'],
+            'shares': trade_request['amount'],
+            'price': trade_request['price']
+        }
+
+        trade_responses.append(response)
+
+    return trade_responses
+
+
