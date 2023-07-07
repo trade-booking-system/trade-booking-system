@@ -1,6 +1,8 @@
-### endpoints
+### endpoints (frontend)
     -websocket requests /ws/
     -api requests /api/
+### endpoints (backend)
+    
 ### json
     - trade input - {
         "account":"account name",
