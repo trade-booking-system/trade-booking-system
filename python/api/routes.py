@@ -31,36 +31,8 @@ async def csv_to_json(file: UploadFile = File(...)):
 
 @router.post("/bookManyTrades")
 async def book_trades(trades: list[dict], client: redis.Redis = Depends(get_redis_client)) -> list[dict]:
-    trade_responses = []
-    request_group = str(uuid4())
+    return tradebooker.book_many_trades(client, trades, tickers)
 
-    for trade_request in trades:
-
-        trade = Trade(
-            account=trade_request['account'],
-            type=trade_request['type'],
-            stock_ticker=trade_request['stock_ticker'],
-            amount=trade_request['amount'],
-            user="101010",
-            price=trade_request['price']
-        )
-
-        tradebooked = tradebooker.booktrade(client, trade, tickers)
-
-        response = {
-            'id': tradebooked['Field'],
-            'booked_at': datetime.now().isoformat(),
-            'request_group': request_group,
-            'accounts': trade_request['account'],
-            'buyOrSell': trade_request['type'],
-            'tickers': trade_request['stock_ticker'],
-            'shares': trade_request['amount'],
-            'price': trade_request['price']
-        }
-
-        trade_responses.append(response)
-
-    return trade_responses
 
 @router.post("/updateTrade")
 def update_trade(trade_id: str, account: str, date: str, updated_type: str= None, updated_amount: int= None, 
@@ -89,3 +61,4 @@ async def get_accounts(client: redis.Redis = Depends(get_redis_client)) -> set[s
 @router.get("/tickers")
 async def get_tickers(tickers: ValidTickers = Depends(lambda: ValidTickers("utils/ListOfStocks.txt"))) -> list[str]:
     return tickers.get_all_tickers()
+
