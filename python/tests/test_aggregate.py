@@ -11,14 +11,14 @@ def test_aggregate():
     tickers = ["XYZ", "ABC", "QUE"]
     accounts = ["account" + str(i) for i in range(3)]
     handler = TradeHandler(redis)
-    redis._add_channel("updatePositions")
-    redis.pubsub().subscribe(**{"updatePositions": handler.get_trade_handler()})
+    redis._add_channel("tradesInfo")
+    redis.pubsub().subscribe(**{"tradesInfo": handler.get_trade_handler()})
     data: dict[str, int] = {}
     for i in range(5):
         for account in accounts:
             for ticker in tickers:
                 amount = gen.randrange(1, 1000)
-                redis.publish("updatePositions", f"{account}:{ticker}:{amount}:123.45")
+                redis.publish("tradesInfo", f"{account}:{ticker}:{amount}:123.45")
                 data[account + ticker] = amount + data.get(account + ticker, 0)
     for account in accounts:
         for ticker in tickers:
