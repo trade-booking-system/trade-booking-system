@@ -91,7 +91,7 @@ def test_booktrade_channel(trade: schema.Trade, test_server: System):
         assert message == {"data": f"create: {trade.json()}"}
         handled = True
     client.put("/bookTrade", json=trade_to_dict(trade))
-    redis.pubsub().subscribe(**{"tradeUpdates": handler})
+    redis.pubsub().subscribe(**{"tradeUpdatesWS": handler})
     assert handled
 
 def test_get_accounts(test_server: System):
