@@ -78,3 +78,7 @@ class PositionResponse(BaseModel):
     count: int
     
     _count_validator = validator("count", allow_reuse=True)(validate_is_positive)
+
+class ProfitLoss(BaseModel):
+    trade_pl: float
+    position_pl: float
