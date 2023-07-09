@@ -58,5 +58,5 @@ if __name__ == "__main__":
     handler = PriceHandler(client, tickers.get_all_tickers(), datetime.datetime.now if os.getenv("DEBUG_MODE", "off") == "off" else None)
     while True:
         handler.update_stock_prices()
-        client.publish("prices", "updated")
+        client.publish("pricesUpdates", "updated")
         sleep(60)

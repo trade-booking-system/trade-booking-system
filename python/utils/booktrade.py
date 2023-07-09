@@ -1,26 +1,25 @@
 from fastapi import HTTPException
 from schema import Trade, History
 from utils.tickers import ValidTickers
-from typing import IO, Union
 from csv import DictReader
 from pydantic import ValidationError
 from io import StringIO
 from datetime import datetime
 from uuid import uuid4
-
-
 import redis
 
 def booktrade(client: redis.Redis, trade: Trade, tickers: ValidTickers):
     if not tickers.is_valid_ticker(trade.stock_ticker.upper()):
-        raise HTTPException(status_code= 404, detail= "invalid stock ticker")
+        raise HTTPException(status_code= 400, detail= "invalid stock ticker")
     key = f"trades:{trade.account}:{trade.date.isoformat()}"
     history= History()
     history.trades.append(trade)
     json_data= history.json()
     client.hset(key, trade.id, json_data)
-    client.publish("updatePositions", f"{trade.account}:{trade.stock_ticker}:{get_amount(trade)}:{trade.price}")
-    client.publish("tradeUpdates", f"create: {trade.json()}")
+    trade_amount = get_amount(trade)
+    client.publish("tradesInfo", f"{trade.account}:{trade.stock_ticker}:{trade_amount}")
+    client.publish("tradeUpdates", f"{trade.account}:{trade.stock_ticker}:{trade_amount}:{trade.price}")
+    client.publish("tradeUpdatesWS", f"create: {trade.json()}")
     return {"Key": key, "Field": trade.id}
 
 def booktrades_bulk(client: redis.Redis, trades: list[Trade]):
@@ -32,15 +31,21 @@ def update_trade(trade_id, account, date, updated_type, updated_amount, updated_
     key= f"trades:{account}:{date}"
     json_history= client.hget(key, trade_id)
     if json_history == None:
-        raise HTTPException(status_code= 404, detail= "trade does not exist")
+        raise HTTPException(status_code= 400, detail= "trade does not exist")
     history= History.parse_raw(json_history)
     old_trade= history.get_current_trade()
+    if old_trade.date != datetime.now().date():
+        raise HTTPException(status_code= 400, detail= "trade being updated was not created today")
     trade= create_updated_trade(updated_amount, updated_type, updated_price, old_trade)
     history.add_updated_trade(trade)
-    # undo previous version of trade and add new trade
-    client.publish("updatePositions", f"{trade.account}:{trade.stock_ticker}:{get_amount(old_trade)}:{-old_trade.price}")
-    client.publish("updatePositions", f"{trade.account}:{trade.stock_ticker}:{get_amount(trade)}:{trade.price}")
-    client.publish("tradeUpdates", f"update: {trade.json()}")
+    if updated_amount != None or updated_type != None:
+        # undo previous version of trade and add new trade
+        client.publish("tradesInfo", f"{trade.account}:{trade.stock_ticker}:{get_amount(trade) - get_amount(old_trade)}")
+
+    client.publish("tradeUpdates", f"{trade.account}:{trade.stock_ticker}:{-get_amount(old_trade)}:{old_trade.price}")
+    client.publish("tradeUpdates", f"{trade.account}:{trade.stock_ticker}:{get_amount(trade)}:{trade.price}")
+
+    client.publish("tradeUpdatesWS", f"update: {trade.json()}")
     client.hset(key, trade_id, history.json())
     return {"Key": key, "Field": trade.id, "Version": trade.version}
 
@@ -153,5 +158,3 @@ def book_many_trades(client: redis.Redis, trades: list[dict], tickers: ValidTick
         trade_responses.append(response)
 
     return trade_responses
-
-

@@ -54,7 +54,6 @@ class Position(BaseModel):
     amount: int
     last_aggregation_time: datetime
     last_aggregation_host: str
-    total_price: float
 
 class Price(BaseModel):
     stock_ticker: str

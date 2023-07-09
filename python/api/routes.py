@@ -1,15 +1,9 @@
 import redis
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
+from fastapi import APIRouter, Depends, UploadFile, File
 from utils import booktrade as tradebooker
 from utils.redis_initializer import get_redis_client
 from utils.tickers import ValidTickers
 from schema import Trade, History
-from typing import IO, Union
-from csv import DictReader
-from pydantic import ValidationError
-from io import StringIO
-from datetime import datetime
-from uuid import uuid4
 
 
 router= APIRouter()
@@ -61,4 +55,3 @@ async def get_accounts(client: redis.Redis = Depends(get_redis_client)) -> set[s
 @router.get("/tickers")
 async def get_tickers(tickers: ValidTickers = Depends(lambda: ValidTickers("utils/ListOfStocks.txt"))) -> list[str]:
     return tickers.get_all_tickers()
-

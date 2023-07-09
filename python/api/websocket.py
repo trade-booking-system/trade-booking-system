@@ -27,7 +27,7 @@ async def websocket_endpoint_watchTrade(websocket: WebSocket, redis: redis.Redis
         data = {"type": type, "trade": trade.strip()}
         queue.put_nowait(data)
     
-    pubsub.subscribe(**{"tradeUpdates":handler})
+    pubsub.subscribe(**{"tradeUpdatesWS":handler})
     pubsub.run_in_thread(daemon= True)
 
     try:
