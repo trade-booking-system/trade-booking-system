@@ -44,6 +44,10 @@ class Trade(BaseModel):
 
     @validator("type")
     def validate_type(cls, type):
+        if type == "b":
+            type= "buy"
+        if type == "s":
+            type= "sell"
         if type in ("sell", "buy"):
             return type
         raise ValueError("type does not equal sell or buy")
