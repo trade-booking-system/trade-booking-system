@@ -36,8 +36,8 @@
     { field: "BuyOrSell" },
     { field: "Shares" },
     { field: "Price" },
-    { field: "Booked-At" },
-    { field: "Request-Group" }
+    { field: "Booked_At" },
+    { field: "Request_Group" }
   ];
 
   //this allows you to drag and resize columns 
@@ -99,24 +99,46 @@
 
   function getAllRows(){
     let rowNodes = [];
-    rowNodes = gridOptions.api.getRenderedNodes().map(node => node.data);
-    console.log({rowNodes: rowNodes})
+    rowNodes = gridOptions.api.getRenderedNodes().map(node => node.data).filter(item => item !== undefined);
+    console.log({rowNodesgetAllRows: rowNodes})
     return rowNodes;
   }
 
   function getAllRowsForTradeSubmission(){
     let rowNodes = [];
     rowNodes = gridOptions.api.getRenderedNodes().map(node => {
-      return {
-        account: node.data.Account,
-        type: node.data.BuyOrSell, 
-        stock_ticker: node.data.Ticker, 
-        amount: node.data.Shares,
-        price: node.data.Price, 
-        user: 'BulkBookingPortal',  // User is hardcoded because its always coming from the BulkBooking UI
-      };
-    });
-    console.log({rowNodes: rowNodes})
+        if (node.data.ID === null || node.data.ID === undefined) {
+            return {
+                account: node.data.Account,
+                type: node.data.BuyOrSell, 
+                stock_ticker: node.data.Ticker, 
+                amount: node.data.Shares,
+                price: node.data.Price, 
+                user: 'BulkBookingPortal',  // User is hardcoded because it's always coming from the BulkBooking UI
+            };
+        }
+    }).filter(item => item !== undefined);
+    console.log({rowNodesgetAllRowsForTradeSubmission: rowNodes})
+    return rowNodes;
+  }
+
+  function getAllSubmittedRows(){
+    let rowNodes = [];
+    rowNodes = gridOptions.api.getRenderedNodes().map(node => {
+        if (node.data.ID != null && node.data.ID != undefined) {
+            return {
+              ID: node.data.ID,
+              Booked_At: node.data.Booked_At,
+              Request_Group: node.data.Request_Group,
+              Account: node.data.Account,
+              BuyOrSell: node.data.BuyOrSell, 
+              Ticker: node.data.Ticker, 
+              Shares: node.data.Shares,
+              Price: node.data.Price,   
+            };
+        }
+    }).filter(item => item !== undefined);
+    console.log({rowNodesgetAllsubmittedRows: rowNodes})
     return rowNodes;
   }
 
@@ -143,6 +165,30 @@
     tradeData = [];
   };
 
+    function populateGridBulkBook(data){
+    // Clear rowData
+    rowData = getAllSubmittedRows();
+    // Populate rowData with tradeData (properly formatting it)
+    data.forEach(element => {
+      rowData.push({
+        ID: element.id,
+        Booked_At: element.booked_at,
+        Request_Group: element.request_group,
+        Ticker: element.tickers,
+        Account: element.accounts,
+        BuyOrSell: element.buyOrSell,
+        Shares: element.shares,
+        Price: element.price,
+      });
+    });
+    // Update the grid with rowData
+    if (gridOptions.api) {
+      gridOptions.api.setRowData(rowData);
+    }
+    currentRows = [...tradeData, ...data];
+    data = [];
+  };
+
 
   $: {
     if(tradeData.length > 0 && deleteCall === false && submitTrade === false){
@@ -161,7 +207,7 @@
     console.log(currentRows);
 
     try{
-      const response = await fetch('api/bookTradesBulk', {
+      const response = await fetch('api//bookManyTrades', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -177,11 +223,11 @@
       const jsonData = await response.json();
       console.log("made it to jsondata");
 
-      tradeData = jsonData;
+      const data = jsonData;
 
-      console.log({tradeData: tradeData});
+      console.log({dataSubmitTrades: data});
 
-      populateGrid();
+      populateGridBulkBook(data);
       console.log('why is it not populating grid then?');
 
       submitTrade = false;

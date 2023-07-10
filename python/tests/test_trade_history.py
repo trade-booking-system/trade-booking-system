@@ -1,3 +1,4 @@
+import datetime
 import pytest
 
 import schema
@@ -6,6 +7,7 @@ from .conftest import System, generate_trades, trade_to_dict, assert_trades_equa
 @pytest.mark.parametrize("trades", [generate_trades(3, x) for x in range(7000, 7200, 10)])
 def test_trade_history(trades: list[schema.Trade], test_server: System):
     client = test_server.web
+    trades[0].date = datetime.datetime.now().date()
     response = client.put("/bookTrade/", json=trade_to_dict(trades[0]))
     id = response.json()["Field"]
     for i in range(1, len(trades)):

@@ -12,6 +12,6 @@ async def test_watch_trades(ws_server: AsyncSystem, trades: list[schema.Trade]):
         redis._add_channel("tradeUpdatesWS")
         async with client.websocket_connect("/trades") as websocket:
             for (trade, trade_type) in zip(trades, types):
-                redis.publish("tradeUpdatesWs", f"{trade_type}: {trade.json()}")
+                redis.publish("tradeUpdatesWS", f"{trade_type}: {trade.json()}")
                 data = await websocket.receive_json()
                 assert data == {"type": trade_type, "payload": trade_to_dict(trade)}
