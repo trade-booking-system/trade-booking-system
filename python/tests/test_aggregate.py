@@ -18,7 +18,7 @@ def test_aggregate():
         for account in accounts:
             for ticker in tickers:
                 amount = gen.randrange(1, 1000)
-                redis.publish("tradesInfo", f"{account}:{ticker}:{amount}:123.45")
+                redis.publish("tradesInfo", f"{account}:{ticker}:{amount}")
                 data[account + ticker] = amount + data.get(account + ticker, 0)
     for account in accounts:
         for ticker in tickers:
