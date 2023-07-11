@@ -1,5 +1,7 @@
 from utils.redis_initializer import get_redis_client
+from schema.schema import ProfitLoss
 from schema.schema import Position
+from datetime import datetime, date as date_obj
 from threading import Thread
 from queue import Queue
 import signal
@@ -34,27 +36,34 @@ def update_position_pl():
         update_position_pl(account, ticker)
 
 def update_position_pl(account: str, ticker: str):
-    pl= (get_live_price(ticker) - get_opening_price(ticker)) * get_position()
-    client.hset(f"p&l:{account}:{ticker}", "position", pl)
+    pl= get_pl(account, ticker)
+    position= get_position(account, ticker)
+    pl.position_pl= (get_price(ticker, now.date()) - get_previous_closing_price(ticker)) * position.amount
+    client.hset(f"p&l:{account}:{ticker}", now.date().isoformat(), pl.json())
     print(f"position p&l: account: {account} stock ticker: {ticker} profit loss: {pl}")
 
 def update_trade_pl(account: str, ticker: str, amount, price):
-    trade_pl= get_trade_pl(account, ticker)
-    trade_pl+= (get_opening_price() - price) * amount
-    client.hset(f"p&l:{account}:{ticker}", "trade", trade_pl)
-    print(f"realized p&l: account: {account} stock ticker: {ticker} profit loss: {trade_pl}")
+    pl= get_pl(account, ticker)
+    pl.trade_pl+= (get_previous_closing_price() - price) * amount
+    client.hset(f"p&l:{account}:{ticker}", now.date().isoformat(), pl.json())
+    print(f"realized p&l: account: {account} stock ticker: {ticker} profit loss: {pl.trade_pl}")
 
-def get_live_price(ticker: str) -> float:
-    return float(client.get("livePrices:"+ticker.upper()))
+def get_price(ticker: str, date: date_obj) -> float:
+    return float(client.hget("livePrices:"+ticker.upper(), date.isoformat()))
 
-def get_position(account: str, ticker: str) -> int:
+def get_position(account: str, ticker: str) -> Position:
     json_position= client.hget("positions:"+account, ticker)
-    if json_position != None:
-        return Position.parse_raw(json_position).amount
-    return 0
+    return Position.parse_raw(json_position).amount
 
-def get_opening_price(ticker: str)-> float:
-    get_last_day_with_market_open()
+def get_pl(account: str, ticker: str) -> ProfitLoss:
+    pl_json= client.hget(f"p&l:{account}:{ticker}", now.date().isoformat())
+    if pl_json == None:
+        return ProfitLoss(0, 0)
+    return ProfitLoss.parse_raw(pl_json)
+
+def get_previous_closing_price(ticker: str)-> float:
+    date= get_most_recent_trading_day()
+    return get_price(ticker, date)
 
 def process_queue():
     while True:
@@ -62,6 +71,7 @@ def process_queue():
         func(*args)
         queue.task_done()
 
+now= datetime.now()
 queue= Queue()
 client = get_redis_client()
 sub= client.pubsub(ignore_subscribe_messages= True)

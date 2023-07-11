@@ -33,16 +33,13 @@ class PriceHandler:
             return
         now = datetime.datetime.fromtimestamp(0) if self.now is None else self.now()
         date= now.date()
-        time= now.time()
         prices= self.tickers_info.price
 
         for stock_ticker in self.tickers:
             if stock_ticker in prices and "regularMarketPrice" in prices[stock_ticker]:
                 stock_price= prices[stock_ticker]["regularMarketPrice"]
                 live_price_key= "livePrices:" + stock_ticker
-                snapshot_key= f"snapshotPrices:{stock_ticker}:{date.isoformat()}"
-                self.client.set(live_price_key, stock_price)
-                self.client.hset(snapshot_key, time.isoformat(), stock_price)
+                self.client.hset(live_price_key, date.isoformat(), stock_price)
                 print(f"stock: {stock_ticker} price: {stock_price}")
             else:
                 print("error getting "+stock_ticker+"s price")
