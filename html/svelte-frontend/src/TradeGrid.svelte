@@ -1,6 +1,8 @@
 <script>
   import { Grid } from "ag-grid-community";
   import { onMount, onDestroy } from "svelte";
+    import { append_hydration } from "svelte/internal";
+    import PositionsGrid from "./PositionsGrid.svelte";
 
   let gridContainer;
   let grid;
@@ -73,20 +75,77 @@
     });
   }
 
+  export let checkedAccounts;
+
   let rowData = [];
+  let trades = [];
 
   let responseData;
 
-  async function fetchData() {
+  $: {
+    if(checkedAccounts.length > 0){
+      populateTradeGrid();
+      console.log('updating trades');
+      const ws = new WebSocket("ws://" + window.location.hostname + `/ws/trades?accounts=${checkedAccounts.join(',')}`);
+      ws.onmessage = (updatedData) => {
+        let jsonData = updatedData.data.json();
+        let newTrade = jsonData.payload
+        rowData.forEach(trade => {
+          if(trade.id == newTrade.id){
+            let index = trades.indexOf(trade);
+            if(index > -1){
+              trades.splice(index, 1);
+            }
+            trades.push(trade);
+          }
+        });
+        rowData = [];
+        populateRowData();
+        if (gridOptions.api) {
+          gridOptions.api.setRowData(rowData);
+        }
+      }
+    }
+    else{
+      rowData = [];
+      if (gridOptions.api) {
+        gridOptions.api.setRowData(rowData);
+      }
+    }
+  }
+  async function populateTradeGrid() {
+    console.log('trades checked accounts changed');
+    trades = [];
+    console.log('cleared trades');
+
+    const getTradePromises = checkedAccounts.map(account => getTrades(account));
+    const tradesArray = await Promise.all(getTradePromises);
+    trades = tradesArray.flat();
+
+    console.log('trades', trades);
+    rowData =[];
+    console.log("cleared trade row data");
+    populateRowData();
+    if (gridOptions.api) {
+      gridOptions.api.setRowData(rowData);
+      }
+  }
+
+  function populateRowData(){
+    console.log("populating trade row data");
+      trades.forEach(trade => {
+        rowData.push(trade);
+      });
+  }
+
+  async function getTrades(account){
     try {
-      const response = await fetch("/api/getTrades");
+      const response = await fetch(`/api/queryTrades?account=${account}`);
 
       if (response.ok) {
         responseData = await response.json();
         console.log(responseData);
-        responseData.forEach((element) => {
-          rowData.push(element);
-        });
+        return responseData;
       } else {
         console.error("Error:", response.status);
       }
@@ -101,8 +160,7 @@
     rowData: rowData,
   };
 
-  onMount(async () => {
-    await fetchData();
+  onMount(() => {
     window.addEventListener("resize", sizeToFit); //handles auto resizing
     grid = new Grid(gridContainer, gridOptions);
     sizeToFit();

@@ -58,7 +58,7 @@
       rowData = [];
       if (gridOptions.api) {
       gridOptions.api.setRowData(rowData);
-    }
+      }
     }
   }
 
@@ -72,11 +72,6 @@
     positions = positionsArray.flat();
 
     console.log("positions", positions);
-    
-    //checkedAccounts.forEach(account => {
-    //console.log('calling get position on:', account)
-    //getPosition(account)
-    //});
 
     console.log("clearing row data");
     rowData = [];

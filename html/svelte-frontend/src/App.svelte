@@ -34,7 +34,7 @@
     <WebSocketTest />
   </div>
   <div id = "tradeGrid" class = "bottomPadding">
-    <TradeGrid/>
+    <TradeGrid {checkedAccounts}/>
   </div>
   <div id = "positionsGrid" class = "bottomPadding">
     <PositionsGrid {checkedAccounts}/>
