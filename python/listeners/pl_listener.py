@@ -4,6 +4,7 @@ from schema.schema import Position
 from datetime import datetime, date as date_obj
 from threading import Thread
 from queue import Queue
+from utils import market_calendar
 import signal
 import sys
 
@@ -36,16 +37,18 @@ def update_position_pl():
         update_position_pl(account, ticker)
 
 def update_position_pl(account: str, ticker: str):
+    date= datetime.now().date()
     pl= get_pl(account, ticker)
     position= get_position(account, ticker)
-    pl.position_pl= (get_price(ticker, now.date()) - get_previous_closing_price(ticker)) * position.amount
-    client.hset(f"p&l:{account}:{ticker}", now.date().isoformat(), pl.json())
+    pl.position_pl= (get_price(ticker, date) - get_previous_closing_price(ticker)) * position.amount
+    client.hset(f"p&l:{account}:{ticker}", date.isoformat(), pl.json())
     print(f"position p&l: account: {account} stock ticker: {ticker} profit loss: {pl}")
 
 def update_trade_pl(account: str, ticker: str, amount, price):
+    date= datetime.now().date()
     pl= get_pl(account, ticker)
     pl.trade_pl+= (get_previous_closing_price() - price) * amount
-    client.hset(f"p&l:{account}:{ticker}", now.date().isoformat(), pl.json())
+    client.hset(f"p&l:{account}:{ticker}", date.isoformat(), pl.json())
     print(f"realized p&l: account: {account} stock ticker: {ticker} profit loss: {pl.trade_pl}")
 
 def get_price(ticker: str, date: date_obj) -> float:
@@ -56,13 +59,14 @@ def get_position(account: str, ticker: str) -> Position:
     return Position.parse_raw(json_position).amount
 
 def get_pl(account: str, ticker: str) -> ProfitLoss:
-    pl_json= client.hget(f"p&l:{account}:{ticker}", now.date().isoformat())
+    date= datetime.now().date()
+    pl_json= client.hget(f"p&l:{account}:{ticker}", date.isoformat())
     if pl_json == None:
         return ProfitLoss(0, 0)
     return ProfitLoss.parse_raw(pl_json)
 
-def get_previous_closing_price(ticker: str)-> float:
-    date= get_most_recent_trading_day()
+def get_previous_closing_price(ticker: str) -> float:
+    date= market_calendar.get_most_recent_trading_day()
     return get_price(ticker, date)
 
 def process_queue():
@@ -71,7 +75,6 @@ def process_queue():
         func(*args)
         queue.task_done()
 
-now= datetime.now()
 queue= Queue()
 client = get_redis_client()
 sub= client.pubsub(ignore_subscribe_messages= True)

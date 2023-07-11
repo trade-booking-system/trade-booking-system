@@ -27,8 +27,11 @@
 - `ValidTickers.get_all_tickers`: returns the list of tickers
 - `ValidTickers.is_valid_ticker`: returns whether the given ticker is on the list
 
-- 'MarketCalander': deals with getting valid market dates (not created yet (subject to change slightly))
-- 'get_previous_open_market_date': returns the most recent date where the market was open
+- 'MarketCalander': deals with getting valid market dates
+- 'get_most_recent_trading_day': returns the most recent date where the market was open
+- 'is_trading_day': returns true if the market was open on the specified date
+- 'is_market_open': returns true if market is currently open
+- 'default_closing_time': returns the default closing time (4 pm)
 
 ### websocket
 - listens to positionUpdates or tradeUpdates
@@ -85,4 +88,4 @@
 - Type: hash
 - Name: `livePrices:{ticker}`
 - Key: date
-- Value: stock price (float)
+- Value: Price (JSON)
