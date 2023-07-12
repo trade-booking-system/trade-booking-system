@@ -104,7 +104,7 @@
           let jsonData = JSON.parse(updatedData.data);
           let newPosition = jsonData.payload;
           let index = positions.findIndex((position) => {
-            position.account == newPosition.account && position.stock_ticker == newPosition.stock_ticker;
+            return position.account == newPosition.account && position.stock_ticker == newPosition.stock_ticker;
           });
           if (index > -1) {
             positions[index] = newPosition;
