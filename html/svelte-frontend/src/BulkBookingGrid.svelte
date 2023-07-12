@@ -10,7 +10,7 @@
 
   export let submitTrade = false;
 
-  export let tradesPosted = [];
+  export let amountOfTradesPerGrouping;
 
   //this is in order for the to alway be a store of which data is currently being displayed
   let currentRows = [];
@@ -99,34 +99,38 @@
 
   function getAllRows(){
     let rowNodes = [];
-    rowNodes = gridOptions.api.getRenderedNodes().map(node => node.data).filter(item => item !== undefined);
-    console.log({rowNodesgetAllRows: rowNodes})
+    gridOptions.api.forEachNode((node, index) => {
+      if(node !== undefined){
+        rowNodes.push(node.data);
+      }
+    });
     return rowNodes;
   }
 
   function getAllRowsForTradeSubmission(){
     let rowNodes = [];
-    rowNodes = gridOptions.api.getRenderedNodes().map(node => {
+     gridOptions.api.forEachNode((node, index) => {
+      //if id is null that means it hasnt been submitted
         if (node.data.ID === null || node.data.ID === undefined) {
-            return {
+            rowNodes.push({
                 account: node.data.Account,
                 type: node.data.BuyOrSell, 
                 stock_ticker: node.data.Ticker, 
                 amount: node.data.Shares,
                 price: node.data.Price, 
                 user: 'BulkBookingPortal',  // User is hardcoded because it's always coming from the BulkBooking UI
-            };
+            });
         }
-    }).filter(item => item !== undefined);
-    console.log({rowNodesgetAllRowsForTradeSubmission: rowNodes})
+    });
     return rowNodes;
   }
 
   function getAllSubmittedRows(){
     let rowNodes = [];
-    rowNodes = gridOptions.api.getRenderedNodes().map(node => {
+    gridOptions.api.forEachNode((node, index) => {
+      //this means it has been submitted
         if (node.data.ID != null && node.data.ID != undefined) {
-            return {
+            rowNodes.push( {
               ID: node.data.ID,
               Booked_At: node.data.Booked_At,
               Request_Group: node.data.Request_Group,
@@ -135,10 +139,9 @@
               Ticker: node.data.Ticker, 
               Shares: node.data.Shares,
               Price: node.data.Price,   
-            };
+            });
         }
-    }).filter(item => item !== undefined);
-    console.log({rowNodesgetAllsubmittedRows: rowNodes})
+    });
     return rowNodes;
   }
 
@@ -198,14 +201,39 @@
       deleteNodes();
     }
     if (submitTrade === true){
-      submitTrades();
+      groupTrades();
     }
   }
 
-  async function submitTrades(){
+  function groupTrades(){
     const currentSubmission = getAllRowsForTradeSubmission();
-    console.log(currentRows);
 
+    let tradesToSubmitGrouped = [];
+    let counter = 0;
+
+    if (amountOfTradesPerGrouping == undefined|| amountOfTradesPerGrouping == null || amountOfTradesPerGrouping == 0 || currentSubmission.length < amountOfTradesPerGrouping){
+      tradesToSubmitGrouped = [...currentSubmission];
+      submitTrades(tradesToSubmitGrouped);
+      return;
+    }
+    
+    for (let index = 0; index < currentSubmission.length; index++) {
+      const element = currentSubmission[index];
+      tradesToSubmitGrouped.push(element);
+      counter++;
+      if (counter == amountOfTradesPerGrouping) {
+        submitTrades(tradesToSubmitGrouped);
+        tradesToSubmitGrouped = [];
+        counter = 0;
+      }
+    }
+    //if there are still unsubmitted trades submit them
+    if (tradesToSubmitGrouped.length > 0){
+      submitTrades(tradesToSubmitGrouped);
+    }
+  }
+
+  async function submitTrades(currentSubmission){
     try{
       const response = await fetch('api//bookManyTrades', {
         method: 'POST',
@@ -217,28 +245,21 @@
 
       if(!response.ok){
         const errorText = await response.text();
+        alert(`Error: ${errorText}`);
         throw new Error(`Response not ok: ${errorText}`);
       }
 
       const jsonData = await response.json();
-      console.log("made it to jsondata");
-
       const data = jsonData;
-
       console.log({dataSubmitTrades: data});
-
       populateGridBulkBook(data);
-      console.log('why is it not populating grid then?');
-
       submitTrade = false;
+      
     } catch (error){
-
       submitTrade = false;
       tradeData = [];
       console.error('Error:', error);
     }
-
-
   } 
 
   function sizeToFit() {

@@ -14,13 +14,11 @@
 
   let tickers = '', accounts = '', buyOrSell = '', shares = '', price = '';
 
-  let tradesToGenerate = 1;
+  let tradesToGenerate;
 
   let amountOfTradesPerGrouping = 0;
 
   let tradeData = [];
-
-  let tradesPosted = [];
 
   let submitTrade = false;
 
@@ -47,36 +45,40 @@
 
   }
 
+  /*
+   * if there is or isnt an uneven amount of inputs this deals w it 
+   */
   function createRows(splitTickers, splitAccounts, splitBuyOrSell, splitShares, splitPrice){
     let amountOfIterations = 0;
     const createdTrades = [];
 
-  while (amountOfIterations <= tradesToGenerate - 1){
-    let index = amountOfIterations % splitTickers.length;
-    const currentTicker = splitTickers[index];
-    
-    let indexOfAccounts = amountOfIterations % splitAccounts.length;
-    const currentAccount = splitAccounts[indexOfAccounts];
-    
-    let indexOfBuyOrSell = amountOfIterations % splitBuyOrSell.length;
-    const currentBuyOrSell = splitBuyOrSell[indexOfBuyOrSell];
+ 
+    while (amountOfIterations <= tradesToGenerate - 1){
+      let index = amountOfIterations % splitTickers.length;
+      const currentTicker = splitTickers[index];
+      
+      let indexOfAccounts = amountOfIterations % splitAccounts.length;
+      const currentAccount = splitAccounts[indexOfAccounts];
+      
+      let indexOfBuyOrSell = amountOfIterations % splitBuyOrSell.length;
+      const currentBuyOrSell = splitBuyOrSell[indexOfBuyOrSell];
 
-    let indexOfSplitShares = amountOfIterations % splitShares.length;
-    const currentShares = splitShares[indexOfSplitShares];
-    
-    let indexOfPrice = amountOfIterations % splitPrice.length;
-    const currentPrice = splitPrice[indexOfPrice];
+      let indexOfSplitShares = amountOfIterations % splitShares.length;
+      const currentShares = splitShares[indexOfSplitShares];
+      
+      let indexOfPrice = amountOfIterations % splitPrice.length;
+      const currentPrice = splitPrice[indexOfPrice];
 
-    createdTrades.push({
-      tickers: currentTicker,
-      accounts: currentAccount,
-      buyOrSell: currentBuyOrSell,
-      shares: currentShares,
-      price: currentPrice,
-    });
+      createdTrades.push({
+        tickers: currentTicker,
+        accounts: currentAccount,
+        buyOrSell: currentBuyOrSell,
+        shares: currentShares,
+        price: currentPrice,
+      });
 
-    amountOfIterations++;
-  }
+      amountOfIterations++;
+    }
 
   return createdTrades;
 
@@ -160,7 +162,7 @@
           Ticker Ladder
         </div>
       </Label>
-      <Input label="Ticker-Ladder" id="Ticker-Ladder" name="Ticker-Ladder" required placeholder="AMA,IBM,MSFT" bind:value = "{tickers}"/>
+      <Input label="Ticker-Ladder" id="Ticker-Ladder" name="Ticker-Ladder" required placeholder="AAPL,IBM,MSFT" bind:value = "{tickers}"/>
       <Helper class="text-sm mb-2">
         <div class="helper">
           Please enter a comma seperated list of tickers.
@@ -187,7 +189,7 @@
       <Input label="Buy/Sell-Ladder" id="Buy/Sell-Ladder" name="Buy/Sell-Ladder" required placeholder="b,b,s" bind:value = "{buyOrSell}"/>
       <Helper class="text-sm mb-2">
         <div class="helper">
-          Please enter a comma seperated list of B or S.
+          Please enter a comma seperated list of b (buy) or s (sell).
         </div>
       </Helper>
 
@@ -253,7 +255,7 @@
   <GradientButton color="purpleToBlue" on:click = {submitTrades}>Bulk Book</GradientButton>
 </div>
 
-<BulkBookingGrid bind:tradeData = {tradeData} bind:deleteCall = {deleteCall} bind:buttonName = {buttonName} bind:tradesPosted = {tradesPosted} bind:submitTrade = {submitTrade}/>
+<BulkBookingGrid bind:tradeData = {tradeData} bind:deleteCall = {deleteCall} bind:buttonName = {buttonName} bind:submitTrade = {submitTrade} bind:amountOfTradesPerGrouping = {amountOfTradesPerGrouping}/>
 
 <style>
   .orange {
