@@ -211,7 +211,7 @@
     let tradesToSubmitGrouped = [];
     let counter = 0;
 
-    if (amountOfTradesPerGrouping == undefined|| amountOfTradesPerGrouping == null || amountOfTradesPerGrouping == 0 || currentSubmission.length < amountOfTradesPerGrouping){
+    if (amountOfTradesPerGrouping == undefined || amountOfTradesPerGrouping == null || amountOfTradesPerGrouping == 0 || currentSubmission.length < amountOfTradesPerGrouping){
       tradesToSubmitGrouped = [...currentSubmission];
       submitTrades(tradesToSubmitGrouped);
       return;
@@ -254,7 +254,7 @@
       console.log({dataSubmitTrades: data});
       populateGridBulkBook(data);
       submitTrade = false;
-      
+
     } catch (error){
       submitTrade = false;
       tradeData = [];

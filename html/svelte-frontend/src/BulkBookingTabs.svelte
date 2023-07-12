@@ -16,7 +16,7 @@
 
   let tradesToGenerate;
 
-  let amountOfTradesPerGrouping = 0;
+  let amountOfTradesPerGrouping;
 
   let tradeData = [];
 
