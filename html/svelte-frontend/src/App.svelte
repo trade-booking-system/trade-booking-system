@@ -9,12 +9,6 @@
   import BulkBookingTabs from "./BulkBookingTabs.svelte";
   import { getContext } from "svelte";
 
-  const checkedAccountsStore = writable([]);
-  let checkedAccounts = [];
-  checkedAccountsStore.subscribe(value => {
-    checkedAccounts = value
-  })
-
 </script>
 
 <div class="container">
@@ -22,7 +16,7 @@
     <BulkBookingTabs/>
   </div>
   <div class="accountpicker">
-    <Accountpicker {checkedAccountsStore}/>
+    <Accountpicker/>
   </div>
   <div class="hellobutton">
     <HelloButton />
@@ -34,10 +28,10 @@
     <WebSocketTest />
   </div>
   <div id = "tradeGrid" class = "bottomPadding">
-    <TradeGrid {checkedAccounts}/>
+    <TradeGrid/>
   </div>
   <div id = "positionsGrid" class = "bottomPadding">
-    <PositionsGrid {checkedAccounts}/>
+    <PositionsGrid/>
   </div>
 </div>
 

@@ -1,8 +1,7 @@
 <script>
   import { Grid } from "ag-grid-community";
   import { onMount, onDestroy } from "svelte";
-    import { append_hydration } from "svelte/internal";
-    import PositionsGrid from "./PositionsGrid.svelte";
+  import { checkedAccounts } from "./checkedAccounts";
 
   let gridContainer;
   let grid;
@@ -75,50 +74,18 @@
     });
   }
 
-  export let checkedAccounts;
-
   let rowData = [];
   let trades = [];
+  let ws = null;
 
   let responseData;
 
-  $: {
-    if(checkedAccounts.length > 0){
-      populateTradeGrid();
-      console.log('updating trades');
-      const ws = new WebSocket("ws://" + window.location.hostname + `/ws/trades?accounts=${checkedAccounts.join(',')}`);
-      ws.onmessage = (updatedData) => {
-        let jsonData = updatedData.data.json();
-        let newTrade = jsonData.payload
-        rowData.forEach(trade => {
-          if(trade.id == newTrade.id){
-            let index = trades.indexOf(trade);
-            if(index > -1){
-              trades.splice(index, 1);
-            }
-            trades.push(trade);
-          }
-        });
-        rowData = [];
-        populateRowData();
-        if (gridOptions.api) {
-          gridOptions.api.setRowData(rowData);
-        }
-      }
-    }
-    else{
-      rowData = [];
-      if (gridOptions.api) {
-        gridOptions.api.setRowData(rowData);
-      }
-    }
-  }
-  async function populateTradeGrid() {
+  async function populateTradeGrid(accounts) {
     console.log('trades checked accounts changed');
     trades = [];
     console.log('cleared trades');
 
-    const getTradePromises = checkedAccounts.map(account => getTrades(account));
+    const getTradePromises = accounts.map(account => getTrades(account));
     const tradesArray = await Promise.all(getTradePromises);
     trades = tradesArray.flat();
 
@@ -126,7 +93,7 @@
     rowData =[];
     console.log("cleared trade row data");
     populateRowData();
-    if (gridOptions.api) {
+    if (gridOptions !== null && gridOptions.api) {
       gridOptions.api.setRowData(rowData);
       }
   }
@@ -164,6 +131,39 @@
     window.addEventListener("resize", sizeToFit); //handles auto resizing
     grid = new Grid(gridContainer, gridOptions);
     sizeToFit();
+    checkedAccounts.subscribe((accounts) => {
+      if(accounts.length > 0){
+        populateTradeGrid(accounts);
+        console.log('updating trades');
+        if (ws !== null) {
+          ws.close()
+        }
+        ws = new WebSocket("ws://" + window.location.hostname + `/ws/trades?accounts=${accounts.join(',')}`);
+        ws.onmessage = (updatedData) => {
+          let jsonData = JSON.parse(updatedData.data);
+          let newTrade = jsonData.payload;
+          if (jsonData.type == "create") {
+            trades.push(newTrade)
+          } else {
+            let index = trades.findIndex((trade) => {trade.id == newTrade.id});
+            if (index > -1) {
+              trades[index] = newTrade;
+            }
+          }
+          rowData = [];
+          populateRowData();
+          if (gridOptions !== undefined && gridOptions.api) {
+            gridOptions.api.setRowData(rowData);
+          }
+        }
+      }
+      else {
+        rowData = [];
+        if (gridOptions !== undefined && gridOptions.api) {
+          gridOptions.api.setRowData(rowData);
+        }
+      }
+    });
   });
 
   onDestroy(() => {

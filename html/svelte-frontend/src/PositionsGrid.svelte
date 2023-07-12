@@ -1,11 +1,10 @@
 <script>
   import { Grid } from "ag-grid-community";
   import { onMount, onDestroy } from "svelte";
+  import { checkedAccounts } from "./checkedAccounts";
 
   let gridContainer;
   let grid;
-
-  export let checkedAccounts;
 
   //this is where column headers are defined
   const columnDefs = [
@@ -31,38 +30,9 @@
  */
   let positions = [];
   let rowData = [];
+  let ws = null;
 
-  $: {
-    if(checkedAccounts.length > 0){
-      populatePositionGrid();
-      const ws = new WebSocket("ws://" + window.location.hostname + `/ws/positions?accounts=${checkedAccounts.join(',')}`);
-      ws.onmessage = (updatedData) => {
-        let jsonData = updatedData.data.json();
-        let newPosition = jsonData.payload;
-        rowData.forEach(position => {
-          if(position.account == newPosition.account && position.stock_ticker == newPosition.stock_ticker){
-            let index = positions.indexOf(position);
-            if(index > -1){
-              positions.splice(index, 1);
-            }
-            positions.push(position);
-          }
-          rowData = [];
-          populateRowData();
-          if (gridOptions.api) {
-            gridOptions.api.setRowData(rowData);
-          }
-        });
-      }
-    } else{
-      rowData = [];
-      if (gridOptions.api) {
-      gridOptions.api.setRowData(rowData);
-      }
-    }
-  }
-
-  async function populatePositionGrid() {
+  async function populatePositionGrid(checkedAccounts) {
     console.log('checked Acount changed:', checkedAccounts)
     positions = [];
     console.log('cleared positions')
@@ -123,6 +93,37 @@
     window.addEventListener("resize", sizeToFit); //handles auto resizing: any time the window resizes at all it makes the grid resized to fit screen 
     grid = new Grid(gridContainer, gridOptions); //creates the actual ag-grid
     sizeToFit();
+    checkedAccounts.subscribe((accounts) => {
+      if(accounts.length > 0){
+        populatePositionGrid(accounts);
+        if (ws !== null) {
+          ws.close()
+        }
+        ws = new WebSocket("ws://" + window.location.hostname + `/ws/positions?accounts=${accounts.join(',')}`);
+        ws.onmessage = (updatedData) => {
+          let jsonData = JSON.parse(updatedData.data);
+          let newPosition = jsonData.payload;
+          let index = positions.findIndex((position) => {
+            position.account == newPosition.account && position.stock_ticker == newPosition.stock_ticker;
+          });
+          if (index > -1) {
+            positions[index] = newPosition;
+          } else {
+            positions.push(newPosition);
+          }
+          rowData = [];
+          populateRowData();
+          if (gridOptions !== undefined && gridOptions.api) {
+            gridOptions.api.setRowData(rowData);
+          }
+        }
+      } else {
+        rowData = [];
+        if (gridOptions !== undefined && gridOptions.api) {
+        gridOptions.api.setRowData(rowData);
+        }
+      }
+    });
   });
 
   onDestroy(() => {

@@ -7,39 +7,28 @@
     Chevron,
     Checkbox,
   } from "flowbite-svelte";
-  import { writable } from 'svelte/store'
+  import { checkedAccounts } from "./checkedAccounts"
 
   const accounts = [];
-  
-  let checkedAccounts = [];
-  export let checkedAccountsStore;
-
   let selectedAccount;
+  let checkedAccountsList;
 
-  const selectAccount = (account) => {
-    checkedAccounts.push(account);
-    displayAccounts();
-  };
-
-  function displayAccounts() {
-    selectedAccount = "";
-    checkedAccounts.forEach((element) => {
-      selectedAccount += element + ", ";
-    });
-  }
+  checkedAccounts.subscribe((accounts) => {
+    selectedAccount = accounts.join(", ");
+    checkedAccountsList = accounts;
+  });
 
   function dealWithAccountSelection(account) {
-    if (checkedAccounts.includes(account)) {
-      const index = checkedAccounts.indexOf(account);
+    checkedAccounts.update((accounts) => {
+      const index = accounts.indexOf(account);
       if (index > -1) {
-        checkedAccounts.splice(index, 1);
-        displayAccounts();
+        accounts.splice(index, 1);
+      } else {
+        accounts.push(account);
       }
-    } else {
-      selectAccount(account);
-    }
-    console.log(checkedAccounts);
-    checkedAccountsStore.set(checkedAccounts);
+      console.log(accounts);
+      return accounts;
+    });
   }
 
   let responseData;
@@ -71,7 +60,7 @@
     {#each accounts as account}
       <Checkbox
         class="w-58 p-3 space-y-3 text-sm overflow-y-auto center"
-        checked={checkedAccounts.includes(account)}
+        checked={checkedAccountsList.includes(account)}
         on:click={() => dealWithAccountSelection(account)}>{account}</Checkbox
       >
     {/each}

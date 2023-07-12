@@ -16,6 +16,7 @@ async def watch_trades(websocket: WebSocket, accounts: str = "*", manager: Conne
 
 async def loop(websocket: WebSocket, manager: ConnectionManager, accounts: str):
     await websocket.accept()
+    print("Connected: " + accounts)
     queue: Queue = Queue()
     id = await manager.subscribe(queue, accounts)
     try:
