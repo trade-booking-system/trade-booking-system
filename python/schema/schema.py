@@ -61,7 +61,7 @@ class Position(BaseModel):
 
 class Price(BaseModel):
     price: float
-    time: time
+    is_closing_price: bool
 
     _price_validator= validator("price", allow_reuse= True)(validate_is_positive)
 

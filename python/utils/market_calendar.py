@@ -15,8 +15,8 @@ def is_trading_day(date: date) -> bool:
     trading_days= cal.valid_days(start_date= date, end_date= date)
     return trading_days.size == 1
 
-def is_market_open() -> bool:
-    return cal.is_open_now()
+def default_opening_time() -> time:
+    return cal.open_time
 
 def default_closing_time() -> time:
     return cal.close_time

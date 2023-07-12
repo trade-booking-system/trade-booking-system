@@ -47,7 +47,7 @@ def update_position_pl(account: str, ticker: str):
 def update_trade_pl(account: str, ticker: str, amount, price):
     date= datetime.now().date()
     pl= get_pl(account, ticker)
-    pl.trade_pl+= (get_previous_closing_price() - price) * amount
+    pl.trade_pl+= (get_previous_closing_price(ticker) - price) * amount
     client.hset(f"p&l:{account}:{ticker}", date.isoformat(), pl.json())
     print(f"realized p&l: account: {account} stock ticker: {ticker} profit loss: {pl.trade_pl}")
 
@@ -62,7 +62,7 @@ def get_pl(account: str, ticker: str) -> ProfitLoss:
     date= datetime.now().date()
     pl_json= client.hget(f"p&l:{account}:{ticker}", date.isoformat())
     if pl_json == None:
-        return ProfitLoss(0, 0)
+        return ProfitLoss(trade_pl= 0, position_pl= 0)
     return ProfitLoss.parse_raw(pl_json)
 
 def get_previous_closing_price(ticker: str) -> float:
