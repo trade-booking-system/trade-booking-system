@@ -38,7 +38,7 @@ class PriceHandler:
                 print(f"stock: {stock_ticker} price: {stock_price}")
             else:
                 print("error getting "+stock_ticker+"s price")
-        client.publish("pricesUpdates", "updated")
+        self.client.publish("pricesUpdates", "updated")
 
     def is_market_closed(self, date_time: datetime) -> bool:
         if not market_calendar.is_trading_day(date_time.date()):
@@ -57,7 +57,7 @@ class PriceHandler:
         if market_calendar.is_trading_day(date_time.date()):
             return True
         for stock_ticker in self.tickers:
-            price_json= client.hget("livePrices"+stock_ticker, date_time.date().isoformat())
+            price_json= self.client.hget("livePrices"+stock_ticker, date_time.date().isoformat())
             if price_json == None: 
                 return False
             price= Price.parse_raw(price_json)
