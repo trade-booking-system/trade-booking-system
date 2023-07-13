@@ -1,6 +1,5 @@
 from utils.redis_initializer import get_redis_client
-from schema.schema import ProfitLoss
-from schema.schema import Position
+from schema.schema import ProfitLoss, Position, Price
 from datetime import datetime, date as date_obj
 from threading import Thread
 from queue import Queue
@@ -24,7 +23,7 @@ def position_updates_handler(msg):
 def trade_updates_handler(msg):
     data: str= msg["data"]
     account, ticker, amount, price= data.split(":")
-    queue.put_nowait((update_trade_pl, (account, ticker, amount, price)))
+    queue.put_nowait((update_trade_pl, (account, ticker, int(amount), float(price))))
 
 def price_updates_handler(msg):
      if msg["data"] == "update":
@@ -44,7 +43,7 @@ def update_position_pl(account: str, ticker: str):
     client.hset(f"p&l:{account}:{ticker}", date.isoformat(), pl.json())
     print(f"position p&l: account: {account} stock ticker: {ticker} profit loss: {pl}")
 
-def update_trade_pl(account: str, ticker: str, amount, price):
+def update_trade_pl(account: str, ticker: str, amount: int, price: float):
     date= datetime.now().date()
     pl= get_pl(account, ticker)
     pl.trade_pl+= (get_previous_closing_price(ticker) - price) * amount
@@ -52,11 +51,16 @@ def update_trade_pl(account: str, ticker: str, amount, price):
     print(f"realized p&l: account: {account} stock ticker: {ticker} profit loss: {pl.trade_pl}")
 
 def get_price(ticker: str, date: date_obj) -> float:
-    return float(client.hget("livePrices:"+ticker.upper(), date.isoformat()))
+    price_json= client.hget("livePrices:"+ticker.upper(), date.isoformat())
+    if price_json == None:
+        print(f"error: ticker: {ticker} does not have a live price")
+        return 0
+    price= Price.parse_raw(price_json)
+    return price.price
 
 def get_position(account: str, ticker: str) -> Position:
     json_position= client.hget("positions:"+account, ticker)
-    return Position.parse_raw(json_position).amount
+    return Position.parse_raw(json_position)
 
 def get_pl(account: str, ticker: str) -> ProfitLoss:
     date= datetime.now().date()
