@@ -158,8 +158,12 @@
 <style>
   #datagrid {
     --ag-header-foreground-color: orangered;
+    --ag-header-background-color: #5E5C5C;
+    --ag-background-color: #373839;
   }
   :global(.ag-header-cell) {
-    font-size: 16px;
+    font-size: 12px;
+    font-style: normal;
+    font-family: Verdana;
   }
 </style>

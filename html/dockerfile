@@ -14,4 +14,5 @@ RUN npm run build
 FROM nginx:latest
 
 COPY --from=build /app/dist /usr/share/nginx/html
+COPY ./svelte-frontend/bulk-booking/bulk-booker.html /usr/share/nginx/html
 COPY ./nginx/nginx.conf /etc/nginx/conf.d/default.conf

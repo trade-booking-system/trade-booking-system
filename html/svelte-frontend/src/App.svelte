@@ -9,6 +9,7 @@
   import BulkBookingTabs from "./BulkBookingTabs.svelte";
   import { getContext } from "svelte";
 
+
 </script>
 
 <div class="container">
@@ -17,15 +18,6 @@
   </div>
   <div class="accountpicker">
     <Accountpicker/>
-  </div>
-  <div class="hellobutton">
-    <HelloButton />
-  </div>
-  <div class="sumsearch">
-    <SumSearch />
-  </div>
-  <div class="WebSocketTest">
-    <WebSocketTest />
   </div>
   <div id = "tradeGrid" class = "bottomPadding">
     <TradeGrid/>
