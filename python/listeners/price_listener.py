@@ -66,17 +66,24 @@ class PriceHandler:
         return True
 
 def fill_in_closing_prices(tickers: list[str], tickers_info: Ticker, previous_trading_day: datetime):
-    history= tickers_info.history(start= previous_trading_day, end= previous_trading_day + timedelta(1))
+    history = tickers_info.history(start=previous_trading_day, end=previous_trading_day + timedelta(1))
 
     for stock in tickers:
-        key= "livePrices:"+stock
-        price_json= client.hget(key, previous_trading_day.isoformat())
+        key = "livePrices:" + stock
+        price_json = client.hget(key, previous_trading_day.isoformat())
+
         if not(price_json != None and Price.parse_raw(price_json).is_closing_price):
-            print("stock ticker "+stock)
-            closing_price= 
+            print("stock ticker " + stock)
+            
+            closing_price = history[stock].get('close', None)
+            if closing_price is None:
+                print(f"No closing price found for {stock} on {previous_trading_day}")
+                continue
+
             print(closing_price)
-            price= Price(price= closing_price, is_closing_price= True)
+            price = Price(price=closing_price, is_closing_price=True)
             client.hset(key, previous_trading_day.isoformat(), price.json())
+
 
 def termination_handler(signum, frame):
     client.close()
