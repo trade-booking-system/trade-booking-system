@@ -4,7 +4,7 @@ from utils import market_calendar
 from yahooquery import Ticker
 from time import sleep
 from schema.schema import Price
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 import signal
 import redis
 import sys
@@ -54,10 +54,10 @@ class PriceHandler:
         if date_time.time() < market_calendar.default_closing_time():
             return True
         # markets closed today
-        if market_calendar.is_trading_day(date_time.date()):
+        if not market_calendar.is_trading_day(date_time.date()):
             return True
         for stock_ticker in self.tickers:
-            price_json= self.client.hget("livePrices"+stock_ticker, date_time.date().isoformat())
+            price_json= self.client.hget("livePrices:"+stock_ticker, date_time.date().isoformat())
             if price_json == None: 
                 return False
             price= Price.parse_raw(price_json)
@@ -65,23 +65,23 @@ class PriceHandler:
                 return False
         return True
 
-def fill_in_closing_prices(tickers: list[str], tickers_info: Ticker, previous_trading_day: datetime):
-    history = tickers_info.history(start=previous_trading_day, end=previous_trading_day + timedelta(1))
+def fill_in_closing_prices(tickers: list[str], tickers_info: Ticker):
+    previous_trading_day= market_calendar.get_most_recent_trading_day()
+    history= tickers_info.history(start=previous_trading_day, end=previous_trading_day + timedelta(1))
 
-    for stock in tickers:
-        key = "livePrices:" + stock
-        price_json = client.hget(key, previous_trading_day.isoformat())
+    for stock_ticker in tickers:
+        key= "livePrices:" + stock_ticker
+        price_json= client.hget(key, previous_trading_day.isoformat())
 
         if not(price_json != None and Price.parse_raw(price_json).is_closing_price):
-            print("stock ticker " + stock)
-            
-            closing_price = history[stock].get('close', None)
+            ticker = history.loc[stock_ticker].iloc[0]
+            closing_price= ticker.get("adjclose", None)
             if closing_price is None:
-                print(f"No closing price found for {stock} on {previous_trading_day}")
+                print(f"No closing price found for {stock_ticker} on {previous_trading_day}")
                 continue
 
-            print(closing_price)
-            price = Price(price=closing_price, is_closing_price=True)
+            print(f"stock ticker: {stock_ticker} closing price: {str(closing_price)}")
+            price = Price(price= closing_price, is_closing_price= True)
             client.hset(key, previous_trading_day.isoformat(), price.json())
 
 
@@ -90,15 +90,12 @@ def termination_handler(signum, frame):
     sys.exit()
 
 if __name__ == "__main__":
-    print("starting")
     client = get_redis_client()
     signal.signal(signal.SIGTERM, termination_handler)
     tickers= ValidTickers("utils/ListOfStocks.txt")
     handler = PriceHandler(client, tickers.get_all_tickers())
-    previous_trading_day= market_calendar.get_most_recent_trading_day()
-    if not PriceHandler.has_closing_prices(previous_trading_day):
-        fill_in_closing_prices(handler.tickers, handler.tickers_info, previous_trading_day)
-    print("price_listener running")
+    print("filling in closing prices")
+    fill_in_closing_prices(handler.tickers, handler.tickers_info)
 
     while True:
         handler.price_handler()
