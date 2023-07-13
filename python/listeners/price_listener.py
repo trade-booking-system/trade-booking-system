@@ -4,7 +4,7 @@ from utils import market_calendar
 from yahooquery import Ticker
 from time import sleep
 from schema.schema import Price
-from datetime import datetime
+from datetime import datetime, timedelta
 import signal
 import redis
 import sys
@@ -65,34 +65,34 @@ class PriceHandler:
                 return False
         return True
 
+def fill_in_closing_prices(tickers: list[str], tickers_info: Ticker, previous_trading_day: datetime):
+    history= tickers_info.history(start= previous_trading_day, end= previous_trading_day + timedelta(1))
+
+    for stock in tickers:
+        key= "livePrices:"+stock
+        price_json= client.hget(key, previous_trading_day.isoformat())
+        if not(price_json != None and Price.parse_raw(price_json).is_closing_price):
+            print("stock ticker "+stock)
+            closing_price= 
+            print(closing_price)
+            price= Price(price= closing_price, is_closing_price= True)
+            client.hset(key, previous_trading_day.isoformat(), price.json())
+
 def termination_handler(signum, frame):
     client.close()
     sys.exit()
 
 if __name__ == "__main__":
+    print("starting")
     client = get_redis_client()
     signal.signal(signal.SIGTERM, termination_handler)
     tickers= ValidTickers("utils/ListOfStocks.txt")
     handler = PriceHandler(client, tickers.get_all_tickers())
+    previous_trading_day= market_calendar.get_most_recent_trading_day()
+    if not PriceHandler.has_closing_prices(previous_trading_day):
+        fill_in_closing_prices(handler.tickers, handler.tickers_info, previous_trading_day)
+    print("price_listener running")
 
     while True:
         handler.price_handler()
         sleep(60)
-
-
-
-
-
-"""
-def fill_in_closing_prices():
-    previous_trading_day= market_calendar.get_most_recent_trading_day()
-    history= tickers_info.history(start= previous_trading_day, end= previous_trading_day)
-    print(history)
-
-    for stock in tickers.get_all_tickers():
-        key= "livePrices:"+stock
-        price_json= client.hget(key, previous_trading_day.isoformat())
-        if not(price_json != None and Price.parse_raw(price_json).is_closing_price):
-            price= Price(price= 1, is_closing_price= True)
-            client.hset(key, previous_trading_day.isoformat(), price.json())
-"""
