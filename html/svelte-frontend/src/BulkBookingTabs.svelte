@@ -162,7 +162,7 @@
           Ticker Ladder
         </div>
       </Label>
-      <Input label="Ticker-Ladder" id="Ticker-Ladder" name="Ticker-Ladder" required placeholder="AAPL,IBM,MSFT" bind:value = "{tickers}"/>
+      <Input label="Ticker-Ladder" id="Ticker-Ladder" name="Ticker-Ladder" required placeholder="Enter a Value like: AAPL,IBM,MSFT" bind:value = "{tickers}"/>
       <Helper class="text-sm mb-2">
         <div class="helper">
           Please enter a comma seperated list of tickers.
@@ -174,7 +174,7 @@
           Account Ladder
         </div>
       </Label>
-      <Input label="Account-Ladder" id="Account-Ladder" name="Account-Ladder" required placeholder="Account-1,Account-2,Account-3" bind:value = "{accounts}"/>
+      <Input label="Account-Ladder" id="Account-Ladder" name="Account-Ladder" required placeholder="Enter a Value like: Account-1,Account-2,Account-3" bind:value = "{accounts}"/>
       <Helper class="text-sm mb-2">
         <div class="helper">
           Please enter a comma seperated list of accounts.
@@ -186,7 +186,7 @@
           Buy/Sell Ladder
         </div>
       </Label>
-      <Input label="Buy/Sell-Ladder" id="Buy/Sell-Ladder" name="Buy/Sell-Ladder" required placeholder="b,b,s" bind:value = "{buyOrSell}"/>
+      <Input label="Buy/Sell-Ladder" id="Buy/Sell-Ladder" name="Buy/Sell-Ladder" required placeholder="Enter a Value like: b,b,s" bind:value = "{buyOrSell}"/>
       <Helper class="text-sm mb-2">
         <div class="helper">
           Please enter a comma seperated list of b (buy) or s (sell).
@@ -198,7 +198,7 @@
           Shares Ladder
         </div>
       </Label>
-      <Input label="Shares-Ladder" id="Shares-Ladder" name="Shares-Ladder" required placeholder="5,100,50" bind:value = "{shares}"/>
+      <Input label="Shares-Ladder" id="Shares-Ladder" name="Shares-Ladder" required placeholder="Enter a Value like: 5,100,50" bind:value = "{shares}"/>
       <Helper class="text-sm mb-2">
         <div class="helper">
           Please enter a comma seperated list of the amount of shares.
@@ -210,7 +210,7 @@
           Price Ladder
         </div>
       </Label>
-      <Input label="Price-Ladder" id="Price-Ladder" name="Price-Ladder" required placeholder="10,15.5,32" bind:value = "{price}"/>
+      <Input label="Price-Ladder" id="Price-Ladder" name="Price-Ladder" required placeholder="Enter a Value like: 10,15.5,32" bind:value = "{price}"/>
       <Helper class="text-sm mb-2">
         <div class="helper">
           Please enter a comma seperated list of prices.
@@ -222,7 +222,7 @@
           Total Trades
         </div>
       </Label>
-      <Input label="Total-Trades" id="Total-Trades" name="Total-Trades" required placeholder="500" bind:value = "{tradesToGenerate}"/>
+      <Input label="Total-Trades" id="Total-Trades" name="Total-Trades" required placeholder="Enter a Value like: 500" bind:value = "{tradesToGenerate}"/>
       <Helper class="text-sm mb-2">
         <div class="helper">
           Please enter the total number of trades to book.
@@ -246,7 +246,7 @@
       Trades Per Bulk Booking
     </div>
   </Label>
-  <Input label="Trades-Per-BulkBooking" id="Trades-Per-BulkBooking" name="Trades-Per-BulkBooking" required placeholder="50" bind:value = "{amountOfTradesPerGrouping}"/>
+  <Input label="Trades-Per-BulkBooking" id="Trades-Per-BulkBooking" name="Trades-Per-BulkBooking" required placeholder="Enter a value like: 100" bind:value = "{amountOfTradesPerGrouping}"/>
   <Helper class="text-sm mb-2">
     <div class="helper">
       Please enter the amount of trades per grouping

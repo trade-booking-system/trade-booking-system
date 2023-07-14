@@ -212,9 +212,7 @@
     let counter = 0;
 
     if (amountOfTradesPerGrouping == undefined || amountOfTradesPerGrouping == null || amountOfTradesPerGrouping == 0 || currentSubmission.length < amountOfTradesPerGrouping){
-      tradesToSubmitGrouped = [...currentSubmission];
-      submitTrades(tradesToSubmitGrouped);
-      return;
+      amountOfTradesPerGrouping = 100;
     }
     
     for (let index = 0; index < currentSubmission.length; index++) {
