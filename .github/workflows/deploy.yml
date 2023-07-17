@@ -6,17 +6,17 @@ permissions:
 env:
     role: arn:aws:iam::142002257801:role/GithubActions
     region: "us-east-1"
+    cluster: arn:aws:ecs:us-east-1:142002257801:cluster/yisroel-test
 
 on:
-    workflow_call:
-        inputs:
-            cluster:
-                type: string
-                required: true
+    workflow_run:
+        workflows: [backend, frontend]
+        types: completed
 
 jobs:
     deploy:
         runs-on: ubuntu-latest
+        if: ${{ github.event.workflow_run.conclusion == 'success' }}
         steps:
             - name: Configure AWS Credentials
               uses: aws-actions/configure-aws-credentials@v2
@@ -25,6 +25,6 @@ jobs:
                   aws-region: ${{ env.region }}
             - name: Get Services
               run: |
-                aws ecs describe-services --namespace ${{ inputs.cluster }} \
+                aws ecs describe-services --namespace ${{ env.cluster }} \
                 --output text --query 'services[*].serviceName' | xargs \
-                aws ecs update-service --cluster ${{ inputs.cluster }} --service
+                aws ecs update-service --cluster ${{ env.cluster }} --service

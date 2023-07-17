@@ -87,9 +87,3 @@ jobs:
                 file: ./python/Dockerfile.${{ matrix.file }}
                 labels: ${{ steps.meta.outputs.labels }}
                 tags: ${{ steps.meta.outputs.tags }}
-    update-cluster:
-        name: deploy
-        needs: build
-        uses: ./.github/workflows/deploy.yml
-        with:
-          cluster: "arn:aws:ecs:us-east-1:142002257801:cluster/yisroel-test"
