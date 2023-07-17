@@ -1,0 +1,30 @@
+name: Deplow to ECS
+
+permissions:
+    id-token: write
+
+env:
+    role: arn:aws:iam::142002257801:role/GithubActions
+    region: "us-east-1"
+
+on:
+    workflow_call:
+        inputs:
+            cluster:
+                type: string
+                required: true
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v2
+              with:
+                  role-to-assume: ${{ env.role }}
+                  aws-region: ${{ env.region }}
+            - name: Get Services
+              run: |
+                aws ecs describe-services --namespace ${{ inputs.cluster }} \
+                --output text --query 'services[*].serviceName' | xargs \
+                aws ecs update-service --cluster ${{ inputs.cluster }} --service
