@@ -10,7 +10,7 @@ env:
 
 on:
     workflow_run:
-        workflows: [backend, frontend]
+        workflows: [Backend Check and Build, Build and Push Frontend]
         types: completed
 
 jobs:
