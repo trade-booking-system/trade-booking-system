@@ -10,7 +10,11 @@
     Indicator,
   } from "flowbite-svelte";
 
+  import { onMount } from "svelte";
+
   import BulkBookingGrid from "./BulkBookingGrid.svelte";
+
+  let validTickers = [];
 
   let tickers = '', accounts = '', buyOrSell = '', shares = '', price = '';
 
@@ -30,12 +34,63 @@
 
   $: deletebuttonTitle = buttonName;
 
+  let validationErrors = [];
+
+function validateForm() {
+  validationErrors = [];
+
+  const splitTickers = tickers.split(',').map(ticker => ticker.trim().toUpperCase());
+  splitTickers.forEach(ticker => {
+    if (!validTickers.includes(ticker)) {
+      validationErrors.push(`Invalid Ticker: ${ticker}`);
+    }
+  });
+
+  const splitBuyOrSell = buyOrSell.split(',').map(input => input.trim().toLowerCase());
+  splitBuyOrSell.forEach(input => {
+    if (input !== 'b' && input !== 's') {
+      validationErrors.push(`Invalid Buy or Sell input: ${input}`);
+    }
+  });
+
+  const splitShares = shares.split(',').map(share => parseFloat(share.trim()));
+  splitShares.forEach(share => {
+    if (share <= 0) {
+      validationErrors.push(`Shares must be greater than 0, got: ${share}`);
+    }
+  });
+
+  const splitPrice = price.split(',').map(price => parseFloat(price.trim()));
+  splitPrice.forEach(price => {
+    if (price <= 0) {
+      validationErrors.push(`Price must be greater than 0, got: ${price}`);
+    }
+  });
+
+  if (tradesToGenerate <= 0) {
+    validationErrors.push(`Trades to Generate must be greater than 0, got: ${tradesToGenerate}`);
+  }
+
+  if (amountOfTradesPerGrouping <= 0 && !undefined) {
+    validationErrors.push(`Amount of Trades Per Grouping must be greater than 0, got: ${amountOfTradesPerGrouping}`);
+  }
+
+  // If validationErrors is empty, the form is valid
+  return validationErrors.length === 0;
+}
+
   function handleAdd(){
     event.preventDefault();
     //splits data as needed
-    const splitTickers = tickers.split(',').map(ticker => ticker.trim()), 
+
+    if (!validateForm()) {
+    alert('There are errors in the form:\n' + validationErrors.join('\n'));
+    return;
+  }
+
+    const splitTickers = tickers.split(',').map(ticker => ticker.trim().toUpperCase()), 
     splitAccounts = accounts.split(',').map(account => account.trim()),
-    splitBuyOrSell = buyOrSell.split(',').map(account => account.trim()),
+    splitBuyOrSell = buyOrSell.split(',').map(account => account.trim().toLowerCase()),
     splitShares = shares.split(',').map(share => parseFloat(share.trim())),
     splitPrice = price.split(',').map(price => parseFloat(price.trim()));
 
@@ -140,6 +195,21 @@
       console.error('this error');
     }
   }
+
+  onMount( async () => {
+    try {
+      const response = await fetch('/api/tickers');
+      if (response.ok) {
+        const data = await response.json();
+        validTickers = [...data];
+        console.log({ tickers: validTickers });
+      } else {
+        console.error('Failed to fetch tickers:', response.status);
+      }
+    } catch (error) {
+      console.error('Error while fetching tickers:', error);
+    }
+  });
 </script>
 
 <Tabs>
@@ -268,12 +338,3 @@
     color: gray;
   }
 </style>
-
-  <!-- id = {null} 
-  ticker = {tradeData.tickers} 
-  account = {tradeData.accounts} 
-  buyOrSell = {tradeData.buyOrSell} 
-  shares = {tradeData.shares} 
-  price = {tradeData.price}
-  bookedAt = {null}
-  requestGroup = {null} -->

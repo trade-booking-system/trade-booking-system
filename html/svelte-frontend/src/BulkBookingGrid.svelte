@@ -208,6 +208,10 @@
   function groupTrades(){
     const currentSubmission = getAllRowsForTradeSubmission();
 
+    if (currentSubmission.length == 0){
+      return;
+    }
+
     let tradesToSubmitGrouped = [];
     let counter = 0;
 
