@@ -28,5 +28,5 @@ jobs:
                 aws ecs list-services --cluster ${{ env.cluster }} \
                 --output text --query 'serviceArns[*]'
                 aws ecs list-services --cluster ${{ env.cluster }} \
-                --output text --query 'serviceArns[*]' | xargs \
+                --output text --query 'serviceArns[*]' | xargs -d '\t' \
                 aws ecs update-service --cluster ${{ env.cluster }} --service
