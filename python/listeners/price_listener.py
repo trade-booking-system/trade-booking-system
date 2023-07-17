@@ -4,7 +4,7 @@ from utils import market_calendar
 from yahooquery import Ticker
 from time import sleep
 from schema.schema import Price
-from datetime import datetime, timedelta, time
+from datetime import datetime, timedelta
 import signal
 import redis
 import sys
@@ -34,7 +34,8 @@ class PriceHandler:
             if stock_ticker in prices and "regularMarketPrice" in prices[stock_ticker]:
                 stock_price= prices[stock_ticker]["regularMarketPrice"]
                 live_price_key= "livePrices:" + stock_ticker
-                self.client.hset(live_price_key, date.isoformat(), Price(price= stock_price, is_closing_price= is_market_closed).json())
+                price = Price(price= stock_price, stock_ticker= stock_ticker, is_closing_price= is_market_closed)
+                self.client.hset(live_price_key, date.isoformat(), price.json())
                 print(f"stock: {stock_ticker} price: {stock_price}")
             else:
                 print("error getting "+stock_ticker+"s price")
@@ -81,7 +82,7 @@ def fill_in_closing_prices(tickers: list[str], tickers_info: Ticker):
                 continue
 
             print(f"stock ticker: {stock_ticker} closing price: {str(closing_price)}")
-            price = Price(price= closing_price, is_closing_price= True)
+            price = Price(price= closing_price, stock_ticker= stock_ticker, is_closing_price= True)
             client.hset(key, previous_trading_day.isoformat(), price.json())
 
 
