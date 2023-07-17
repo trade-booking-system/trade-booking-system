@@ -25,8 +25,8 @@ jobs:
                   aws-region: ${{ env.region }}
             - name: Redeploy Services
               run: |
-                aws ecs describe-services --namespace ${{ env.cluster }} \
-                --output text --query 'services[*].serviceName'
-                aws ecs describe-services --namespace ${{ env.cluster }} \
-                --output text --query 'services[*].serviceName' | xargs \
+                aws ecs list-services --cluster ${{ env.cluster }} \
+                --output text --query 'serviceArns[*]'
+                aws ecs list-services --cluster ${{ env.cluster }} \
+                --output text --query 'serviceArns[*]' | xargs \
                 aws ecs update-service --cluster ${{ env.cluster }} --service
