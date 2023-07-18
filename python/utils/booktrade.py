@@ -20,6 +20,7 @@ def booktrade(client: redis.Redis, trade: Trade, tickers: ValidTickers):
     client.publish("tradesInfo", f"{trade.account}:{trade.stock_ticker}:{trade_amount}")
     client.publish("tradeUpdates", f"{trade.account}:{trade.stock_ticker}:{trade_amount}:{trade.price}")
     client.publish("tradeUpdatesWS", f"create: {trade.json()}")
+    client.sadd("p&lStocks", trade.account+":"+trade.stock_ticker)
     return {"Key": key, "Field": trade.id}
 
 def booktrades_bulk(client: redis.Redis, trades: list[Trade]):
@@ -60,7 +61,7 @@ def create_updated_trade(updated_amount, updated_type, updated_price, old_trade:
         return Trade(id= old_trade.id, account= old_trade.account, stock_ticker= old_trade.stock_ticker, user= old_trade.user,
                       version= version, type= updated_type, amount= updated_amount, price= updated_price)
 
-def get_trades(client: redis.Redis):
+def get_trades(client: redis.Redis) -> list[Trade]:
     trades= []
     for key in client.scan_iter("trades:*"):
         for _, json_object in client.hscan_iter(key):
@@ -68,7 +69,7 @@ def get_trades(client: redis.Redis):
             trades.append(trade_object)
     return trades
 
-def query_trades(account: str, year: str, month: str, day: str, client: redis.Redis):
+def query_trades(account: str, year: str, month: str, day: str, client: redis.Redis) -> list[Trade]:
     trades = []
     for key in client.scan_iter(f"trades:{account}:{year}-{month}-{day}"):
         for _, json_object in client.hscan_iter(key):
@@ -76,21 +77,21 @@ def query_trades(account: str, year: str, month: str, day: str, client: redis.Re
             trades.append(trade_object)
     return trades
 
-def get_trade_history(trade_id, account, date, client: redis.Redis):
+def get_trade_history(trade_id, account, date, client: redis.Redis) -> History:
     key= f"trades:{account}:{date}"
     json_history= client.hget(key, trade_id)
     if json_history == None:
         raise HTTPException(status_code= 404, detail= "trade does not exist")
     return History.parse_raw(json_history)
 
-def get_accounts(client: redis.Redis):
+def get_accounts(client: redis.Redis) -> set[str]:
     keys = client.scan_iter("trades:*")
     accounts = set()
     for key in keys:
         accounts.add(key.split(":")[1])
     return accounts
 
-def get_amount(trade: Trade):
+def get_amount(trade: Trade) -> int:
     return trade.amount if trade.type == "buy" else -trade.amount
 
 def csv_to_json(data: bytes):

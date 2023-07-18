@@ -37,29 +37,38 @@ def update_position_pl():
 
 def update_position_pl(account: str, ticker: str):
     date= datetime.now().date()
-    pl= get_pl(account, ticker)
+    price = get_price(ticker, date)
     position= get_position(account, ticker)
-    pl.position_pl= (get_price(ticker, date) - get_previous_closing_price(ticker)) * position.amount
+    if price == None:
+        print(f"error: ticker: {ticker} does not have a live price")
+        return
+    if position == None:
+        return
+    pl= get_pl(account, ticker)
+    closing_price= get_previous_closing_price(ticker)
+    pl.position_pl= (price - closing_price) * position.amount
     client.hset(f"p&l:{account}:{ticker}", date.isoformat(), pl.json())
-    print(f"position p&l: account: {account} stock ticker: {ticker} profit loss: {pl}")
+    print(f"position p&l: account: {account} stock ticker: {ticker} profit loss: {pl.position_pl}")
 
 def update_trade_pl(account: str, ticker: str, amount: int, price: float):
     date= datetime.now().date()
     pl= get_pl(account, ticker)
-    pl.trade_pl+= (get_previous_closing_price(ticker) - price) * amount
+    closing_price = get_previous_closing_price(ticker)
+    pl.trade_pl+= (closing_price - price) * amount
     client.hset(f"p&l:{account}:{ticker}", date.isoformat(), pl.json())
-    print(f"realized p&l: account: {account} stock ticker: {ticker} profit loss: {pl.trade_pl}")
+    print(f"trade p&l: account: {account} stock ticker: {ticker} profit loss: {pl.trade_pl}")
 
 def get_price(ticker: str, date: date_obj) -> float:
     price_json= client.hget("livePrices:"+ticker.upper(), date.isoformat())
     if price_json == None:
-        print(f"error: ticker: {ticker} does not have a live price")
-        return 0
+        return None
     price= Price.parse_raw(price_json)
     return price.price
 
 def get_position(account: str, ticker: str) -> Position:
     json_position= client.hget("positions:"+account, ticker)
+    if json_position == None:
+        return None
     return Position.parse_raw(json_position)
 
 def get_pl(account: str, ticker: str) -> ProfitLoss:
