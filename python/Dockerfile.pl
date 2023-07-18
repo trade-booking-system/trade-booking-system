@@ -8,6 +8,7 @@ RUN python -m pip install -r requirements.txt
 
 WORKDIR /app
 COPY ./listeners/pl_listener.py /app/service/
+COPY ./listeners/listener.py /app/
 COPY schema /app/schema
 COPY utils /app/utils
 

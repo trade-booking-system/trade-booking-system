@@ -1,22 +1,30 @@
 from redis import Redis
 from datetime import datetime, timedelta, date
 from schema import Position, Trade, History
-from utils.redis_initializer import get_redis_client
 from utils.booktrade import get_trades, get_amount
-import signal
+from listener import listener_base
 
-class TradeHandler:
-    def __init__(self, client: Redis):
-        self.client: Redis = client
+class PositionListener(listener_base):
+    def __init__(self):
         self.cache: dict[str, dict[str, int]] = {}
+        super().__init__()
 
-    def get_trade_handler(self):
-        def handler(msg):
-            data: str= msg["data"]
-            account, stock_ticker, amount= data.split(":")
-            self.update_position(account, stock_ticker, int(amount))
-            self.client.publish("positionUpdates", f"{account}:{stock_ticker}")
-        return handler
+    def get_handlers(self):
+        return {
+            "tradesInfo": self.trade_updates_handler
+        }
+    
+    def startup(self):
+        self.recover()
+
+    def trade_updates_handler(self, msg):
+        data: str= msg["data"]
+        account, stock_ticker, amount= data.split(":")
+        self.queue.put_nowait((self.update_position_and_notify, (account, stock_ticker, int(amount))))
+
+    def update_position_and_notify(self, account: str, stock_ticker: str, amount_added: int):
+        self.update_position(account, stock_ticker, amount_added)
+        self.client.publish("positionUpdates", f"{account}:{stock_ticker}")
 
     def update_position(self, account: str, stock_ticker: str, amount_added: int):
         key = "positions:"+account
@@ -45,7 +53,7 @@ class TradeHandler:
         trades_cache: dict[str, list[Trade]]= dict()
         for stock in stocks:
             account, ticker= stock.split(":")
-            last_aggregation_time= self.get_last_aggregation_time(account, ticker)
+            last_aggregation_time= self.get_last_aggregation_time(self.client, account, ticker)
             date = last_aggregation_time.date()
             trades: list[Trade]= []
             while date <= current_date:
@@ -78,11 +86,12 @@ class TradeHandler:
         cache[key]= trades
         return trades
 
-    def get_last_aggregation_time(self, account, ticker) -> datetime:
-        json_position= self.client.hget("positions:"+account, ticker)
+    @staticmethod
+    def get_last_aggregation_time(client: Redis, account, ticker) -> datetime:
+        json_position= client.hget("positions:"+account, ticker)
         if json_position != None:
             return Position.parse_raw(json_position).last_aggregation_time
-        keys: list[str]= self.client.keys(f"trades:{account}:*")
+        keys: list[str]= client.keys(f"trades:{account}:*")
         date= keys[0].split(":")[2]
         return datetime.fromisoformat(date)
 
@@ -95,17 +104,4 @@ class TradeHandler:
         for trade in trades:
             self.update_position(trade.account, trade.stock_ticker, trade.amount)
 
-def termination_handler(signum, frame):
-    thread.stop()
-    thread.join()
-    sub.close()
-    client.close()
-
-if __name__ == "__main__":
-    client = get_redis_client()
-    handler = TradeHandler(client)
-    handler.recover()
-    sub= client.pubsub(ignore_subscribe_messages= True)
-    sub.subscribe(**{"tradesInfo": handler.get_trade_handler()})
-    thread= sub.run_in_thread()
-    signal.signal(signal.SIGTERM, termination_handler)
+PositionListener()

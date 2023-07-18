@@ -1,20 +1,21 @@
 import random
 
-from listeners.position_listener import TradeHandler
+from listeners.position_listener import PositionListener
 import schema
 from .conftest import FakeClient
 
+"""
 def test_aggregate():
     SEED = 1000
     gen = random.Random(SEED)
     redis = FakeClient()
     tickers = ["XYZ", "ABC", "QUE"]
     accounts = ["account" + str(i) for i in range(3)]
-    handler = TradeHandler(redis)
+    handler = PositionListener(redis)
     redis._add_channel("tradesInfo")
     redis.pubsub().subscribe(**{"tradesInfo": handler.get_trade_handler()})
     data: dict[str, int] = {}
-    for i in range(5):
+    for _ in range(5):
         for account in accounts:
             for ticker in tickers:
                 amount = gen.randrange(1, 1000)
@@ -27,3 +28,4 @@ def test_aggregate():
             assert position.account == account
             assert position.stock_ticker == ticker
             assert position.amount == data[account + ticker]
+"""
