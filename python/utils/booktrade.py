@@ -1,5 +1,5 @@
 from fastapi import HTTPException
-from schema import Trade, History
+from schema import Trade, History, ProfitLoss
 from utils.tickers import ValidTickers
 from csv import DictReader
 from pydantic import ValidationError
@@ -159,3 +159,18 @@ def book_many_trades(client: redis.Redis, trades: list[dict], tickers: ValidTick
         trade_responses.append(response)
 
     return trade_responses
+
+def get_pl(client: redis.Redis, account: str, ticker: str) -> ProfitLoss:
+    date = datetime.now().date().isoformat()
+    pl_json = client.hget(f"p&l:{account}:{ticker}", date)
+    if pl_json is None:
+        raise HTTPException(status_code=404, detail="profit loss data not found")
+    return ProfitLoss.parse_raw(pl_json)
+
+def get_all_pl(client: redis.Redis, account: str) -> list[ProfitLoss]:
+    pl_list = []
+    for key in client.scan_iter(f"p&l:{account}:*"):
+        for _, json_object in client.hscan_iter(key):
+            pl_object = ProfitLoss.parse_raw(json_object)
+            pl_list.append(pl_object)
+    return pl_list

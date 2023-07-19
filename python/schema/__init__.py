@@ -1,1 +1,1 @@
-from .schema import Trade, Position, PositionResponse, Price, History
+from .schema import Trade, Position, PositionResponse, Price, History, ProfitLoss

@@ -4,11 +4,13 @@ from utils.redis_initializer import get_redis_client
 from api import routes
 from api import positions
 from api import websocket
+from api import pl_routes
 
 app = FastAPI(dependencies=[Depends(get_redis_client)])
 app.include_router(routes.router)
 app.include_router(positions.router, prefix="/positions")
 app.include_router(websocket.router, prefix="/ws")
+app.include_router(pl_routes.router, prefix="/pl")
 
 
 @app.get("/sum/")
