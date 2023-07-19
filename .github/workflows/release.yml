@@ -1,0 +1,74 @@
+name: Release Stable Version
+
+permissions:
+    packages: write
+    contents: read
+    id-token: write
+
+env:
+    role: arn:aws:iam::142002257801:role/GithubActions
+    region: "us-east-1"
+    cluster: arn:aws:ecs:us-east-1:142002257801:cluster/uat-cluster
+
+on:
+    workflow_dispatch:
+
+jobs:       
+    release:
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                include:
+                    - image: api
+                      name: API
+                      file: api
+                    - image: service
+                      name: Aggregation Service
+                      file: aggr
+                    - image: websocket
+                      name: WebSocket
+                      file: ws
+                    - image: price-listener
+                      name: Price Listener
+                      file: price
+                    - image: frontend
+                      name: Frontend
+                      file:
+        name: Release ${{ matrix.name }}
+        steps:
+            - name: Login to GitHub Container Registry
+              uses: docker/login-action@v2
+              with:
+                registry: ghcr.io
+                username: ${{ github.actor }}
+                password: ${{ secrets.GITHUB_TOKEN }}
+            - name: Extract metadata
+              id: meta
+              uses: docker/metadata-action@v4
+              with:
+                images: ghcr.io/trade-booking-system/${{ matrix.image }}
+                labels: release
+            - name: Build and Push
+              uses: docker/build-push-action@v4
+              with:
+                pull: true
+                push: true
+                context: ${{ matrix.image == 'frontend' && './html' || './python' }}
+                file: |
+                    ${{ matrix.image == 'frontend' && './html/Dockerfile' || format('./python/Dockerfile.{0}', matrix.file) }}
+                labels: ${{ steps.meta.outputs.labels }}
+                tags: ${{ steps.meta.outputs.tags }}
+    deploy:
+        runs-on: ubuntu-latest
+        needs: release
+        steps:
+            - name: Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v2
+              with:
+                  role-to-assume: ${{ env.role }}
+                  aws-region: ${{ env.region }}
+            - name: Redeploy Services
+              run: |
+                aws ecs list-services --cluster ${{ env.cluster }} --output text \
+                --query 'serviceArns[*]' | tr -d '\n' | xargs -n1 -d'\t' \
+                aws ecs update-service --cluster ${{ env.cluster }} --force-new-deployment --service
