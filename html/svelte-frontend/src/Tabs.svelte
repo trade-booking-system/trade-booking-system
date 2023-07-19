@@ -15,8 +15,8 @@
         <div class="dropdown">
             <Dropdown />
         </div>
-        <TradeGrid />
         <PositionsGrid />
+        <TradeGrid />
     </TabItem>
     <TabItem class="w-full">
         <span slot="title">Dashboard</span>
