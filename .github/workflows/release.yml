@@ -47,8 +47,7 @@ jobs:
               id: meta
               uses: docker/metadata-action@v4
               with:
-                images: ghcr.io/trade-booking-system/${{ matrix.image }}
-                labels: release
+                images: ghcr.io/trade-booking-system/${{ matrix.image }}/release
             - name: Build and Push
               uses: docker/build-push-action@v4
               with:
