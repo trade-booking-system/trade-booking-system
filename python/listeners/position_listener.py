@@ -20,35 +20,35 @@ class PositionListener(listener_base):
     def trade_updates_handler(self, msg):
         data: str= msg["data"]
         account, stock_ticker, amount= data.split(":")
-        self.queue.put_nowait((self.update_position_and_notify, (account, stock_ticker, int(amount))))
+        self.queue.put_nowait((self.update_position_and_notify, (account, stock_ticker, int(amount), datetime.now())))
 
-    def update_position_and_notify(self, account: str, stock_ticker: str, amount_added: int):
-        self.update_position(account, stock_ticker, amount_added)
+    def update_position_and_notify(self, account: str, stock_ticker: str, amount_added: int, now: datetime):
+        self.update_position(account, stock_ticker, amount_added, now)
         self.client.publish("positionUpdates", f"{account}:{stock_ticker}")
 
-    def update_position(self, account: str, stock_ticker: str, amount_added: int):
+    def update_position(self, account: str, stock_ticker: str, amount_added: int, now: datetime):
         key = "positions:"+account
         stock_tickers= self.cache.get(account, dict())
         self.cache[account]= stock_tickers
         old_amount= stock_tickers.get(stock_ticker)
         if old_amount == None:
             position_json= self.client.hget(key, stock_ticker)
+            old_amount= 0
             if position_json != None:
                 old_position= Position.parse_raw(position_json)
                 old_amount= old_position.amount
-            else:
-                old_amount= 0
         amount= old_amount + amount_added
 
         stock_tickers[stock_ticker]= amount
         position= Position(account= account, stock_ticker= stock_ticker, amount= amount, 
-                        last_aggregation_time= datetime.now(), last_aggregation_host= "host")
+                        last_aggregation_time= now, last_aggregation_host= "host")
         
         self.client.hset(key, stock_ticker, position.json())
         self.client.publish("positionUpdatesWS", f"position:{position.json()}")
 
     def recover(self):
-        current_date= datetime.now().date()
+        now= datetime.now()
+        current_date= now.date()
         stocks: list[str]= self.client.smembers("p&lStocks")
         trades_cache: dict[str, list[Trade]]= dict()
         for stock in stocks:
@@ -62,7 +62,8 @@ class PositionListener(listener_base):
 
             for trade in trades:
                 if trade.date != last_aggregation_time.date() or trade.time > last_aggregation_time.time():
-                    self.update_position(trade.account, trade.stock_ticker, get_amount(trade))
+                    self.update_position(trade.account, trade.stock_ticker, get_amount(trade), now)
+        self.client.publish("pricesUpdates", "updated")
 
     def get_trades(self, account: str, ticker: str, date: date, cache: dict[str, Trade]) -> list[Trade]:
         trades= list()
@@ -97,8 +98,7 @@ class PositionListener(listener_base):
 
     def rebuild(self):
         keys= self.client.keys("positions:*")
-        for key in keys:
-            self.client.delete(key)
+        self.client.delete(*keys)
         self.cache= dict()
         trades: list[Trade]= get_trades(self.client)
         for trade in trades:
