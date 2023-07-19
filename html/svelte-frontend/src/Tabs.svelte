@@ -12,7 +12,7 @@
 >
     <TabItem class="w-full" open>
         <span slot="title">Position Management</span>
-        <div class="dropdown">
+        <div class="dropdown" style="position: relative; z-index: 1;">
             <Dropdown />
         </div>
         <PositionsGrid />
