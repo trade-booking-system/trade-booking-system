@@ -27,4 +27,4 @@ jobs:
               run: |
                 aws ecs list-services --cluster ${{ env.cluster }} --output text \
                 --query 'serviceArns[*]' | tr -d '\n' | xargs -n1 -d'\t' \
-                aws ecs update-service --cluster ${{ env.cluster }} --service
+                aws ecs update-service --cluster ${{ env.cluster }} --force-new-deployment --service
