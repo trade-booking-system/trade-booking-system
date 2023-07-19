@@ -11,7 +11,7 @@
     defaultClass="flex rounded-lg divide-x divide-gray-200 shadow dark:divide-gray-700"
 >
     <TabItem class="w-full" open>
-        <span slot="title">Profile</span>
+        <span slot="title">Position Management</span>
         <div class="dropdown">
             <Dropdown />
         </div>
@@ -19,7 +19,7 @@
         <TradeGrid />
     </TabItem>
     <TabItem class="w-full">
-        <span slot="title">Dashboard</span>
+        <span slot="title">Bulk Booking</span>
         <BulkBookingTabs />
     </TabItem>
 </Tabs>
