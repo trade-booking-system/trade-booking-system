@@ -2,6 +2,7 @@
   import { Grid } from "ag-grid-community";
   import { onMount, onDestroy } from "svelte";
 
+
   export let tradeData = [];
 
   export let deleteCall = false;
@@ -64,6 +65,9 @@
     rowData: rowData,
     rowMultiSelectWithClick: true,
     rowSelection: rowselection,
+    enableSorting: true,
+    rowGroupPanelShow: 'always', // to show the row group panel
+    groupMultiAutoColumn: true,
     //this is for the reactive element below
     onSelectionChanged: function() {
         const selectedNodes = this.api.getSelectedNodes();
@@ -209,6 +213,7 @@
     const currentSubmission = getAllRowsForTradeSubmission();
 
     if (currentSubmission.length == 0){
+      submitTrade = false;
       return;
     }
 
@@ -305,7 +310,6 @@
   style="height: 50vh; width:80vw;"
   bind:this={gridContainer}
 />
-
 <style>
   #datagrid {
     --ag-header-foreground-color: orangered;
