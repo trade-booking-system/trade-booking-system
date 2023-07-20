@@ -8,7 +8,8 @@
 
 <Tabs
     style="full"
-    defaultClass="flex rounded-lg divide-x divide-gray-200 shadow dark:divide-gray-700"
+    defaultClass="flex mb-4"
+    class = "bg-backgroundProj-100" contentClass = 'bg-backgroundProj-100' activeClasses = "!bg-orangeProj-100" inactiveClasses = "!bg-backgroundProj-100"
 >
     <TabItem class="w-full" open>
         <span slot="title">Position Management</span>
@@ -18,7 +19,7 @@
         <PositionsGrid />
         <TradeGrid />
     </TabItem>
-    <TabItem class="w-full">
+    <TabItem class="w-full bg-backgroundProj-100" >
         <span slot="title">Bulk Booking</span>
         <BulkBookingTabs />
     </TabItem>
