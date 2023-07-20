@@ -86,3 +86,5 @@ class PositionResponse(BaseModel):
 class ProfitLoss(BaseModel):
     trade_pl: float
     position_pl: float
+    account: str
+    ticker: str

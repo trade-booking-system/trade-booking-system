@@ -90,7 +90,7 @@ class PLListener(listener_base):
         date= datetime.now().date()
         pl_json= client.hget(f"p&l:{account}:{ticker}", date.isoformat())
         if pl_json == None:
-            return ProfitLoss(trade_pl= 0, position_pl= 0)
+            return ProfitLoss(trade_pl= 0, position_pl= 0, account= account, ticker= ticker)
         return ProfitLoss.parse_raw(pl_json)
     
     def recover_current_days_pl(self):

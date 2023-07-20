@@ -9,8 +9,7 @@ class listener_base(ABC):
         self.queue= Queue()
         self.client= get_redis_client()
         self.sub= self.client.pubsub(ignore_subscribe_messages= True)
-        for channel, handler in self.get_handlers().items():
-            self.sub.subscribe(**{channel: handler}, args= (self.client))
+        self.sub.subscribe(**self.get_handlers())
         self.thread= self.sub.run_in_thread()
         self.startup()
         queue_processor_thread= Thread(target= self.process_queue, daemon= True)

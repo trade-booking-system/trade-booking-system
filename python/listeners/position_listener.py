@@ -1,13 +1,19 @@
-from redis import Redis
 from datetime import datetime, timedelta, date
 from schema import Position, Trade, History
+from apscheduler.schedulers.background import BackgroundScheduler
 from utils.booktrade import get_trades, get_amount
+from utils.get_positions import get_all_positions
 from listener import listener_base
+from utils import market_calendar
+from redis import Redis
 
 class PositionListener(listener_base):
     def __init__(self):
         self.cache: dict[str, dict[str, int]] = {}
+        self.scheduler= BackgroundScheduler()
+        self.scheduler.add_job(self.take_snapshot, "cron", day_of_week= "0-4", hour= 16)
         super().__init__()
+        self.scheduler.start()
 
     def get_handlers(self):
         return {
@@ -45,6 +51,15 @@ class PositionListener(listener_base):
         
         self.client.hset(key, stock_ticker, position.json())
         self.client.publish("positionUpdatesWS", f"position:{position.json()}")
+
+    def take_snapshot(self):
+        now= datetime.now()
+        if not market_calendar.is_trading_day(now.date()):
+            return
+        positions= get_all_positions(self.client)
+        for position in positions:
+            key= f"positionsSnapshots:{position.account}:{now.date().isoformat()}"
+            self.client.hset(key, position.stock_ticker, position.json())
 
     def recover(self):
         now= datetime.now()
