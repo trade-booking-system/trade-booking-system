@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  backend2:
+    image: nginx-backend
+    build:
+      context: ./python
+      dockerfile: Dockerfile.api
+    ports:
+      - "8001:8000"
+    networks: 
+      - backend
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
+      - TZ=America/New_York
+  
+  websocket2:
+    image: websocket
+    build:
+      context: ./python
+      dockerfile: Dockerfile.ws
+    ports:
+      - "8081:8000"
+    networks:
+      - backend
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
+  
+  frontend:
+    image: nginx-frontend
+    build: 
+      context: ./html
+    ports:
+      - "80:80"
+    networks: 
+      - frontend
+      - backend
+    depends_on:
+      - backend
+      - websocket
+      - backend2
+      - websocket2
+    environment:
+      API_GROUP: |
+        server backend:8000;
+        server backend2:8000;
+      WS_GROUP: |
+        server websocket:8000;
+        server websocket2:8000;

@@ -19,6 +19,12 @@ services:
     networks: 
       - frontend
       - backend
+    depends_on:
+      - backend
+      - websocket
+    environment:
+      API_GROUP: server backend:8000;
+      WS_GROUP: server websocket:8000;
   
   backend:
     image: nginx-backend
