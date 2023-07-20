@@ -11,6 +11,18 @@ def get_most_recent_trading_day() -> date:
     previous_trading_day= trading_days[-1]
     return previous_trading_day.date()
 
+# return all dates from starting date to end date that are valid trading days
+def get_market_dates(start_date: date, end_date: date) -> list[date]:
+    dates: list[date]= list()
+    if start_date > end_date:
+        raise ValueError("start date is later than end date")
+    current_date= start_date
+    while current_date <= end_date:
+        if is_trading_day(current_date):
+            dates.append(current_date)
+        current_date= current_date +timedelta(1)
+    return dates
+
 def is_trading_day(date: date) -> bool:
     trading_days= cal.valid_days(start_date= date, end_date= date)
     return trading_days.size == 1

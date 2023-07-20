@@ -1,103 +1,99 @@
+from apscheduler.schedulers.blocking import BlockingScheduler
+from apscheduler.triggers.combining import OrTrigger
+from apscheduler.triggers.cron import CronTrigger
 from utils.redis_initializer import get_redis_client
+from datetime import datetime, timedelta, date as date_obj
 from utils.tickers import ValidTickers
 from utils import market_calendar
 from yahooquery import Ticker
-from time import sleep
 from schema.schema import Price
-from datetime import datetime, timedelta
+import pandas
 import signal
-import redis
 import sys
 
-class PriceHandler:
-    def __init__(self, client: redis.Redis, tickers: list[str]):
-        self.client= client
-        self.tickers= tickers
-        self.tickers_info= Ticker(tickers)
-        self.now= datetime.now
 
-    def price_handler(self):
-        date_time = self.now()
-        is_market_closed = self.is_market_closed(date_time)
-        if is_market_closed:
-            print("market is closed")
-            if not self.has_closing_prices(date_time):
-                self.update_stock_prices(date_time, is_market_closed)
+def update_stock_prices():
+    date= datetime.now().date()
+    if not market_calendar.is_trading_day(date):
+        return
+    print("updating prices")
+    prices= tickers_info.price
+
+    for stock_ticker in tickers:
+        if stock_ticker in prices and "regularMarketPrice" in prices[stock_ticker]:
+            stock_price= prices[stock_ticker]["regularMarketPrice"]
+            live_price_key= "livePrices:" + stock_ticker
+            price = Price(price= stock_price, stock_ticker= stock_ticker, is_closing_price= False)
+            client.hset(live_price_key, date.isoformat(), price.json())
+            print(f"stock: {stock_ticker} price: {stock_price}")
         else:
-            self.update_stock_prices(date_time, is_market_closed)
+            print("error getting "+stock_ticker+"s price")
+    client.publish("pricesUpdates", "updated")
 
-    def update_stock_prices(self, date_time: datetime, is_market_closed: bool):
-        date= date_time.date()
-        prices= self.tickers_info.price
-
-        for stock_ticker in self.tickers:
-            if stock_ticker in prices and "regularMarketPrice" in prices[stock_ticker]:
-                stock_price= prices[stock_ticker]["regularMarketPrice"]
-                live_price_key= "livePrices:" + stock_ticker
-                price = Price(price= stock_price, stock_ticker= stock_ticker, is_closing_price= is_market_closed)
-                self.client.hset(live_price_key, date.isoformat(), price.json())
-                print(f"stock: {stock_ticker} price: {stock_price}")
-            else:
-                print("error getting "+stock_ticker+"s price")
-        self.client.publish("pricesUpdates", "updated")
-
-    def is_market_closed(self, date_time: datetime) -> bool:
-        if not market_calendar.is_trading_day(date_time.date()):
-            return True
-        if date_time.time() < market_calendar.default_opening_time():
-            return True
-        if date_time.time() > market_calendar.default_closing_time():
-            return True
-        return False
-
-    def has_closing_prices(self, date_time: datetime) -> bool:
-        # market hasn't opened yet
-        if date_time.time() < market_calendar.default_closing_time():
-            return True
-        # markets closed today
-        if not market_calendar.is_trading_day(date_time.date()):
-            return True
-        for stock_ticker in self.tickers:
-            price_json= self.client.hget("livePrices:"+stock_ticker, date_time.date().isoformat())
+def has_closing_prices(dates: list[date_obj]) -> bool:
+    for date in dates:
+        for stock_ticker in tickers:
+            price_json= client.hget("livePrices:"+stock_ticker, date.isoformat())
             if price_json == None: 
                 return False
             price= Price.parse_raw(price_json)
             if not price.is_closing_price:
                 return False
-        return True
+    return True
 
-def fill_in_closing_prices(tickers: list[str], tickers_info: Ticker):
-    previous_trading_day= market_calendar.get_most_recent_trading_day()
-    history= tickers_info.history(start=previous_trading_day, end=previous_trading_day + timedelta(1))
+def fill_in_closing_prices(start_date: date_obj= datetime.now().date(), end_date: date_obj= datetime.now().date()):
+    print("filling in closing prices")
+    history= tickers_info.history(start=start_date, end= end_date + timedelta(1))
+    dates= market_calendar.get_market_dates(start_date, end_date)
+    has_prices= has_closing_prices(dates)
+    runs= 0
+    while has_prices != True and runs <= 5:
+        has_prices= set_closing_prices(dates, history)
+        runs+= 1
 
-    for stock_ticker in tickers:
-        key= "livePrices:" + stock_ticker
-        price_json= client.hget(key, previous_trading_day.isoformat())
+def set_closing_prices(dates: list[date_obj], history: pandas.DataFrame) -> bool:
+    successful= True
+    for date in dates:
+        for stock_ticker in tickers:
+            key= "livePrices:" + stock_ticker
+            price_json= client.hget(key, date.isoformat())
 
-        if not(price_json != None and Price.parse_raw(price_json).is_closing_price):
-            ticker = history.loc[stock_ticker].iloc[0]
-            closing_price= ticker.get("adjclose", None)
-            if closing_price is None:
-                print(f"No closing price found for {stock_ticker} on {previous_trading_day}")
-                continue
+            if not(price_json != None and Price.parse_raw(price_json).is_closing_price):
+                closing_price= get_closing_price(history, date, stock_ticker)
+                if closing_price == None:
+                    print(f"No closing price found for {stock_ticker} on {date}")
+                    successful= False
+                else:
+                    print(f"stock ticker: {stock_ticker} date: {date.isoformat()} closing price: {str(closing_price)}")
+                    price = Price(price= closing_price, stock_ticker= stock_ticker, is_closing_price= True)
+                    client.hset(key, date.isoformat(), price.json())
+    return successful
 
-            print(f"stock ticker: {stock_ticker} closing price: {str(closing_price)}")
-            price = Price(price= closing_price, stock_ticker= stock_ticker, is_closing_price= True)
-            client.hset(key, previous_trading_day.isoformat(), price.json())
-
+def get_closing_price(history: pandas.DataFrame, date: date_obj, stock_ticker: str):
+    ticker = history.loc[stock_ticker]
+    if not date in ticker.index:
+        return None
+    stock_info: pandas.Series= ticker.loc[date]
+    closing_price= stock_info.get("adjclose", None)
+    return closing_price
 
 def termination_handler(signum, frame):
+    scheduler.shutdown(wait= False)
     client.close()
     sys.exit()
 
-if __name__ == "__main__":
-    client = get_redis_client()
-    signal.signal(signal.SIGTERM, termination_handler)
-    tickers= ValidTickers("utils/ListOfStocks.txt")
-    handler = PriceHandler(client, tickers.get_all_tickers())
-    print("filling in closing prices")
-    fill_in_closing_prices(handler.tickers, handler.tickers_info)
+def schedule_jobs(scheduler: BlockingScheduler):
+    current_date= datetime.now().date()
+    price_updates_trigger= OrTrigger(triggers= [CronTrigger(day_of_week= "0-4", hour= "10-15", minute= "*"), CronTrigger(day_of_week= "0-4", hour= 9, minute= "30-59")])
+    closing_price_updates_trigger= OrTrigger(triggers= [CronTrigger(day_of_week= "0-4", hour= "16"), CronTrigger(day_of_week= "0-4", hour= 23, minute= 59)])
+    scheduler.add_job(func= fill_in_closing_prices, args= [current_date - timedelta(6), current_date - timedelta(1)])
+    scheduler.add_job(func= update_stock_prices, trigger= price_updates_trigger)
+    scheduler.add_job(func= fill_in_closing_prices, trigger= closing_price_updates_trigger)
+    scheduler.start()
 
-    while True:
-        handler.price_handler()
-        sleep(60)
+client = get_redis_client()
+tickers= ValidTickers("utils/ListOfStocks.txt").get_all_tickers()
+tickers_info= Ticker(tickers)
+signal.signal(signal.SIGTERM, termination_handler)
+scheduler= BlockingScheduler()
+schedule_jobs(scheduler)
