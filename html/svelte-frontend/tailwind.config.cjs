@@ -87,10 +87,10 @@ const config = {
         // gray
         gray: { "50": "#f9fafb", "100": "#f3f4f6", "200": "#e5e7eb", "300": "#d1d5db", "400": "#9ca3af", "500": "#6b7280", "600": "#4b5563", "700": "#374151", "800": "#1f2937", "900": "#111827" },
         
-        orangeProj: { "100": "#FF6404" },
+        orangeProj: { "100": "#FF4500" },
         greenProj: { "100": "#95C3B5" },
         blueProj: { "100": "#226272" },
-        backgroundProj: {100: "#202020"},
+        backgroundProj: {"100": "#202020"},
         
 
         //slate

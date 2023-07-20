@@ -216,7 +216,7 @@ function validateForm() {
   <Tabs class = "bg-backgroundProj-100 mb-4" contentClass = 'bg-backgroundProj-100' activeClasses = "bg-orangeProj-100" inactiveClasses = "bg-backgroundProj-100"  >
     <TabItem open>
       <span slot="title">Import From CSV</span>
-      <Label class="pb-2">Upload CSV file</Label>
+      <Label class="pb-2 text-orangeProj-100 font-bold mt-2">Upload CSV file</Label>
       <Fileupload on:change={handleFileChange}/>
 
       {#if fileUpload != null}
@@ -228,7 +228,7 @@ function validateForm() {
     <TabItem>
       <span slot="title">Generate Bulk Trades</span>
       <form on:submit|preventDefault="{handleAdd}">
-        <Label class="block mb-2">
+        <Label class="block mt-2 mb-2">
           <div class="orange">
             Ticker Ladder
           </div>
@@ -323,7 +323,7 @@ function validateForm() {
         Please enter the amount of trades per grouping
       </div>
     </Helper>
-    <GradientButton color="purpleToBlue" on:click = {submitTrades}>Bulk Book</GradientButton>
+    <GradientButton color="purpleToBlue" class = "mb-4"on:click = {submitTrades}>Bulk Book</GradientButton>
   </div>
 
   <BulkBookingGrid bind:tradeData = {tradeData} bind:deleteCall = {deleteCall} bind:buttonName = {buttonName} bind:submitTrade = {submitTrade} bind:amountOfTradesPerGrouping = {amountOfTradesPerGrouping}/>
