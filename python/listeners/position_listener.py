@@ -1,7 +1,7 @@
-from datetime import datetime, timedelta, date
-from schema import Position, Trade, History
+from datetime import datetime, date as date_obj, time
+from schema import Position, Trade
 from apscheduler.schedulers.background import BackgroundScheduler
-from utils.booktrade import get_trades, get_amount
+from utils.booktrade import query_trades
 from utils.get_positions import get_all_positions
 from listener import listener_base
 from utils import market_calendar
@@ -11,8 +11,8 @@ class PositionListener(listener_base):
     def __init__(self):
         self.cache: dict[str, dict[str, int]] = {}
         self.scheduler= BackgroundScheduler()
-        self.scheduler.add_job(self.take_snapshot, "cron", day_of_week= "0-4", hour= 16)
         super().__init__()
+        self.scheduler.add_job(self.take_snapshot, "cron", day_of_week= "0-4", hour= 16)
         self.scheduler.start()
 
     def get_handlers(self):
@@ -22,6 +22,7 @@ class PositionListener(listener_base):
     
     def startup(self):
         self.recover()
+        #self.rebuild()
 
     def trade_updates_handler(self, msg):
         data: str= msg["data"]
@@ -52,53 +53,62 @@ class PositionListener(listener_base):
         self.client.hset(key, stock_ticker, position.json())
         self.client.publish("positionUpdatesWS", f"position:{position.json()}")
 
-    def take_snapshot(self):
-        now= datetime.now()
+    def take_snapshot(self, now= datetime.now()):
         if not market_calendar.is_trading_day(now.date()):
             return
         positions= get_all_positions(self.client)
         for position in positions:
-            key= f"positionsSnapshots:{position.account}:{now.date().isoformat()}"
-            self.client.hset(key, position.stock_ticker, position.json())
+            self.set_snapshot(self.client, now, position)
+
+    @staticmethod
+    def set_snapshot(client: Redis, date: date_obj, position: Position):
+        key= f"positionsSnapshots:{position.account}:{date.isoformat()}"
+        client.hset(key, position.stock_ticker, position.json())
+
+    @staticmethod
+    def get_position(client: Redis, account: str, ticker: str) -> Position:
+        json_position= client.hget("positions:"+account, ticker)
+        if json_position == None:
+            return None
+        return Position.parse_raw(json_position)
 
     def recover(self):
         now= datetime.now()
-        current_date= now.date()
         stocks: list[str]= self.client.smembers("p&lStocks")
         trades_cache: dict[str, list[Trade]]= dict()
         for stock in stocks:
             account, ticker= stock.split(":")
             last_aggregation_time= self.get_last_aggregation_time(self.client, account, ticker)
-            date = last_aggregation_time.date()
-            trades: list[Trade]= []
-            while date <= current_date:
-                trades.extend(self.get_trades(account, ticker, date, trades_cache))
-                date= date + timedelta(1)
+            
+            dates = market_calendar.get_dates(last_aggregation_time.date(), now.date())
+            for date in dates:
+                trades= self.get_trades_by_ticker(account, ticker, date, trades_cache)
+                if date == last_aggregation_time.date():
+                    trades= [trade for trade in trades if last_aggregation_time.time() < trade.time]
+                market_trades, after_market_trades= self.split_trades_by_time(trades)
+                for trade in market_trades:
+                    self.update_position(account, ticker, trade.get_amount(), datetime.combine(date, trade.time))
+                
+                position = self.get_position(self.client, account, ticker)
+                if position != None:
+                    if now.date() != position.last_aggregation_time.date() or now.time() > time(16):
+                        self.set_snapshot(self.client, date, position)
+                        
+                for trade in after_market_trades:
+                    self.update_position(account, ticker, trade.get_amount(), datetime.combine(date, trade.time))
 
-            for trade in trades:
-                if trade.date != last_aggregation_time.date() or trade.time > last_aggregation_time.time():
-                    self.update_position(trade.account, trade.stock_ticker, get_amount(trade), now)
         self.client.publish("pricesUpdates", "updated")
 
-    def get_trades(self, account: str, ticker: str, date: date, cache: dict[str, Trade]) -> list[Trade]:
-        trades= list()
+    def get_trades_by_ticker(self, account: str, ticker: str, date: date_obj, cache: dict[str, Trade]) -> list[Trade]:
         days_trades= self.get_trades_by_day(account, date, cache)
-        for trade in days_trades:
-            if trade.stock_ticker == ticker:
-                trades.append(trade)
-        return trades
+        return [trade for trade in days_trades if trade.stock_ticker == ticker]
 
-    def get_trades_by_day(self, account: str, date: date, cache: dict[str, list[Trade]]) -> list[Trade]:
-        key= f"trades:{account}:{date.isoformat()}"
+    def get_trades_by_day(self, account: str, date: date_obj, cache: dict[str, list[Trade]]) -> list[Trade]:
+        key= f"{account}:{date.isoformat()}"
         trades= cache.get(key)
         if trades != None:
             return trades
-        trades= []
-        hashes= self.client.hgetall(key)
-        if hashes != None:
-            json_trades= hashes.values()
-            for json_trade in json_trades:
-                trades.append(History.parse_raw(json_trade).get_current_trade())
+        trades= query_trades(account= account, year= str(date.year), month= str(date.month).zfill(2), day= str(date.day).zfill(2), client= self.client)
         cache[key]= trades
         return trades
 
@@ -107,16 +117,40 @@ class PositionListener(listener_base):
         json_position= client.hget("positions:"+account, ticker)
         if json_position != None:
             return Position.parse_raw(json_position).last_aggregation_time
-        keys: list[str]= client.keys(f"trades:{account}:*")
-        date= keys[0].split(":")[2]
-        return datetime.fromisoformat(date)
+        return PositionListener.get_startup_date(client)
 
     def rebuild(self):
-        keys= self.client.keys("positions:*")
-        self.client.delete(*keys)
+        now= datetime.now()
+        for key in self.client.scan_iter("positions*"):
+            self.client.delete(key)
         self.cache= dict()
-        trades: list[Trade]= get_trades(self.client)
+        startup_date= PositionListener.get_startup_date(self.client)
+        for date in market_calendar.get_dates(startup_date, datetime.now().date()):
+            trades= query_trades(account= "*", year= str(date.year), month= str(date.month).zfill(2), day= str(date.day).zfill(2), client= self.client)
+            market_trades, after_market_trades= self.split_trades_by_time(trades)
+            for trade in market_trades:
+                self.update_position(trade.account, trade.stock_ticker, trade.get_amount(), datetime.combine(date, trade.time))
+            if date != now.date() or time(16) < now.time():
+                self.take_snapshot(date)
+            for trade in after_market_trades:
+                self.update_position(trade.account, trade.stock_ticker, trade.get_amount(), datetime.combine(date, trade.time))
+
+    @staticmethod
+    def get_startup_date(client: Redis) -> date_obj:
+        startup_date= client.get("startupDate")
+        if startup_date == None:
+            return datetime.now().date()
+        return date_obj.fromisoformat(startup_date)
+
+    @staticmethod
+    def split_trades_by_time(trades: list[Trade]) -> tuple[list[Trade], list[Trade]]:
+        before_four: list[Trade]= list()
+        after_four: list[Trade]= list()
         for trade in trades:
-            self.update_position(trade.account, trade.stock_ticker, trade.amount)
+            if trade.time < time(hour= 16):
+                before_four.append(trade)
+            else:
+                after_four.append(trade)
+        return before_four, after_four
 
 PositionListener()

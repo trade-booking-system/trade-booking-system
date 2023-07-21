@@ -9,14 +9,14 @@ from uuid import uuid4
 import redis
 
 def booktrade(client: redis.Redis, trade: Trade, tickers: ValidTickers):
-    if not tickers.is_valid_ticker(trade.stock_ticker.upper()):
+    if not tickers.is_valid_ticker(trade.stock_ticker):
         raise HTTPException(status_code= 400, detail= "invalid stock ticker")
     key = f"trades:{trade.account}:{trade.date.isoformat()}"
     history= History()
     history.trades.append(trade)
     json_data= history.json()
     client.hset(key, trade.id, json_data)
-    trade_amount = get_amount(trade)
+    trade_amount = trade.get_amount()
     client.publish("tradesInfo", f"{trade.account}:{trade.stock_ticker}:{trade_amount}")
     client.publish("tradeUpdates", f"{trade.account}:{trade.stock_ticker}:{trade_amount}:{trade.price}")
     client.publish("tradeUpdatesWS", f"create: {trade.json()}")
@@ -41,10 +41,10 @@ def update_trade(trade_id, account, date, updated_type, updated_amount, updated_
     history.add_updated_trade(trade)
     if updated_amount != None or updated_type != None:
         # undo previous version of trade and add new trade
-        client.publish("tradesInfo", f"{trade.account}:{trade.stock_ticker}:{get_amount(trade) - get_amount(old_trade)}")
+        client.publish("tradesInfo", f"{trade.account}:{trade.stock_ticker}:{trade.get_amount() - old_trade.get_amount()}")
 
-    client.publish("tradeUpdates", f"{trade.account}:{trade.stock_ticker}:{-get_amount(old_trade)}:{old_trade.price}")
-    client.publish("tradeUpdates", f"{trade.account}:{trade.stock_ticker}:{get_amount(trade)}:{trade.price}")
+    client.publish("tradeUpdates", f"{trade.account}:{trade.stock_ticker}:{-old_trade.get_amount()}:{old_trade.price}")
+    client.publish("tradeUpdates", f"{trade.account}:{trade.stock_ticker}:{trade.get_amount()}:{trade.price}")
 
     client.publish("tradeUpdatesWS", f"update: {trade.json()}")
     client.hset(key, trade_id, history.json())
@@ -90,9 +90,6 @@ def get_accounts(client: redis.Redis) -> set[str]:
     for key in keys:
         accounts.add(key.split(":")[1])
     return accounts
-
-def get_amount(trade: Trade) -> int:
-    return trade.amount if trade.type == "buy" else -trade.amount
 
 def csv_to_json(data: bytes):
     text: str = data.decode()

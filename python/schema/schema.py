@@ -22,7 +22,16 @@ class Trade(BaseModel):
     price: float | None
     version: int= 1
 
+    def get_amount(cls) -> int:
+        return cls.amount if cls.type == "buy" else -cls.amount
+
     _amount_validator= validator("amount", allow_reuse= True)(validate_is_positive)
+
+    @validator("stock_ticker")
+    def validate_is_uppercase(stock_ticker: str):
+        if stock_ticker.isupper():
+            return stock_ticker
+        return stock_ticker.upper()
 
     @validator("id", pre= True, always= True)
     def create_id(id):

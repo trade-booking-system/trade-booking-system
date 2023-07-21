@@ -1,6 +1,6 @@
 from schema.schema import ProfitLoss, Position, Price
 from datetime import datetime, date as date_obj
-from utils.booktrade import query_trades, get_amount
+from utils.booktrade import query_trades
 from utils import market_calendar
 from listener import listener_base
 from redis import Redis
@@ -16,6 +16,7 @@ class PLListener(listener_base):
     
     def startup(self):
         self.recover_current_days_pl()
+        #self.rebuild()
 
     def position_updates_handler(self, msg):
         data: str= msg["data"]
@@ -72,7 +73,7 @@ class PLListener(listener_base):
 
     @staticmethod
     def get_price(client: Redis, ticker: str, date: date_obj) -> float:
-        price_json= client.hget("livePrices:"+ticker.upper(), date.isoformat())
+        price_json= client.hget("livePrices:"+ticker, date.isoformat())
         if price_json == None:
             return None
         price= Price.parse_raw(price_json)
@@ -102,7 +103,7 @@ class PLListener(listener_base):
             closing_price= self.get_previous_closing_price(trade.stock_ticker)
             key= trade.account+":"+trade.stock_ticker
             amount= pl.get(key, 0)
-            amount=+ self.calculate_trade_pl(closing_price, trade.price, get_amount(trade))
+            amount=+ self.calculate_trade_pl(closing_price, trade.price, trade.get_amount())
             pl[key]= amount
 
         for key, trade_pl in pl.items():
@@ -112,7 +113,7 @@ class PLListener(listener_base):
             self.client.hset(f"p&l:{account}:{ticker}", now.date().isoformat(), profit_loss.json())
 
     def rebuild(self):
-        keys= self.client.keys("p&l:*")
-        self.client.delete(*keys)
+        for key in self.client.scan_iter("p&l*"):
+            self.client.delete(key)
 
 PLListener()
