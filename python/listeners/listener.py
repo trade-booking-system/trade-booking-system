@@ -10,10 +10,12 @@ class listener_base(ABC):
         self.client= get_redis_client()
         self.sub= self.client.pubsub(ignore_subscribe_messages= True)
         self.sub.subscribe(**self.get_handlers())
+        self.queue_processor_thread= Thread(target= self.process_queue, daemon= True)
+
+    def start(self):
         self.thread= self.sub.run_in_thread()
         self.startup()
-        queue_processor_thread= Thread(target= self.process_queue, daemon= True)
-        queue_processor_thread.start()
+        self.queue_processor_thread.start()
         signal.signal(signal.SIGTERM, self.termination_handler)
 
     def process_queue(self):

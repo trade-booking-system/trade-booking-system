@@ -12,8 +12,7 @@ import signal
 import sys
 
 
-def update_stock_prices():
-    date= datetime.now().date()
+def update_stock_prices(date: date_obj= datetime.now().date()):
     if not market_calendar.is_trading_day(date):
         return
     print("updating prices")
@@ -89,7 +88,6 @@ def schedule_jobs(scheduler: BlockingScheduler):
     scheduler.add_job(func= fill_in_closing_prices, args= [current_date - timedelta(6), current_date - timedelta(1)])
     scheduler.add_job(func= update_stock_prices, trigger= price_updates_trigger)
     scheduler.add_job(func= fill_in_closing_prices, trigger= closing_price_updates_trigger)
-    scheduler.start()
 
 client = get_redis_client()
 tickers= ValidTickers("utils/ListOfStocks.txt").get_all_tickers()
@@ -97,3 +95,5 @@ tickers_info= Ticker(tickers)
 signal.signal(signal.SIGTERM, termination_handler)
 scheduler= BlockingScheduler()
 schedule_jobs(scheduler)
+if __name__ == "__main__":
+    scheduler.start()

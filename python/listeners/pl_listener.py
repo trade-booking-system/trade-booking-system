@@ -116,4 +116,4 @@ class PLListener(listener_base):
         for key in self.client.scan_iter("p&l*"):
             self.client.delete(key)
 
-PLListener()
+PLListener().start()

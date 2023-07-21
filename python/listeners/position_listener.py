@@ -9,10 +9,13 @@ from redis import Redis
 
 class PositionListener(listener_base):
     def __init__(self):
+        super().__init__()
         self.cache: dict[str, dict[str, int]] = {}
         self.scheduler= BackgroundScheduler()
-        super().__init__()
         self.scheduler.add_job(self.take_snapshot, "cron", day_of_week= "0-4", hour= 16)
+
+    def start(self):
+        super().start()
         self.scheduler.start()
 
     def get_handlers(self):
@@ -153,4 +156,4 @@ class PositionListener(listener_base):
                 after_four.append(trade)
         return before_four, after_four
 
-PositionListener()
+PositionListener().start()
