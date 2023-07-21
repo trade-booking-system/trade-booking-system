@@ -1,7 +1,7 @@
 <script>
   import { onMount } from "svelte";
   import {
-    Button,
+    GradientButton,
     Dropdown,
     DropdownItem,
     Chevron,
@@ -55,7 +55,7 @@
 </script>
 
 <div class="allign_with_top">
-  <Button><Chevron>Accounts</Chevron></Button>
+  <GradientButton color = "pinkToOrange"><Chevron>Accounts</Chevron></GradientButton>
   <Dropdown class="w-58 overflow-y-auto py-1 h-30">
     {#each accounts as account}
       <Checkbox
