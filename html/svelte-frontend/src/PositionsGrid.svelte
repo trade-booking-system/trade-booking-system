@@ -13,6 +13,9 @@
     { field: "Quantity" },
     { field: "LastAggregationTime" },
     { field: "SystemLastAggregationProcessHost_Id" },
+    { field: "Trade PL"},
+    { field: "Position PL"},
+    { field: "Total PL"}
   ];
 
   //this allows you to drag and resize columns 
