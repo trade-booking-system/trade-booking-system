@@ -159,10 +159,13 @@
 />
 
 <style>
-  #datagrid {
-    --ag-header-foreground-color: orangered;
-    --ag-header-background-color: #5E5C5C;
-    --ag-background-color: #373839;
+    #datagrid {
+    --ag-header-foreground-color:  #98bfca;
+    --ag-border-color: #98bfca;
+    --ag-header-background-color: #202020;
+    --ag-background-color: #202020;
+    --ag-selected-row-background-color: #95C3B5 ;
+    /* --ag-odd-row-background-color: none; */
   }
   :global(.ag-header-cell) {
     font-size: 12px;
