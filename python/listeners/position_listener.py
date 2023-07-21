@@ -120,7 +120,7 @@ class PositionListener(listener_base):
         json_position= client.hget("positions:"+account, ticker)
         if json_position != None:
             return Position.parse_raw(json_position).last_aggregation_time
-        return PositionListener.get_startup_date(client)
+        return datetime.combine(PositionListener.get_startup_date(client), time())
 
     def rebuild(self):
         now= datetime.now()

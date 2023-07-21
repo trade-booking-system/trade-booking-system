@@ -97,13 +97,14 @@ class PLListener(listener_base):
     def recover_current_days_pl(self):
         now= datetime.now()
         self.update_all_position_pl(now.date())
-        trades= query_trades("*", now.year, now.month, now.day, self.client)
+        trades= query_trades(account= "*", year= str(now.year), month= str(now.month).zfill(2), day= str(now.day).zfill(2), client= self.client)
         pl: dict[str, int]= dict()
+
         for trade in trades:
             closing_price= self.get_previous_closing_price(trade.stock_ticker)
             key= trade.account+":"+trade.stock_ticker
             amount= pl.get(key, 0)
-            amount=+ self.calculate_trade_pl(closing_price, trade.price, trade.get_amount())
+            amount+= self.calculate_trade_pl(closing_price, trade.price, trade.get_amount())
             pl[key]= amount
 
         for key, trade_pl in pl.items():
@@ -111,9 +112,19 @@ class PLListener(listener_base):
             profit_loss= self.get_pl(self.client, account, ticker)
             profit_loss.trade_pl= trade_pl
             self.client.hset(f"p&l:{account}:{ticker}", now.date().isoformat(), profit_loss.json())
+            print(f"recovered trade p&l: account: {account} stock ticker: {ticker} profit loss: {profit_loss.trade_pl}")
 
     def rebuild(self):
         for key in self.client.scan_iter("p&l*"):
             self.client.delete(key)
+            now= datetime.now()
+            dates= market_calendar.get_market_dates(self.get_startup_date, now.date())
+
+    @staticmethod
+    def get_startup_date(client: Redis) -> date_obj:
+        startup_date= client.get("startupDate")
+        if startup_date == None:
+            return datetime.now().date()
+        return date_obj.fromisoformat(startup_date)
 
 PLListener().start()

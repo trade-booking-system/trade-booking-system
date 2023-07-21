@@ -30,8 +30,6 @@
 - `MarketCalander`: deals with getting valid market dates
 - `get_most_recent_trading_day`: returns the most recent date where the market was open
 - `is_trading_day`: returns true if the market was open on the specified date
-- `default_opening_time`: returns the default opening time (9:30 am)
-- `default_closing_time`: returns the default closing time (4:00 pm)
 
 ### websocket
 - listens to positionUpdates or tradeUpdates
@@ -62,11 +60,15 @@
 
 ## Structures
 
-### p&lStocks
+### startup date
+- Name: `startupDate`
+
+### stocks
 - Type: set
+- Name: `p&lStocks`
 - Data: `{account}:{ticker}`
 
-### pnl
+### p&l
 - Type: hash
 - Name: `p&l:{account}:{ticker}`
 - Key: date
