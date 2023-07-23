@@ -24,21 +24,26 @@
   //this is where column headers are defined
   const columnDefs = [
     {
-      headerName: "Delete",
-      field: "Delete",
-      checkboxSelection: true,
-      headerCheckboxSelection: true,
-      headerCheckboxSelectionFilteredOnly: true, 
-      width: 80
-    },
-    { field: "ID" },
-    { field: "Ticker" },
-    { field: "Account" },
-    { field: "BuyOrSell" },
-    { field: "Shares" },
-    { field: "Price" },
-    { field: "Booked_At" },
-    { field: "Request_Group" }
+      headerName: "Bulk Booking Grid",
+      children: [
+        {
+          headerName: "Delete",
+          field: "Delete",
+          checkboxSelection: true,
+          headerCheckboxSelection: true,
+          headerCheckboxSelectionFilteredOnly: true, 
+          width: 80
+        },
+        { field: "ID" },
+        { field: "Ticker" },
+        { field: "Account" },
+        { field: "BuyOrSell" },
+        { field: "Shares" },
+        { field: "Price" },
+        { field: "Booked_At" },
+        { field: "Request_Group" }
+      ]
+    }
   ];
 
   //this allows you to drag and resize columns 
@@ -319,7 +324,7 @@
     --ag-selected-row-background-color: #226272;
     /* --ag-odd-row-background-color: none; */
   }
-  :global(.ag-header-cell) {
+  /* :global(.ag-header-cell) {
     font-size: 16px;
-  }
+  } */
 </style>

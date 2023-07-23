@@ -7,15 +7,20 @@
   let grid;
 
   const columnDefs = [
-    { field: "id" },
-    { field: "account" },
-    { field: "type" },
-    { field: "stock_ticker" },
-    { field: "amount" },
-    { field: "date" },
-    { field: "time" },
-    { field: "user" },
-    { field: "version" },
+    {
+      headerName: "Trades",
+      children: [
+        { field: "id" },
+        { field: "account" },
+        { field: "type" },
+        { field: "stock_ticker" },
+        { field: "amount" },
+        { field: "date" },
+        { field: "time" },
+        { field: "user" },
+        { field: "version" },
+      ]
+    }
   ];
 
   const defaultColDef = {
@@ -204,7 +209,7 @@
     --ag-selected-row-background-color: #226272;
     /* --ag-odd-row-background-color: none; */
   }
-  :global(.ag-header-cell) {
+  /* :global(.ag-header-cell) {
     font-size: 16px;
-  }
+  } */
 </style>

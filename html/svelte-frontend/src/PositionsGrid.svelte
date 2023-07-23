@@ -8,14 +8,19 @@
 
   //this is where column headers are defined
   const columnDefs = [
-    { field: "Account" },
-    { field: "Ticker" },
-    { field: "Quantity" },
-    { field: "LastAggregationTime" },
-    { field: "SystemLastAggregationProcessHost_Id" },
-    { field: "Trade PL"},
-    { field: "Position PL"},
-    { field: "Total PL"}
+    {
+      headerName: "Positions",
+      children: [
+        { field: "Account" },
+        { field: "Ticker" },
+        { field: "Quantity" },
+        { field: "LastAggregationTime" },
+        { field: "SystemLastAggregationProcessHostId" },
+        { field: "Trade PL"},
+        { field: "Position PL"},
+        { field: "Total PL"}
+      ]
+    }
   ];
 
   //this allows you to drag and resize columns 
@@ -167,9 +172,9 @@
     --ag-selected-row-background-color: #95C3B5 ;
     /* --ag-odd-row-background-color: none; */
   }
-  :global(.ag-header-cell) {
+  /* :global(.ag-header-cell) {
     font-size: 12px;
     font-style: normal;
-    font-family: Verdana;
-  }
+    font-family: Roboto;
+  }  */
 </style>
