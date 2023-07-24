@@ -104,5 +104,5 @@ class ProfitLoss(BaseModel):
 class TradeProfitLoss(BaseModel):
     trade_id: str
     trade_pl: float
-    price_at_calc: float
+    closing_price: float
     date: date

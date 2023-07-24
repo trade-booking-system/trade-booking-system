@@ -3,14 +3,6 @@ from redis import Redis
 from datetime import datetime, date as date_obj
 from schema.schema import Trade, ProfitLoss, TradeProfitLoss, Position, Price, History
 
-#def set_price()
-
-def get_price(client: Redis, ticker: str, date: date_obj) -> Price:
-    key= "livePrices:"+ticker
-    price_json= client.hget(key, date.isoformat())
-    if price_json is None:
-        return None
-    return Price.parse_raw(price_json)
 
 def set_position(client: Redis, account: str, ticker: str, position: Position):
     key= "positions:"+account
@@ -54,6 +46,7 @@ def get_trade_pl(client: Redis, id: str, date: date_obj, default = None) -> Trad
     if pl_json == None:
         return default
     return TradeProfitLoss.parse_raw(pl_json)
+
 def get_startup_date(client: Redis) -> date_obj:
     startup_date= client.get("startupDate")
     if startup_date == None:
@@ -75,6 +68,18 @@ def set_history(client: Redis, account: str, date: date_obj, id: str, history: H
 
 #def get_trade():
 #    return get_history().get_current_trade()
+
+def set_price(client: Redis, stock_ticker: str, date: date_obj, stock_price: float, is_closing_price: bool):
+    live_price_key= "livePrices:" + stock_ticker
+    price = Price(price= stock_price, stock_ticker= stock_ticker, is_closing_price= is_closing_price)
+    client.hset(live_price_key, date.isoformat(), price.json())
+
+def get_price(client: Redis, ticker: str, date: date_obj) -> Price:
+    key= "livePrices:"+ticker
+    price_json= client.hget(key, date.isoformat())
+    if price_json is None:
+        return None
+    return Price.parse_raw(price_json)
 
 def get_trades_by_day_and_account(client: Redis, account: str, date: date_obj) -> list[Trade]:
     trades= list()
@@ -98,14 +103,3 @@ def query_trades(client: Redis, account: str = "*", year: str = "*",
     for key in client.scan_iter(f"trades:{account}:{year}-{month}-{day}"):
         for _, json_object in client.hscan_iter(key):
             yield History.parse_raw(json_object).get_current_trade()
-
-def update_live_price(client: Redis, stock_ticker: str, date: date_obj, stock_price: float, is_closing_price: bool):
-    live_price_key= "livePrices:" + stock_ticker
-    price = Price(price= stock_price, stock_ticker= stock_ticker, is_closing_price= is_closing_price)
-    client.hset(live_price_key, date.isoformat(), price.json())
-
-def get_price(client: Redis, stock_ticker: str, date: date_obj):
-    price_json= client.hget("livePrices:" + stock_ticker, date.isoformat())
-    if price_json == None: 
-        return None
-    return Price.parse_raw(price_json)

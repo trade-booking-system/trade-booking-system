@@ -70,7 +70,7 @@ class PositionListener(listener_base):
             
             dates = market_calendar.get_dates(last_aggregation_time.date(), now.date())
             for date in dates:
-                trades= self.get_trades_by_ticker(account, ticker, date, trades_cache)
+                trades= self.get_trades_by_ticker_and_date(account, ticker, date, trades_cache)
                 if date == last_aggregation_time.date():
                     trades= [trade for trade in trades if last_aggregation_time.time() < trade.time]
                 market_trades, after_market_trades= self.split_trades_by_time(trades)
@@ -87,7 +87,7 @@ class PositionListener(listener_base):
 
         self.client.publish("pricesUpdates", "updated")
 
-    def get_trades_by_ticker(self, account: str, ticker: str, date: date_obj, cache: dict[str, Trade]) -> list[Trade]:
+    def get_trades_by_ticker_and_date(self, account: str, ticker: str, date: date_obj, cache: dict[str, Trade]) -> list[Trade]:
         days_trades= self.get_trades_by_day(account, date, cache)
         return [trade for trade in days_trades if trade.stock_ticker == ticker]
 

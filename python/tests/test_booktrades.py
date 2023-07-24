@@ -15,8 +15,8 @@ def test_put(test_server: System, trade: schema.Trade):
     response = client.put("/bookTrade/", json=trade_to_dict(trade))
     assert response.status_code == 200
     result = response.json()
-    assert result["Key"] == "trades:" + trade.account + ":" + str(trade.date)
-    history = redis.hget(result["Key"], result["Field"])
+    assert result == result["message"] == "trade booked successfully"
+    history = redis.hget(f"trades:{trade.account}:{trade.date.isoformat()}", trade.id)
     assert_trades_equal(trade_to_dict(trade), json.loads(history)["trades"][0])
 
 @pytest.mark.parametrize("trade1,trade2",
