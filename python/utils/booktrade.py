@@ -20,10 +20,8 @@ def booktrade(client: redis.Redis, trade: Trade, tickers: ValidTickers):
     client.publish("tradeUpdates", f"{trade.account}:{trade.stock_ticker}:{trade_amount}:{trade.price}")
     client.publish("tradeUpdatesWS", f"create: {trade.json()}")
     client.sadd("p&lStocks", trade.account+":"+trade.stock_ticker)
-    # return {"Key": key, "Field": trade.id}
-    return {"message": "Trade book successfully"}
-
-
+    key = f"trades:{trade.account}:{trade.date.isoformat()}"
+    return {"Key": key, "Field": trade.id}
 
 def booktrades_bulk(client: redis.Redis, trades: list[Trade]):
     for trade in trades:
