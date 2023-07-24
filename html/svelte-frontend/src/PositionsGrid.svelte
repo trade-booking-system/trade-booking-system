@@ -15,7 +15,7 @@
         { field: "Ticker" },
         { field: "Quantity" },
         { field: "LastAggregationTime" },
-        { field: "SystemLastAggregationProcessHostId" },
+        { field: "SystemLastAggregationProcessHost_Id" },
         { field: "Trade PL"},
         { field: "Position PL"},
         { field: "Total PL"}
