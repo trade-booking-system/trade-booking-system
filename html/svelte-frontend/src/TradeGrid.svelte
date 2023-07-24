@@ -10,12 +10,27 @@
     {
       headerName: "Trades",
       children: [
-        { field: "id" },
-        { field: "account" },
-        { field: "type" },
-        { field: "stock_ticker" },
-        { field: "amount" },
-        { field: "date" },
+        { field: "id", },
+        { 
+          field: "account", 
+          filter: true,
+        },
+        { 
+          field: "type",
+          filter: true,
+        },
+        { 
+          field: "stock_ticker",
+          filter: true, 
+        },
+        { 
+          field: "amount",
+          filter: "agNumberColumnFilter", 
+        },
+        { 
+          field: "date",
+          filter: "agDateColumnFilter", 
+        },
         { field: "time" },
         { field: "user" },
         { field: "version" },
@@ -26,52 +41,6 @@
   const defaultColDef = {
     resizable: true,
   };
-
-  // const rowData = [
-  //   {
-	// 	TradeId: "0001",
-	// 	TradeDate: "1/1/23",
-	// 	Account:"Account1",
-	// 	Ticker:"AMA",
-	// 	Buy_Sell_Indicator:"",
-	// 	Quantity: 5,
-	// 	Price: "$100.00",
-	// 	Version: "1.0",
-	// 	EnteredBy:"Account 1",
-	// 	EnteredDateTime:"10-00-00",
-	// 	SystemProcessHost_Id: "00001",
-  //   },
-  //   {
-	// 	TradeId: "0001",
-	// 	TradeDate: "1/1/23",
-	// 	Account:"Account1",
-	// 	Ticker:"AMA",
-	// 	Buy_Sell_Indicator:"",
-	// 	Quantity: 5,
-	// 	Price: "$100.00",
-	// 	Version: "1.0",
-	// 	EnteredBy:"Account 1",
-	// 	EnteredDateTime:"10-00-00",
-	// 	SystemProcessHost_Id: "00001",
-  //   },
-  //   {
-	// 	TradeId: "0001",
-	// 	TradeDate: "1/1/23",
-	// 	Account:"Account1",
-	// 	Ticker:"AMA",
-	// 	Buy_Sell_Indicator:"",
-	// 	Quantity: 5,
-	// 	Price: "$100.00",
-	// 	Version: "1.0",
-	// 	EnteredBy:"Account 1",
-	// 	EnteredDateTime:"10-00-00",
-	// 	SystemProcessHost_Id: "00001",
-  //   },
-  // ];
-
-
-
-  
 
   function sizeToFit() {
     gridOptions.api.sizeColumnsToFit({
