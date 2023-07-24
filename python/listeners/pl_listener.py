@@ -4,6 +4,8 @@ from utils.booktrade import query_trades
 from utils import market_calendar
 from listener import listener_base
 from redis import Redis
+from utils.redis_utils import store_to_redis, get_from_redis
+
 
 class PLListener(listener_base):
 
