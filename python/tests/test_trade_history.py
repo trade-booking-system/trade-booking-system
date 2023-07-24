@@ -22,7 +22,7 @@ def test_trade_history(trades: list[schema.Trade], test_server: System):
             "updated_price": int(trades[i].price)
         })
         assert response.status_code == 200
-        assert response.json()["Version"] == str(i + 1)
+        assert response.json()["version"] == str(i + 1)
         id = response.json()["id"]
     response = client.get("/getTradeHistory", params={
         "trade_id": id,
