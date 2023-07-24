@@ -5,6 +5,15 @@ from utils import market_calendar
 from listener import listener_base
 from redis import Redis
 from utils.redis_utils import store_to_redis, get_from_redis
+from utils.pl_utils import (
+    calculate_position_pl, 
+    calculate_trade_pl, 
+    get_price, 
+    get_position, 
+    get_pl, 
+    get_previous_closing_price,
+    get_startup_date
+)
 
 
 class PLListener(listener_base):
@@ -60,41 +69,6 @@ class PLListener(listener_base):
         pl.trade_pl+= self.calculate_trade_pl(closing_price, price, amount)
         self.client.hset(f"p&l:{account}:{ticker}", date.isoformat(), pl.json())
         print(f"trade p&l: account: {account} stock ticker: {ticker} profit loss: {pl.trade_pl}")
-
-    @staticmethod
-    def calculate_position_pl(price: float, closing_price: float, position: int) -> float:
-         return (price - closing_price) * position
-    
-    @staticmethod
-    def calculate_trade_pl(closing_price: float, price: float, amount) -> float:
-        return (closing_price - price) * amount
-
-    def get_previous_closing_price(self, ticker: str) -> float:
-        date= market_calendar.get_most_recent_trading_day()
-        return self.get_price(self.client, ticker, date)
-
-    @staticmethod
-    def get_price(client: Redis, ticker: str, date: date_obj) -> float:
-        price_json= client.hget("livePrices:"+ticker, date.isoformat())
-        if price_json == None:
-            return None
-        price= Price.parse_raw(price_json)
-        return price.price
-
-    @staticmethod
-    def get_position(client: Redis, account: str, ticker: str) -> Position:
-        json_position= client.hget("positions:"+account, ticker)
-        if json_position == None:
-            return None
-        return Position.parse_raw(json_position)
-    
-    @staticmethod
-    def get_pl(client: Redis, account: str, ticker: str) -> ProfitLoss:
-        date= datetime.now().date()
-        pl_json= client.hget(f"p&l:{account}:{ticker}", date.isoformat())
-        if pl_json == None:
-            return ProfitLoss(trade_pl= 0, position_pl= 0, account= account, ticker= ticker)
-        return ProfitLoss.parse_raw(pl_json)
     
     def recover_current_days_pl(self):
         now= datetime.now()
@@ -122,11 +96,5 @@ class PLListener(listener_base):
             now= datetime.now()
             dates= market_calendar.get_market_dates(self.get_startup_date, now.date())
 
-    @staticmethod
-    def get_startup_date(client: Redis) -> date_obj:
-        startup_date= client.get("startupDate")
-        if startup_date == None:
-            return datetime.now().date()
-        return date_obj.fromisoformat(startup_date)
 
 PLListener().start()

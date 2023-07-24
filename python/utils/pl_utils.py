@@ -34,3 +34,9 @@ def get_pl(client: Redis, account: str, ticker: str) -> ProfitLoss:
 def get_previous_closing_price(client: Redis, ticker: str) -> Optional[float]:
     date= market_calendar.get_most_recent_trading_day()
     return get_price(client, ticker, date)
+
+def get_startup_date(client: Redis) -> date_obj:
+    startup_date= client.get("startupDate")
+    if startup_date == None:
+        return datetime.now().date()
+    return date_obj.fromisoformat(startup_date)
