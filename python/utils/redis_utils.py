@@ -1,6 +1,7 @@
+from typing import Generator
 from redis import Redis
 from datetime import datetime, date as date_obj
-from schema.schema import ProfitLoss, Position, Price, History
+from schema.schema import Trade, ProfitLoss, Position, Price, History
 from utils import market_calendar
 
 
@@ -15,6 +16,12 @@ def get_position(client: Redis, account: str, ticker: str) -> Position:
     if json_position == None:
         return None
     return Position.parse_raw(json_position)
+
+def query_trades(client: Redis, account: str = "*", year: str = "*",
+                    month: str = "*", day: str = "*") -> Generator[Trade, None, None]:
+    for key in client.scan_iter(f"trades:{account}:{year}-{month}-{day}"):
+        for _, json_object in client.hscan_iter(key):
+            yield History.parse_raw(json_object).get_current_trade()
 
 # def set_positions():
 
