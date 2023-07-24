@@ -37,9 +37,16 @@ def get_pl(client: Redis, account: str, ticker: str, date: date_obj, default= No
         return default
     return ProfitLoss.parse_raw(pl_json)
 
+def get_trade(client: Redis, account: str, id: str, date: date_obj, default = None) -> Trade:
+    key = f"trades:{account}:{date.isoformat()}"
+    history_json = client.hget(key, id)
+    if history_json == None:
+        return default
+    return History.parse_raw(history_json).get_current_trade()
+
 def set_trade_pl(client: Redis, id: str, date: date_obj, pl: TradeProfitLoss):
-    key = f"trade_p&l:{id}"
-    client.hset(key, date.isoformat(), pl.json())
+    key = f"trade_p&l:{date.isoformat()}"
+    client.hset(key, id, pl.json())
 
 def get_trade_pl(client: Redis, id: str, date: date_obj, default = None) -> TradeProfitLoss:
     pl_json = client.hget(f"trade_p&l:{date.isoformat()}", id)

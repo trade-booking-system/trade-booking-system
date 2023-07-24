@@ -26,7 +26,7 @@ class PLListener(listener_base):
     def trade_updates_handler(self, msg):
         data: str= msg["data"]
         id, account, ticker, amount, price= data.split(":")
-        self.queue.put_nowait((self.update_trade_pl, (id, account, ticker, int(amount), float(price), datetime.now().date())))
+        self.queue.put_nowait((self.update_trade_pl, (account, ticker, int(amount), float(price), datetime.now().date())))
 
     def price_updates_handler(self, msg):
         if msg["data"] == "updated":
@@ -69,7 +69,7 @@ class PLListener(listener_base):
         self.client.publish("pnlPositionUpdatesWS", pl.json())
 
         trade_pl_obj = TradeProfitLoss(
-            trade_id= id, trade_pl= trade_pl, closing_price= closing_price.price, date= date
+            trade_id= id, trade_pl= trade_pl, closing_price= closing_price.price, date= date, account=account
         )
         redis_utils.set_trade_pl(self.client, id, date, trade_pl_obj)
         self.client.publish("pnlTradeUpdatesWS", trade_pl_obj.json())
@@ -107,7 +107,7 @@ class PLListener(listener_base):
             pl[key]= amount
             redis_utils.set_trade_pl(self.client, trade.id, now.date(), TradeProfitLoss(
                 trade_id= trade.id, trade_pl=trade_pl, closing_price= closing_price.price,
-                date= now.date()
+                date= now.date(), account=trade.account
             ))
 
         for key, trade_pl in pl.items():

@@ -102,6 +102,7 @@ class ProfitLoss(BaseModel):
         return cls.trade_pl + cls.ticker
 
 class TradeProfitLoss(BaseModel):
+    account: str
     trade_id: str
     trade_pl: float
     closing_price: float

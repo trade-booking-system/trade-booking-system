@@ -142,7 +142,7 @@ def book_many_trades(client: redis.Redis, trades: list[dict], tickers: ValidTick
         tradebooked = booktrade(client, trade, tickers)
 
         response = {
-            'id': tradebooked['Field'],
+            'id': tradebooked['id'],
             'booked_at': datetime.now().isoformat(),
             'request_group': request_group,
             'accounts': trade_request['account'],
