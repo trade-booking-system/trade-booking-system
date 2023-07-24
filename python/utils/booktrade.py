@@ -47,7 +47,7 @@ def update_trade(trade_id, account, date, updated_type, updated_amount, updated_
 
     client.publish("tradeUpdatesWS", f"update: {trade.json()}")
     client.hset(key, trade_id, history.json())
-    return {"Key": key, "Field": trade.id, "Version": trade.version}
+    return {"message": "trade updated successfully", "id" : trade.id}
 
 def create_updated_trade(updated_amount, updated_type, updated_price, old_trade: Trade) -> Trade:
         if updated_amount == None:
