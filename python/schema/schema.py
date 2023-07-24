@@ -97,3 +97,9 @@ class ProfitLoss(BaseModel):
     position_pl: float
     account: str
     ticker: str
+
+class TradeProfitLoss(BaseModel):
+    trade_id: str
+    trade_pl: float
+    price_at_calc: float
+    time_at_calc: datetime
