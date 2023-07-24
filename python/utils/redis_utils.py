@@ -98,3 +98,14 @@ def query_trades(client: Redis, account: str = "*", year: str = "*",
     for key in client.scan_iter(f"trades:{account}:{year}-{month}-{day}"):
         for _, json_object in client.hscan_iter(key):
             yield History.parse_raw(json_object).get_current_trade()
+
+def update_live_price(client: Redis, stock_ticker: str, date: date_obj, stock_price: float, is_closing_price: bool):
+    live_price_key= "livePrices:" + stock_ticker
+    price = Price(price= stock_price, stock_ticker= stock_ticker, is_closing_price= is_closing_price)
+    client.hset(live_price_key, date.isoformat(), price.json())
+
+def get_price(client: Redis, stock_ticker: str, date: date_obj):
+    price_json= client.hget("livePrices:" + stock_ticker, date.isoformat())
+    if price_json == None: 
+        return None
+    return Price.parse_raw(price_json)

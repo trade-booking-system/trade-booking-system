@@ -10,6 +10,8 @@ from schema.schema import Price
 import pandas
 import signal
 import sys
+from utils.redis_utils import update_live_price, get_price
+
 
 
 def update_stock_prices(date: date_obj= datetime.now().date()):
@@ -21,9 +23,7 @@ def update_stock_prices(date: date_obj= datetime.now().date()):
     for stock_ticker in tickers:
         if stock_ticker in prices and "regularMarketPrice" in prices[stock_ticker]:
             stock_price= prices[stock_ticker]["regularMarketPrice"]
-            live_price_key= "livePrices:" + stock_ticker
-            price = Price(price= stock_price, stock_ticker= stock_ticker, is_closing_price= False)
-            client.hset(live_price_key, date.isoformat(), price.json())
+            update_live_price(client, stock_ticker, date, stock_price, False)
             print(f"stock: {stock_ticker} price: {stock_price}")
         else:
             print("error getting "+stock_ticker+"s price")
@@ -32,10 +32,7 @@ def update_stock_prices(date: date_obj= datetime.now().date()):
 def has_closing_prices(dates: list[date_obj]) -> bool:
     for date in dates:
         for stock_ticker in tickers:
-            price_json= client.hget("livePrices:"+stock_ticker, date.isoformat())
-            if price_json == None: 
-                return False
-            price= Price.parse_raw(price_json)
+            price= get_price(client, stock_ticker, date)
             if not price.is_closing_price:
                 return False
     return True
@@ -54,18 +51,18 @@ def set_closing_prices(dates: list[date_obj], history: pandas.DataFrame) -> bool
     successful= True
     for date in dates:
         for stock_ticker in tickers:
-            key= "livePrices:" + stock_ticker
-            price_json= client.hget(key, date.isoformat())
+            price= get_price(client, stock_ticker, date)
 
-            if not(price_json != None and Price.parse_raw(price_json).is_closing_price):
+
+            if not(price and price.is_closing_price):
                 closing_price= get_closing_price(history, date, stock_ticker)
                 if closing_price == None:
                     print(f"No closing price found for {stock_ticker} on {date}")
                     successful= False
                 else:
                     print(f"stock ticker: {stock_ticker} date: {date.isoformat()} closing price: {str(closing_price)}")
-                    price = Price(price= closing_price, stock_ticker= stock_ticker, is_closing_price= True)
-                    client.hset(key, date.isoformat(), price.json())
+                    update_live_price(client, stock_ticker, date, closing_price, True)
+
     return successful
 
 def get_closing_price(history: pandas.DataFrame, date: date_obj, stock_ticker: str):
