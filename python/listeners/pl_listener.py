@@ -4,7 +4,12 @@ from utils.booktrade import query_trades
 from utils import market_calendar
 from listener import listener_base
 from redis import Redis
-from utils import redis_utils
+from utils.redis_utils import (
+     get_price, 
+     get_position, 
+     get_pl, 
+     get_startup_date
+ )
 
 class PLListener(listener_base):
 
@@ -71,7 +76,7 @@ class PLListener(listener_base):
     @staticmethod
     def get_previous_closing_price(client: Redis, ticker: str) -> float:
         date= market_calendar.get_most_recent_trading_day()
-        return redis_utils.get_price(client, ticker, date).price
+        return get_price(client, ticker, date).price
     
     def recover_current_days_pl(self):
         now= datetime.now()
