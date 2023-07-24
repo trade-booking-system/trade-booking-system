@@ -17,7 +17,7 @@ def booktrade(client: redis.Redis, trade: Trade, tickers: ValidTickers):
     redis_utils.set_history(client, trade.account, trade.date, trade.id, history)
     trade_amount = trade.get_amount()
     client.publish("tradesInfo", f"{trade.account}:{trade.stock_ticker}:{trade_amount}")
-    client.publish("tradeUpdates", f"{trade.account}:{trade.stock_ticker}:{trade_amount}:{trade.price}")
+    client.publish("tradeUpdates", f"{trade.id}:{trade.account}:{trade.stock_ticker}:{trade_amount}:{trade.price}")
     client.publish("tradeUpdatesWS", f"create: {trade.json()}")
     client.sadd("p&lStocks", trade.account+":"+trade.stock_ticker)
     key = f"trades:{trade.account}:{trade.date.isoformat()}"
@@ -43,8 +43,8 @@ def update_trade(trade_id, account, date, updated_type, updated_amount, updated_
         # undo previous version of trade and add new trade
         client.publish("tradesInfo", f"{trade.account}:{trade.stock_ticker}:{trade.get_amount() - old_trade.get_amount()}")
 
-    client.publish("tradeUpdates", f"{trade.account}:{trade.stock_ticker}:{-old_trade.get_amount()}:{old_trade.price}")
-    client.publish("tradeUpdates", f"{trade.account}:{trade.stock_ticker}:{trade.get_amount()}:{trade.price}")
+    client.publish("tradeUpdates", f"{trade.id}:{trade.account}:{trade.stock_ticker}:{-old_trade.get_amount()}:{old_trade.price}")
+    client.publish("tradeUpdates", f"{trade.id}:{trade.account}:{trade.stock_ticker}:{trade.get_amount()}:{trade.price}")
 
     client.publish("tradeUpdatesWS", f"update: {trade.json()}")
     client.hset(key, trade_id, history.json())

@@ -43,11 +43,17 @@
 ### tradeUpdatesWS
 - Format: `{type}:{json data}`
 
+### pnlTradeUpdatesWS
+- Format: `{pnl json data}`
+
 ### positionUpdatesWS
 - Format: `position:{json data}`
 
+### pnlPositionUpdatesWS
+- Format: `{pnl json data}`
+
 ### tradeUpdates
-- Format: '{account}:{ticker}:{amount}:{price}'
+- Format: '{id}:{account}:{ticker}:{amount}:{price}'
 - Description: used to calculate trade p&l
 
 ### positionUpdates

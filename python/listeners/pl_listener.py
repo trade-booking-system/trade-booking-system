@@ -1,4 +1,4 @@
-from schema.schema import ProfitLoss, Price
+from schema.schema import ProfitLoss, TradeProfitLoss, Price
 from datetime import datetime, date as date_obj
 from utils.booktrade import query_trades
 from utils import market_calendar
@@ -26,8 +26,8 @@ class PLListener(listener_base):
 
     def trade_updates_handler(self, msg):
         data: str= msg["data"]
-        account, ticker, amount, price= data.split(":")
-        self.queue.put_nowait((self.update_trade_pl, (account, ticker, int(amount), float(price), datetime.now().date())))
+        id, account, ticker, amount, price= data.split(":")
+        self.queue.put_nowait((self.update_trade_pl, (id, account, ticker, int(amount), float(price), datetime.now().date())))
 
     def price_updates_handler(self, msg):
         if msg["data"] == "updated":
@@ -54,16 +54,24 @@ class PLListener(listener_base):
         pl= redis_utils.get_pl(self.client, account, ticker, ProfitLoss(account= account, ticker= ticker))
         pl.position_pl= self.calculate_position_pl(price.price, closing_price.price, position.amount)
         redis_utils.set_pl(self.client, account, ticker, date, pl)
+        self.client.publish("pnlPositionUpdatesWS", pl.json())
         print(f"position p&l: account: {account} stock ticker: {ticker} profit loss: {pl.position_pl}")
 
-    def update_trade_pl(self, account: str, ticker: str, amount: int, price: float, date: date_obj):
+    def update_trade_pl(self, id: str, account: str, ticker: str, amount: int, price: float, date: date_obj):
         closing_price = self.get_previous_closing_price(self.client, ticker)
         if closing_price == None:
             print(f"error: ticker {ticker} does not have a closing price")
             return
+        trade_pl = self.calculate_trade_pl(closing_price.price, price, amount)
+        trade_pl_obj = TradeProfitLoss(
+            trade_id=id, trade_pl=trade_pl, price_at_calc=closing_price.price, date=date
+        )
+        redis_utils.set_trade_pl(self.client, id, date, trade_pl_obj)
         pl= redis_utils.get_pl(self.client, account, ticker, ProfitLoss(account= account, ticker= ticker))
-        pl.trade_pl+= self.calculate_trade_pl(closing_price.price, price, amount)
+        pl.trade_pl+= trade_pl
         redis_utils.set_pl(self.client, account, ticker, date, pl)
+        self.client.publish("pnlTradeUpdatesWS", trade_pl_obj.json())
+        self.client.publish("pnlPositionUpdatesWS", pl.json())
         print(f"trade p&l: account: {account} stock ticker: {ticker} profit loss: {pl.trade_pl}")
 
     @staticmethod
@@ -92,8 +100,13 @@ class PLListener(listener_base):
                 return
             key= trade.account+":"+trade.stock_ticker
             amount= pl.get(key, 0)
-            amount+= self.calculate_trade_pl(closing_price.price, trade.price, trade.get_amount())
+            trade_pl = self.calculate_trade_pl(closing_price.price, trade.price, trade.get_amount())
+            amount+= trade_pl
             pl[key]= amount
+            redis_utils.set_trade_pl(self.client, trade.id, now.date(), TradeProfitLoss(
+                trade_id=trade.id, trade_pl=trade_pl, price_at_calc=closing_price.price,
+                date=now.date()
+            ))
 
         for key, trade_pl in pl.items():
             account, ticker= key.split(":")

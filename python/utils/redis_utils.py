@@ -1,7 +1,7 @@
 from typing import Generator
 from redis import Redis
 from datetime import datetime, date as date_obj
-from schema.schema import Trade, ProfitLoss, Position, Price, History
+from schema.schema import Trade, ProfitLoss, TradeProfitLoss, Position, Price, History
 
 
 def get_price(client: Redis, ticker: str, date: date_obj) -> Price:
@@ -29,6 +29,16 @@ def get_pl(client: Redis, account: str, ticker: str, default= None) -> ProfitLos
     if pl_json == None:
         return default
     return ProfitLoss.parse_raw(pl_json)
+
+def set_trade_pl(client: Redis, id: str, date: date_obj, pl: TradeProfitLoss):
+    key = f"trade_p&l:{id}"
+    client.hset(key, date.isoformat(), pl.json())
+
+def get_trade_pl(client: Redis, id: str, date: date_obj, default = None) -> TradeProfitLoss:
+    pl_json = client.hget(f"trade_p&l:{date.isoformat()}", id)
+    if pl_json == None:
+        return default
+    return TradeProfitLoss.parse_raw(pl_json)
 
 def get_startup_date(client: Redis) -> date_obj:
     startup_date= client.get("startupDate")
