@@ -2,7 +2,6 @@ from typing import Generator
 from redis import Redis
 from datetime import datetime, date as date_obj
 from schema.schema import Trade, ProfitLoss, Position, Price, History
-from utils import market_calendar
 
 
 def get_price(client: Redis, ticker: str, date: date_obj) -> Price:
@@ -17,24 +16,19 @@ def get_position(client: Redis, account: str, ticker: str) -> Position:
         return None
     return Position.parse_raw(json_position)
 
-def query_trades(client: Redis, account: str = "*", year: str = "*",
-                    month: str = "*", day: str = "*") -> Generator[Trade, None, None]:
-    for key in client.scan_iter(f"trades:{account}:{year}-{month}-{day}"):
-        for _, json_object in client.hscan_iter(key):
-            yield History.parse_raw(json_object).get_current_trade()
 
 # def set_positions():
 
+def set_pl(client: Redis, account: str, ticker: str, date:date_obj, pl: ProfitLoss):
+    key = f"p&l:{account}:{ticker}"
+    client.hset(key, date.isoformat(), pl.json())
 
-def get_pl(client: Redis, account: str, ticker: str) -> ProfitLoss:
+def get_pl(client: Redis, account: str, ticker: str, default= None) -> ProfitLoss:
     date= datetime.now().date()
     pl_json= client.hget(f"p&l:{account}:{ticker}", date.isoformat())
     if pl_json == None:
-        return ProfitLoss(trade_pl= 0, position_pl= 0, account= account, ticker= ticker)
+        return default
     return ProfitLoss.parse_raw(pl_json)
-
-# def set_pl():
-
 
 def get_startup_date(client: Redis) -> date_obj:
     startup_date= client.get("startupDate")
@@ -42,7 +36,8 @@ def get_startup_date(client: Redis) -> date_obj:
         return datetime.now().date()
     return date_obj.fromisoformat(startup_date)
 
-# def get_stocks() -> list[str]:
+def get_stocks(client: Redis) -> list[str]:
+    return client.smembers("p&lStocks")
 
 # def add_to_stocks(client: Redis, account: str, ticker: str):
 
@@ -52,5 +47,8 @@ def set_history(client: Redis, account: str, date: date_obj, id: str, history: H
     json_data= history.json()
     client.hset(key, id, json_data)
 
-
-
+def query_trades(client: Redis, account: str = "*", year: str = "*",
+                    month: str = "*", day: str = "*") -> Generator[Trade, None, None]:
+    for key in client.scan_iter(f"trades:{account}:{year}-{month}-{day}"):
+        for _, json_object in client.hscan_iter(key):
+            yield History.parse_raw(json_object).get_current_trade()

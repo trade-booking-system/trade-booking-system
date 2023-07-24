@@ -5,6 +5,7 @@ from utils.booktrade import query_trades
 from utils.get_positions import get_all_positions
 from listener import listener_base
 from utils import market_calendar
+from utils import redis_utils
 from redis import Redis
 
 class PositionListener(listener_base):
@@ -120,14 +121,14 @@ class PositionListener(listener_base):
         json_position= client.hget("positions:"+account, ticker)
         if json_position != None:
             return Position.parse_raw(json_position).last_aggregation_time
-        return datetime.combine(PositionListener.get_startup_date(client), time())
+        return datetime.combine(redis_utils.get_startup_date(client), time())
 
     def rebuild(self):
         now= datetime.now()
         for key in self.client.scan_iter("positions*"):
             self.client.delete(key)
         self.cache= dict()
-        startup_date= PositionListener.get_startup_date(self.client)
+        startup_date= redis_utils.get_startup_date(self.client)
         for date in market_calendar.get_dates(startup_date, datetime.now().date()):
             trades= query_trades(account= "*", year= str(date.year), month= str(date.month).zfill(2), day= str(date.day).zfill(2), client= self.client)
             market_trades, after_market_trades= self.split_trades_by_time(trades)

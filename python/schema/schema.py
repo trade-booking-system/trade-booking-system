@@ -93,13 +93,17 @@ class PositionResponse(BaseModel):
     _count_validator = validator("count", allow_reuse=True)(validate_is_positive)
 
 class ProfitLoss(BaseModel):
-    trade_pl: float
-    position_pl: float
+    trade_pl: float= 0
+    position_pl: float= 0
     account: str
     ticker: str
+
+    def get_total_pl(cls) -> float:
+        return cls.trade_pl + cls.ticker
 
 class TradeProfitLoss(BaseModel):
     trade_id: str
     trade_pl: float
     price_at_calc: float
     time_at_calc: datetime
+
