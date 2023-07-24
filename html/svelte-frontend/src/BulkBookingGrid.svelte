@@ -35,11 +35,22 @@
           width: 80
         },
         { field: "ID" },
-        { field: "Ticker" },
-        { field: "Account" },
-        { field: "BuyOrSell" },
-        { field: "Shares" },
-        { field: "Price" },
+        { 
+          field: "Ticker", 
+          filter: true,
+        },
+        { field: "Account", 
+          filter: true, 
+        },
+        { field: "BuyOrSell", 
+          filter: true, 
+        },
+        { field: "Shares",
+          filter: "agNumberColumnFilter", 
+        },
+        { field: "Price", 
+          filter: "agNumberColumnFilter", 
+        },
         { field: "Booked_At" },
         { field: "Request_Group" }
       ]
