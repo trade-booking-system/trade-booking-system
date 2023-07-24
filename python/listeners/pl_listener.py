@@ -1,20 +1,10 @@
-from schema.schema import ProfitLoss, Position, Price
+from schema.schema import ProfitLoss, Position
 from datetime import datetime, date as date_obj
 from utils.booktrade import query_trades
 from utils import market_calendar
 from listener import listener_base
 from redis import Redis
-from utils.redis_utils import store_to_redis, get_from_redis
-from utils.pl_utils import (
-    calculate_position_pl, 
-    calculate_trade_pl, 
-    get_price, 
-    get_position, 
-    get_pl, 
-    get_previous_closing_price,
-    get_startup_date
-)
-
+from utils import redis_utils
 
 class PLListener(listener_base):
 
@@ -69,6 +59,19 @@ class PLListener(listener_base):
         pl.trade_pl+= self.calculate_trade_pl(closing_price, price, amount)
         self.client.hset(f"p&l:{account}:{ticker}", date.isoformat(), pl.json())
         print(f"trade p&l: account: {account} stock ticker: {ticker} profit loss: {pl.trade_pl}")
+
+    @staticmethod
+    def calculate_position_pl(price: float, closing_price: float, position: int) -> float:
+        return (price - closing_price) * position
+
+    @staticmethod
+    def calculate_trade_pl(closing_price: float, price: float, amount) -> float:
+        return (closing_price - price) * amount
+    
+    @staticmethod
+    def get_previous_closing_price(client: Redis, ticker: str) -> float:
+        date= market_calendar.get_most_recent_trading_day()
+        return redis_utils.get_price(client, ticker, date).price
     
     def recover_current_days_pl(self):
         now= datetime.now()

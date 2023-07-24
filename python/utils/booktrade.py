@@ -7,21 +7,21 @@ from io import StringIO
 from datetime import datetime
 from uuid import uuid4
 import redis
+from utils import redis_utils
 
 def booktrade(client: redis.Redis, trade: Trade, tickers: ValidTickers):
     if not tickers.is_valid_ticker(trade.stock_ticker):
         raise HTTPException(status_code= 400, detail= "invalid stock ticker")
-    key = f"trades:{trade.account}:{trade.date.isoformat()}"
     history= History()
     history.trades.append(trade)
-    json_data= history.json()
-    client.hset(key, trade.id, json_data)
+    redis_utils.set_history(client, trade.account, trade.date, trade.id, history)
     trade_amount = trade.get_amount()
     client.publish("tradesInfo", f"{trade.account}:{trade.stock_ticker}:{trade_amount}")
     client.publish("tradeUpdates", f"{trade.account}:{trade.stock_ticker}:{trade_amount}:{trade.price}")
     client.publish("tradeUpdatesWS", f"create: {trade.json()}")
     client.sadd("p&lStocks", trade.account+":"+trade.stock_ticker)
-    return {"Key": key, "Field": trade.id}
+    # return {"Key": key, "Field": trade.id}
+    return {"Trade book successfully"}
 
 def booktrades_bulk(client: redis.Redis, trades: list[Trade]):
     for trade in trades:
