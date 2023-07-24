@@ -11,9 +11,18 @@
     {
       headerName: "Positions",
       children: [
-        { field: "Account" },
-        { field: "Ticker" },
-        { field: "Quantity" },
+        { 
+          field: "Account",
+          filter: true,
+        },
+        { 
+          field: "Ticker",
+          filter: true,
+        },
+        { 
+          field: "Quantity", 
+          filter: "agNumberColumnFilter",
+        },
         { field: "LastAggregationTime" },
         { field: "SystemLastAggregationProcessHost_Id" },
         { field: "Trade PL"},
