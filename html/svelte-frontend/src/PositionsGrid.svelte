@@ -57,7 +57,7 @@
     const getPositionPromises = checkedAccounts.map(account => getPosition(account));
     const positionsArray = await Promise.all(getPositionPromises);
     positions = positionsArray.flat();
-
+    
     console.log("positions", positions);
 
     console.log("clearing row data");
@@ -89,7 +89,10 @@
         Ticker: position.stock_ticker,
         Quantity: position.amount,
         LastAggregationTime: position.last_aggregation_time,
-        SystemLastAggregationProcessHost_Id: position.last_aggregation_host
+        SystemLastAggregationProcessHost_Id: position.last_aggregation_host,
+        "Trade PL": position.trade_pl,
+        "Position PL": position.position_pl,
+        "Total PL": position.trade_pl + position.position_pl
       })
     })
 
@@ -120,6 +123,7 @@
         ws.onmessage = (updatedData) => {
           let jsonData = JSON.parse(updatedData.data);
           let newPosition = jsonData.payload;
+          console.log("position websocket return", newPosition);
           let index = positions.findIndex((position) => {
             return position.account == newPosition.account && position.stock_ticker == newPosition.stock_ticker;
           });
