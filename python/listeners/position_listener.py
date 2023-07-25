@@ -1,7 +1,6 @@
 from datetime import datetime, date as date_obj, time
 from schema import Position, Trade
 from apscheduler.schedulers.background import BackgroundScheduler
-from utils.get_positions import get_all_positions
 from listener import listener_base
 from utils import market_calendar
 from utils import redis_utils
@@ -51,7 +50,7 @@ class PositionListener(listener_base):
     def take_snapshot(self, now= datetime.now()):
         if not market_calendar.is_trading_day(now.date()):
             return
-        positions= get_all_positions(self.client)
+        positions= redis_utils.get_positions(self.client)
         for position in positions:
             redis_utils.set_position_snapshot(self.client, position.account, now.date(), position.stock_ticker, position)
 

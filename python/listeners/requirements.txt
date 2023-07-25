@@ -4,6 +4,5 @@ DateTime==5.1
 yahooquery==2.3.1
 pandas-market-calendars==4.1.4
 APScheduler==3.10.1
-fastapi==0.95.2
 pandas==2.0.2
 pandas-market-calendars==4.1.4
