@@ -1,1 +1,4 @@
-from .schema import Trade, Position, PositionResponse, Price, History, ProfitLoss, TradeProfitLoss
+from .schema import (
+    Trade, Position, PositionResponse, Price, History, ProfitLoss, TradeProfitLoss,
+    TradeWithPl, PositionWithPl
+)

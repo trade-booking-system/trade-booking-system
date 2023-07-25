@@ -89,12 +89,6 @@ class History(BaseModel):
         cls.trades.append(trade)
         cls.current_version= trade.version
 
-class PositionResponse(BaseModel):
-    positions: list[Position]
-    count: int
-    
-    _count_validator = validator("count", allow_reuse=True)(validate_is_positive)
-
 class ProfitLoss(BaseModel):
     trade_pl: float= 0
     position_pl: float= 0
@@ -107,6 +101,18 @@ class ProfitLoss(BaseModel):
 class TradeProfitLoss(BaseModel):
     account: str
     trade_id: str
-    trade_pl: float
-    closing_price: float
+    trade_pl: float = 0
+    closing_price: float = 0
     date: date
+
+class TradeWithPl(Trade, TradeProfitLoss):
+    pnl_valid: bool
+
+class PositionWithPl(Position, ProfitLoss):
+    pnl_valid: bool
+
+class PositionResponse(BaseModel):
+    positions: list[PositionWithPl]
+    count: int
+    
+    _count_validator = validator("count", allow_reuse=True)(validate_is_positive)

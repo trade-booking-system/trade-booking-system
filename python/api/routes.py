@@ -2,8 +2,9 @@ import redis
 from fastapi import APIRouter, Depends, UploadFile, File
 from utils import booktrade as tradebooker
 from utils.redis_initializer import get_redis_client
+from utils import redis_utils
 from utils.tickers import ValidTickers
-from schema import Trade, History
+from schema import Trade, History, TradeWithPl
 
 
 router= APIRouter()
@@ -39,10 +40,13 @@ async def get_trades(client: redis.Redis = Depends(get_redis_client)) -> list[Tr
 
 @router.get("/queryTrades")
 async def query_trades(account: str = "*", year: int = 0, month: int = 0, day: int = 0,
-                       client: redis.Redis = Depends(get_redis_client)) -> list[Trade]:
+                       client: redis.Redis = Depends(get_redis_client)) -> list[TradeWithPl]:
     def default(value: int, pad: int) -> str:
         return "*" if value == 0 else str(value).zfill(pad)
-    return tradebooker.query_trades(account, default(year, 4), default(month, 2), default(day, 2), client)
+    return [
+        redis_utils.merge_trade(client, trade) for trade in
+        redis_utils.query_trades(client, account, default(year, 4), default(month, 2), default(day, 2))
+    ]
 
 @router.get("/getTradeHistory")
 def get_trade_history(trade_id: str, account: str, date: str, client: redis.Redis = Depends(get_redis_client)) -> History:

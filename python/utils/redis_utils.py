@@ -1,7 +1,9 @@
 from typing import Generator
 from redis import Redis
 from datetime import datetime, date as date_obj
-from schema.schema import Trade, ProfitLoss, TradeProfitLoss, Position, Price, History
+from schema.schema import (
+    Trade, ProfitLoss, TradeProfitLoss, Position, Price, History, TradeWithPl, PositionWithPl
+)
 
 
 def set_position(client: Redis, account: str, ticker: str, position: Position):
@@ -14,6 +16,13 @@ def get_position(client: Redis, account: str, ticker: str) -> Position:
     if json_position == None:
         return None
     return Position.parse_raw(json_position)
+
+def get_positions(client: Redis, account: str = "*") -> list[Position]:
+    positions: list[Position] = []
+    for key in client.scan_iter("positions:" + account):
+        for _, value in client.hscan_iter(key):
+            positions.append(Position.parse_raw(value))
+    return positions
 
 def set_position_snapshot(client: Redis, account: str, date: date_obj, ticker: str, position: Position):
     key= f"positionsSnapshots:{account}:{date.isoformat()}"
@@ -116,3 +125,21 @@ def query_trades(client: Redis, account: str = "*", year: str = "*",
     for key in client.scan_iter(f"trades:{account}:{year}-{month}-{day}"):
         for _, json_object in client.hscan_iter(key):
             yield History.parse_raw(json_object).get_current_trade()
+
+def merge_trade(client: Redis, trade: Trade) -> TradeWithPl:
+    pl = get_trade_pl(client, trade.id, trade.date)
+    if pl == None:
+        return TradeWithPl(**trade.dict(), **TradeProfitLoss(
+            account=trade.account, trade_id=trade.id, date=date_obj(1, 1, 1)
+        ).dict(exclude=set(["account", "date"])), pnl_valid=False)
+    else:
+        return TradeWithPl(**trade.dict(), **pl.dict(exclude=set(["account", "date"])), pnl_valid=True)
+
+def merge_position(client: Redis, position: Position, date: date_obj) -> PositionWithPl:
+    pl = get_pl(client, position.account, position.stock_ticker, date)
+    if pl == None:
+        return PositionWithPl(**position.dict(), **ProfitLoss(
+            account=position.account, ticker=position.stock_ticker
+        ).dict(exclude=set(["account"])), pnl_valid=False)
+    else:
+        return PositionWithPl(**position.dict(), **pl.dict(exclude=set(["account"])), pnl_valid=True)
