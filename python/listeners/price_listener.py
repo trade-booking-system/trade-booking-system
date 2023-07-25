@@ -31,6 +31,8 @@ def has_closing_prices(dates: list[date_obj]) -> bool:
     for date in dates:
         for stock_ticker in tickers:
             price= redis_utils.get_price(client, stock_ticker, date)
+            if price == None:
+                return False
             if not price.is_closing_price:
                 return False
     return True

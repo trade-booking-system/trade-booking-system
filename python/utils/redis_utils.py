@@ -61,10 +61,11 @@ def get_startup_date(client: Redis) -> date_obj:
     return date_obj.fromisoformat(startup_date)
 
 def get_stocks(client: Redis) -> list[str]:
-    return client.smembers("p&lStocks")
+    return client.smembers("stocks", )
 
-# def add_to_stocks(client: Redis, account: str, ticker: str):
-
+def add_to_stocks(client: Redis, account: str, ticker: str):
+    value= account+":"+ticker
+    client.sadd("stocks", value)
 
 def set_history(client: Redis, account: str, date: date_obj, id: str, history: History):
     key = f"trades:{account}:{date.isoformat()}"

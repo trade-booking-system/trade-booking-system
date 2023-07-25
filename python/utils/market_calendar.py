@@ -3,8 +3,7 @@ import pandas_market_calendars as market_calendar
 
 cal: market_calendar.MarketCalendar= market_calendar.get_calendar("NYSE")
 
-def get_most_recent_trading_day() -> date:
-    date= datetime.now().date()
+def get_most_recent_trading_day(date: date) -> date:
     date-= timedelta(days= 1)
     trading_days= cal.valid_days(start_date= date - timedelta(days= 5), end_date= date)
 
