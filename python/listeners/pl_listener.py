@@ -83,7 +83,10 @@ class PLListener(listener_base):
     @staticmethod
     def get_previous_closing_price(client: Redis, ticker: str, date: date_obj) -> Price:
         date= market_calendar.get_most_recent_trading_day(date)
-        return redis_utils.get_price(client, ticker, date)
+        price= redis_utils.get_price(client, ticker, date)
+        if not price.is_closing_price():
+            return None
+        return price
     
     @staticmethod
     def get_position_by_day(client: Redis, account: str, ticker: str, date: date_obj) -> Position:

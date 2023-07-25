@@ -77,10 +77,9 @@ def set_history(client: Redis, account: str, date: date_obj, id: str, history: H
 #def get_trade():
 #    return get_history().get_current_trade()
 
-def set_price(client: Redis, stock_ticker: str, date: date_obj, stock_price: float, is_closing_price: bool):
-    live_price_key= "livePrices:" + stock_ticker
-    price = Price(price= stock_price, stock_ticker= stock_ticker, is_closing_price= is_closing_price)
-    client.hset(live_price_key, date.isoformat(), price.json())
+def set_price(client: Redis, stock_ticker: str, date: date_obj, price: Price):
+    key= "livePrices:" + stock_ticker
+    client.hset(key, date.isoformat(), price.json())
 
 def get_price(client: Redis, ticker: str, date: date_obj) -> Price:
     key= "livePrices:"+ticker

@@ -71,7 +71,10 @@ class Position(BaseModel):
 class Price(BaseModel):
     price: float
     stock_ticker: str
-    is_closing_price: bool
+    last_updated: time
+
+    def is_closing_price(cls) -> bool:
+        return cls.last_updated >= time(hour= 16)
 
     _price_validator= validator("price", allow_reuse= True)(validate_is_positive)
 

@@ -2,9 +2,10 @@ from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.triggers.combining import OrTrigger
 from apscheduler.triggers.cron import CronTrigger
 from utils.redis_initializer import get_redis_client
-from datetime import datetime, timedelta, date as date_obj
+from datetime import datetime, timedelta, date as date_obj, time
 from utils.tickers import ValidTickers
 from utils import market_calendar
+from schema.schema import Price
 from yahooquery import Ticker
 from utils import redis_utils
 from redis import Redis
@@ -14,8 +15,8 @@ import sys
 import os
 
 
-def update_stock_prices(date: date_obj= datetime.now().date()):
-    if not market_calendar.is_trading_day(date):
+def update_stock_prices(now: datetime= datetime.now()):
+    if not market_calendar.is_trading_day(now.date()):
         return
     print("updating prices")
     prices= tickers_info.price
@@ -23,7 +24,8 @@ def update_stock_prices(date: date_obj= datetime.now().date()):
     for stock_ticker in tickers:
         if stock_ticker in prices and "regularMarketPrice" in prices[stock_ticker]:
             stock_price= prices[stock_ticker]["regularMarketPrice"]
-            redis_utils.set_price(client, stock_ticker, date, stock_price, False)
+            price = Price(price= stock_price, stock_ticker= stock_ticker, last_updated= now.time())
+            redis_utils.set_price(client, stock_ticker, now.date(), price)
             print(f"stock: {stock_ticker} price: {stock_price}")
         else:
             print("error getting "+stock_ticker+"s price")
@@ -35,7 +37,7 @@ def has_closing_prices(dates: list[date_obj]) -> bool:
             price= redis_utils.get_price(client, stock_ticker, date)
             if price == None:
                 return False
-            if not price.is_closing_price:
+            if not price.is_closing_price():
                 return False
     return True
 
@@ -55,17 +57,18 @@ def set_closing_prices(dates: list[date_obj], history: pandas.DataFrame) -> bool
         for stock_ticker in tickers:
             price= redis_utils.get_price(client, stock_ticker, date)
 
-            if not(price and price.is_closing_price):
+            if not(price and price.is_closing_price()):
                 closing_price= get_closing_price(history, date, stock_ticker)
                 if closing_price == None:
                     print(f"No closing price found for {stock_ticker} on {date}")
                     successful= False
                 else:
+                    price= Price(price= closing_price, stock_ticker= stock_ticker, last_updated= time(16))
+                    redis_utils.set_price(client, stock_ticker, date, price)
                     print(f"stock ticker: {stock_ticker} date: {date.isoformat()} closing price: {str(closing_price)}")
-                    redis_utils.set_price(client, stock_ticker, date, closing_price, True)
     return successful
 
-def get_closing_price(history: pandas.DataFrame, date: date_obj, stock_ticker: str):
+def get_closing_price(history: pandas.DataFrame, date: date_obj, stock_ticker: str) -> float:
     ticker = history.loc[stock_ticker]
     if not date in ticker.index:
         return None

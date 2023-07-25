@@ -14,10 +14,10 @@ def test_price_listener(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(price_listener, "tickers_info", FakePrices(data))
 
     date_time = datetime.datetime(2023, 7, 3, 11, 46, 51)
-    price_listener.update_stock_prices(date= date_time.date())
+    price_listener.update_stock_prices(now= date_time)
     for ticker in data:
         price_json= redis.hget("livePrices:" + ticker, date_time.date().isoformat())
         assert price_json != None
         price= Price.parse_raw(price_json)
         assert price.price == data[ticker]
-        assert price.is_closing_price == False
+        assert price.is_closing_price() == False
