@@ -54,7 +54,7 @@ class PLListener(listener_base):
         pl= redis_utils.get_pl(self.client, account, ticker, date, ProfitLoss(account= account, ticker= ticker))
         pl.position_pl= self.calculate_position_pl(price.price, closing_price.price, position.amount)
         redis_utils.set_pl(self.client, account, ticker, date, pl)
-        self.client.publish("pnlPositionUpdatesWS", pl.json())
+        self.client.publish("pnlPositionUpdatesWS", "pnl: " + pl.json())
 
         print(f"position p&l: account: {account} stock ticker: {ticker} profit loss: {pl.position_pl}")
 
@@ -67,13 +67,13 @@ class PLListener(listener_base):
         trade_pl= self.calculate_trade_pl(closing_price.price, price, amount)
         pl.trade_pl+= trade_pl
         redis_utils.set_pl(self.client, account, ticker, date, pl)
-        self.client.publish("pnlPositionUpdatesWS", pl.json())
+        self.client.publish("pnlPositionUpdatesWS", "pnl: " + pl.json())
 
         trade_pl_obj = TradeProfitLoss(
             account= account, trade_id= id, trade_pl= trade_pl, closing_price= closing_price.price, date= date
         )
         redis_utils.set_trade_pl(self.client, id, date, trade_pl_obj)
-        self.client.publish("pnlTradeUpdatesWS", trade_pl_obj.json())
+        self.client.publish("pnlTradeUpdatesWS", "pnl: " + trade_pl_obj.json())
         print(f"trade p&l: account: {account} stock ticker: {ticker} profit loss: {pl.trade_pl}")
 
     @staticmethod
