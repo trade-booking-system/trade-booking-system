@@ -152,3 +152,10 @@ def merge_position(client: Redis, position: Position, date: date_obj) -> Positio
         ).dict(exclude=set(["account"])), pnl_valid=False)
     else:
         return PositionWithPl(**position.dict(), **pl.dict(exclude=set(["account"])), pnl_valid=True)
+
+def get_history_json(client: Redis, account: str, id: str, date: date_obj, default = None) -> str:
+    key= f"trades:{account}:{date}"
+    history_json = client.hget(key, id)
+    if history_json == None:
+        return default
+    return history_json

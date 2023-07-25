@@ -72,8 +72,7 @@ def query_trades(account: str, year: str, month: str, day: str, client: redis.Re
     return trades
 
 def get_trade_history(trade_id, account, date, client: redis.Redis) -> History:
-    key= f"trades:{account}:{date}"
-    json_history= client.hget(key, trade_id)
+    json_history = redis_utils.get_history_json(client, account, trade_id, date)
     if json_history == None:
         raise HTTPException(status_code= 404, detail= "trade does not exist")
     return History.parse_raw(json_history)
