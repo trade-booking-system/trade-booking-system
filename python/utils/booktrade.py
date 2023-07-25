@@ -46,7 +46,7 @@ def update_trade(trade_id, account, date, updated_type, updated_amount, updated_
     client.publish("tradeUpdates", f"{trade.id}:{trade.account}:{trade.stock_ticker}:{trade.get_amount()}:{trade.price}")
 
     client.publish("tradeUpdatesWS", f"update: {trade.json()}")
-    client.hset(key, trade_id, history.json())
+    redis_utils.set_history(client, trade.account, trade.date, trade.id, history)
     return {"message": "trade updated successfully", "id" : trade.id, "version" : trade.version}
 
 def create_updated_trade(updated_amount, updated_type, updated_price, old_trade: Trade) -> Trade:
