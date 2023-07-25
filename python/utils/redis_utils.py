@@ -112,6 +112,15 @@ def get_trades_by_day_and_account(client: Redis, account: str, date: date_obj) -
         trades.append(trade)
     return trades
 
+def get_all_trades(client: Redis) -> list[Trade]:
+    trades= []
+    for key in client.scan_iter("trades:*"):
+        for _, json_object in client.hscan_iter(key):
+            trade_object= History.parse_raw(json_object).get_current_trade()
+            trades.append(trade_object)
+    return trades
+
+
 def get_trades_by_day(client: Redis, date: date_obj) -> list[Trade]:
     trades= list()
     for key in client.scan_iter(f"trades:*:{date.isoformat()}"):

@@ -61,11 +61,7 @@ def create_updated_trade(updated_amount, updated_type, updated_price, old_trade:
                       version= version, type= updated_type, amount= updated_amount, price= updated_price)
 
 def get_trades(client: redis.Redis) -> list[Trade]:
-    trades= []
-    for key in client.scan_iter("trades:*"):
-        for _, json_object in client.hscan_iter(key):
-            trade_object= History.parse_raw(json_object).get_current_trade()
-            trades.append(trade_object)
+    trades = redis_utils.get_all_trades(client)
     return trades
 
 def query_trades(account: str, year: str, month: str, day: str, client: redis.Redis) -> list[Trade]:
