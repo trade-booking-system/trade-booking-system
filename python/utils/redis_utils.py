@@ -37,6 +37,12 @@ def get_pl(client: Redis, account: str, ticker: str, date: date_obj, default= No
         return default
     return ProfitLoss.parse_raw(pl_json)
 
+def get_all_pl(client: Redis, pattern: str) -> dict[str, dict[str, str]]:
+    """Fetches all the fields and their values for the keys that match the provided pattern"""
+    keys = client.keys(pattern)
+    result = {key: client.hgetall(key) for key in keys}
+    return result
+
 def get_trade(client: Redis, account: str, id: str, date: date_obj, default = None) -> Trade:
     key = f"trades:{account}:{date.isoformat()}"
     history_json = client.hget(key, id)

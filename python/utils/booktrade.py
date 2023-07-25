@@ -46,7 +46,7 @@ def update_trade(trade_id, account, date, updated_type, updated_amount, updated_
     client.publish("tradeUpdates", f"{trade.id}:{trade.account}:{trade.stock_ticker}:{trade.get_amount()}:{trade.price}")
 
     client.publish("tradeUpdatesWS", f"update: {trade.json()}")
-    client.hset(key, trade_id, history.json())
+    redis_utils.set_history(client, account, date, trade_id, history)
     return {"message": "trade updated successfully", "id" : trade.id, "version" : trade.version}
 
 def create_updated_trade(updated_amount, updated_type, updated_price, old_trade: Trade) -> Trade:
@@ -62,32 +62,30 @@ def create_updated_trade(updated_amount, updated_type, updated_price, old_trade:
 
 def get_trades(client: redis.Redis) -> list[Trade]:
     trades= []
-    for key in client.scan_iter("trades:*"):
-        for _, json_object in client.hscan_iter(key):
-            trade_object= History.parse_raw(json_object).get_current_trade()
+    date = datetime.now().date()
+    for key in redis_utils.get_stocks(client):
+        for _, json_object in redis_utils.get_trades_by_day_and_account(client, key.split(":")[0], date):
+            trade_object= json_object.get_current_trade()
             trades.append(trade_object)
     return trades
 
 def query_trades(account: str, year: str, month: str, day: str, client: redis.Redis) -> list[Trade]:
     trades = []
-    for key in client.scan_iter(f"trades:{account}:{year}-{month}-{day}"):
-        for _, json_object in client.hscan_iter(key):
-            trade_object= History.parse_raw(json_object).get_current_trade()
-            trades.append(trade_object)
+    date = f"{year}-{month}-{day}"
+    for trade_object in redis_utils.query_trades(client, account, year, month, day):
+        trades.append(trade_object)
     return trades
 
 def get_trade_history(trade_id, account, date, client: redis.Redis) -> History:
-    key= f"trades:{account}:{date}"
-    json_history= client.hget(key, trade_id)
+    json_history= redis_utils.get_trade(client, account, trade_id, date)
     if json_history == None:
         raise HTTPException(status_code= 404, detail= "trade does not exist")
     return History.parse_raw(json_history)
 
 def get_accounts(client: redis.Redis) -> set[str]:
-    keys = client.scan_iter("trades:*")
     accounts = set()
-    for key in keys:
-        accounts.add(key.split(":")[1])
+    for key in redis_utils.get_stocks(client):
+        accounts.add(key.split(":")[0])
     return accounts
 
 def csv_to_json(data: bytes):
@@ -156,17 +154,20 @@ def book_many_trades(client: redis.Redis, trades: list[dict], tickers: ValidTick
 
     return trade_responses
 
+
 def get_pl(client: redis.Redis, account: str, ticker: str) -> ProfitLoss:
     date = datetime.now().date().isoformat()
-    pl_json = client.hget(f"p&l:{account}:{ticker}", date)
+    pl_json = redis_utils.get_pl(client, account, ticker, date)
     if pl_json is None:
         raise HTTPException(status_code=404, detail="profit loss data not found")
     return ProfitLoss.parse_raw(pl_json)
 
 def get_all_pl(client: redis.Redis, account: str) -> list[ProfitLoss]:
     pl_list = []
+    date = datetime.now().date()
     for key in client.scan_iter(f"p&l:{account}:*"):
-        for _, json_object in client.hscan_iter(key):
-            pl_object = ProfitLoss.parse_raw(json_object)
+        ticker = key.split(":")[2]
+        pl_object = redis_utils.get_pl(client, account, ticker, date)
+        if pl_object is not None:
             pl_list.append(pl_object)
     return pl_list
