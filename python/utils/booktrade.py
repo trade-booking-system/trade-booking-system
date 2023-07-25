@@ -3,11 +3,11 @@ from schema import Trade, History, ProfitLoss
 from utils.tickers import ValidTickers
 from csv import DictReader
 from pydantic import ValidationError
-from utils import redis_utils
 from io import StringIO
 from datetime import datetime
 from uuid import uuid4
 import redis
+from utils import redis_utils
 
 def booktrade(client: redis.Redis, trade: Trade, tickers: ValidTickers):
     if not tickers.is_valid_ticker(trade.stock_ticker):
@@ -73,9 +73,10 @@ def get_trade_history(trade_id, account, date, client: redis.Redis) -> History:
     return history
 
 def get_accounts(client: redis.Redis) -> set[str]:
+    keys = client.scan_iter("trades:*")
     accounts = set()
-    for stock in redis_utils.get_stocks(client):
-        accounts.add(stock.split(":")[0])
+    for key in keys:
+        accounts.add(key.split(":")[1])
     return accounts
 
 def csv_to_json(data: bytes):
