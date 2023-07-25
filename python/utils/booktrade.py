@@ -152,11 +152,6 @@ def get_pl(client: redis.Redis, account: str, ticker: str) -> ProfitLoss:
     return ProfitLoss.parse_raw(pl_json)
 
 def get_all_pl(client: redis.Redis, account: str) -> list[ProfitLoss]:
-    pl_list = []
     date = datetime.now().date()
-    for key in client.scan_iter(f"p&l:{account}:*"):
-        ticker = key.split(":")[2]
-        pl_object = redis_utils.get_pl(client, account, ticker, date)
-        if pl_object is not None:
-            pl_list.append(pl_object)
-    return pl_list
+    return redis_utils.fetch_all_pl(client, account, date)
+

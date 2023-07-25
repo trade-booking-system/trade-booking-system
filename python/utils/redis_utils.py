@@ -136,6 +136,16 @@ def get_all_pl(client: Redis, pattern: str) -> dict[str, dict[str, str]]:
     result = {key: client.hgetall(key) for key in keys}
     return result
 
+def fetch_all_pl(client: Redis, account: str, date: date_obj) -> list[ProfitLoss]:
+    pl_list = []
+    for key in client.scan_iter(f"p&l:{account}:*"):
+        ticker = key.split(":")[2]
+        pl_object = get_pl(client, account, ticker, date)
+        if pl_object is not None:
+            pl_list.append(pl_object)
+    return pl_list
+
+
 def merge_trade(client: Redis, trade: Trade) -> TradeWithPl:
     pl = get_trade_pl(client, trade.id, trade.date)
     if pl == None:
@@ -153,3 +163,4 @@ def merge_position(client: Redis, position: Position, date: date_obj) -> Positio
         ).dict(exclude=set(["account"])), pnl_valid=False)
     else:
         return PositionWithPl(**position.dict(), **pl.dict(exclude=set(["account"])), pnl_valid=True)
+
