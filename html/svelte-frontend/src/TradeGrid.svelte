@@ -12,28 +12,29 @@
       children: [
         { field: "id", },
         { 
-          field: "account", 
+          field: "Account", 
           filter: true,
         },
         { 
-          field: "type",
+          field: "Type",
           filter: true,
         },
         { 
-          field: "stock_ticker",
+          field: "Stock Ticker",
           filter: true, 
         },
         { 
-          field: "amount",
+          field: "Amount",
           filter: "agNumberColumnFilter", 
         },
         { 
-          field: "date",
+          field: "Date",
           filter: "agDateColumnFilter", 
         },
-        { field: "time" },
-        { field: "user" },
-        { field: "version" },
+        { field: "Time" },
+        { field: "User" },
+        { field: "Version" },
+        { field: "Trade PL"}
       ]
     }
   ];
@@ -75,7 +76,18 @@
   function populateRowData(){
     console.log("populating trade row data");
       trades.forEach(trade => {
-        rowData.push(trade);
+        rowData.push({
+          id: trade.id,
+          Account: trade.account,
+          Type: trade.type,
+          "Stock Ticker": trade.stock_ticker,
+          Amount: trade.amount,
+          Date: trade.date,
+          Time: trade.time,
+          User: trade.user,
+          Version: trade.version,
+          "Trade PL": trade.trade_pl,
+        });
       });
   }
 
