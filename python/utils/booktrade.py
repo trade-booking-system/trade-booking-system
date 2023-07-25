@@ -1,10 +1,10 @@
-from fastapi import HTTPException
+from datetime import datetime, date as date_obj
 from schema import Trade, History, ProfitLoss
 from utils.tickers import ValidTickers
+from fastapi import HTTPException
 from csv import DictReader
 from pydantic import ValidationError
 from io import StringIO
-from datetime import datetime
 from uuid import uuid4
 import redis
 from utils import redis_utils
@@ -66,17 +66,16 @@ def query_trades(account: str, year: str, month: str, day: str, client: redis.Re
         trades.append(trade_object)
     return trades
 
-def get_trade_history(trade_id, account, date, client: redis.Redis) -> History:
-    history = redis_utils.get_history(client, account, date, trade_id)
+def get_trade_history(trade_id: str, account: str, date: str, client: redis.Redis) -> History:
+    history = redis_utils.get_history(client, account, date_obj.fromisoformat(date), trade_id)
     if history == None:
         raise HTTPException(status_code= 404, detail= "trade does not exist")
     return history
 
 def get_accounts(client: redis.Redis) -> set[str]:
-    keys = client.scan_iter("trades:*")
     accounts = set()
-    for key in keys:
-        accounts.add(key.split(":")[1])
+    for stock in redis_utils.get_stocks(client):
+        accounts.add(stock.split(":")[0])
     return accounts
 
 def csv_to_json(data: bytes):
