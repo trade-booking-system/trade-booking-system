@@ -13,10 +13,6 @@ class PLListener(listener_base):
             "tradeUpdates": self.trade_updates_handler,
             "pricesUpdates": self.price_updates_handler
         }
-    
-    def startup(self):
-        self.recover_current_days_pl()
-        #self.rebuild()
 
     def position_updates_handler(self, msg):
         data: str= msg["data"]
@@ -96,7 +92,8 @@ class PLListener(listener_base):
             return redis_utils.get_position(client, account, ticker)
         return redis_utils.get_position_snapshot(client, account, date, ticker)
     
-    def recover_current_days_pl(self):
+    # recover todays p&l
+    def recover(self):
         date = datetime.now().date()
         return self.recover_days_pl(date)
 

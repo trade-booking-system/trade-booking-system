@@ -7,9 +7,11 @@ from utils.tickers import ValidTickers
 from utils import market_calendar
 from yahooquery import Ticker
 from utils import redis_utils
+from redis import Redis
 import pandas
 import signal
 import sys
+import os
 
 
 def update_stock_prices(date: date_obj= datetime.now().date()):
@@ -76,19 +78,27 @@ def termination_handler(signum, frame):
     client.close()
     sys.exit()
 
-def schedule_jobs(scheduler: BlockingScheduler):
+def schedule_jobs(scheduler: BlockingScheduler, starting_date: date_obj):
     current_date= datetime.now().date()
     price_updates_trigger= OrTrigger(triggers= [CronTrigger(day_of_week= "0-4", hour= "10-15", minute= "*"), CronTrigger(day_of_week= "0-4", hour= 9, minute= "30-59")])
     closing_price_updates_trigger= OrTrigger(triggers= [CronTrigger(day_of_week= "0-4", hour= "16"), CronTrigger(day_of_week= "0-4", hour= 23, minute= 59)])
-    scheduler.add_job(func= fill_in_closing_prices, args= [current_date - timedelta(6), current_date - timedelta(1)])
+    scheduler.add_job(func= fill_in_closing_prices, args= [starting_date - timedelta(1), current_date - timedelta(1)])
     scheduler.add_job(func= update_stock_prices, trigger= price_updates_trigger)
     scheduler.add_job(func= fill_in_closing_prices, trigger= closing_price_updates_trigger)
+
+def get_starting_date(client: Redis) -> date_obj:
+    mode= os.getenv("RECOVERY_MODE")
+    if mode == "rebuild":
+        return redis_utils.get_startup_date(client)
+    elif mode == "recover":
+        return datetime.now().date - timedelta(5)
 
 client = get_redis_client()
 tickers= ValidTickers("utils/ListOfStocks.txt").get_all_tickers()
 tickers_info= Ticker(tickers)
 signal.signal(signal.SIGTERM, termination_handler)
 scheduler= BlockingScheduler()
-schedule_jobs(scheduler)
+starting_date= get_starting_date(client)
+schedule_jobs(scheduler, starting_date)
 if __name__ == "__main__":
     scheduler.start()

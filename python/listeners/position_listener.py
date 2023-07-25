@@ -1,7 +1,6 @@
 from datetime import datetime, date as date_obj, time
 from schema import Position, Trade
 from apscheduler.schedulers.background import BackgroundScheduler
-from utils.booktrade import query_trades
 from utils.get_positions import get_all_positions
 from listener import listener_base
 from utils import market_calendar
@@ -23,10 +22,6 @@ class PositionListener(listener_base):
         return {
             "tradesInfo": self.trade_updates_handler
         }
-    
-    def startup(self):
-        self.recover()
-        #self.rebuild()
 
     def trade_updates_handler(self, msg):
         data: str= msg["data"]

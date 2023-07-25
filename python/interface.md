@@ -71,7 +71,7 @@
 
 ### stocks
 - Type: set
-- Name: `p&lStocks`
+- Name: `stock`
 - Data: `{account}:{ticker}`
 
 ### p&l

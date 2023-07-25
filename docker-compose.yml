@@ -52,6 +52,7 @@ services:
     environment:
       - REDIS_HOST=redis
       - TZ=America/New_York
+      - RECOVERY_MODE=rebuild
     stop_signal: SIGTERM
 
   price-listener:
@@ -65,7 +66,7 @@ services:
     environment:
       - REDIS_HOST=redis
       - TZ=America/New_York
-      - DEBUG_MODE=on
+      - RECOVERY_MODE=rebuild
     stop_signal: SIGTERM
 
   pl-listener:
@@ -79,6 +80,7 @@ services:
     environment:
       - REDIS_HOST=redis
       - TZ=America/New_York
+      - RECOVERY_MODE=rebuild
     stop_signal: SIGTERM
   
   websocket:

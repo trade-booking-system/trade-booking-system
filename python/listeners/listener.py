@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from queue import Queue
 from threading import Thread
 import signal
+import os
 
 class listener_base(ABC):
     def __init__(self):
@@ -31,10 +32,21 @@ class listener_base(ABC):
         self.sub.close()
         self.client.close()
 
+    def startup(self):
+        mode= os.getenv("RECOVERY_MODE")
+        if mode == "rebuild":
+            self.rebuild()
+        elif mode == "recover":
+            self.recover()
+
     @abstractmethod
-    def get_handlers() -> dict[str, any]:
+    def rebuild():
         pass
 
     @abstractmethod
-    def startup(self):
+    def recover():
+        pass
+
+    @abstractmethod
+    def get_handlers() -> dict[str, any]:
         pass
