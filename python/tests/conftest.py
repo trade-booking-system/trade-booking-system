@@ -75,6 +75,9 @@ class FakeClient:
             self.data[key] = set()
         self.data[key].add(element)
     
+    def smembers(self, key):
+        return self.data.get(key, None)
+    
     def publish(self, channel, message):
         if channel not in self.channels:
             self.channels[channel] = Channel()

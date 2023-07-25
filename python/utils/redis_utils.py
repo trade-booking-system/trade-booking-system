@@ -63,7 +63,7 @@ def get_startup_date(client: Redis) -> date_obj:
     return date_obj.fromisoformat(startup_date)
 
 def get_stocks(client: Redis) -> list[str]:
-    return client.smembers("stocks", )
+    return client.smembers("stocks")
 
 def add_to_stocks(client: Redis, account: str, ticker: str):
     value= account+":"+ticker

@@ -102,7 +102,7 @@ def test_get_accounts(test_server: System):
         trade = generate_trade(i + 500)
         account = "account" + str(i % 3)
         trade.account = account
-        redis.hset("trades:" + account + ":" + str(trade.date), "test" + str(i), trade.json())
+        redis.sadd("stocks", account + ":" + trade.stock_ticker)
     response = client.get("/getAccounts/")
     assert response.status_code == 200
     accounts = response.json()
