@@ -65,6 +65,9 @@ jobs:
               - component: price-listener
                 file: price
                 name: Price Listener
+              - component: pl-listener
+                file: pl
+                name: P&L Listener
         name: Build and Push ${{ matrix.name }}
         steps:
             - uses: actions/checkout@v3
