@@ -25,9 +25,15 @@
         },
         { field: "LastAggregationTime" },
         { field: "SystemLastAggregationProcessHost_Id" },
-        { field: "Trade PL"},
-        { field: "Position PL"},
-        { field: "Total PL"}
+        { field: "Trade PL",
+          filter: "agNumberColumnFilter",
+        },
+        { field: "Position PL",
+          filter: "agNumberColumnFilter",
+        },
+        { field: "Total PL", 
+          filter: "agNumberColumnFilter",
+        }
       ]
     }
   ];
