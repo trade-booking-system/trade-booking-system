@@ -23,6 +23,7 @@
           field: "Stock Ticker",
           filter: true, 
         },
+        { field: "Price"},
         { 
           field: "Amount",
           filter: "agNumberColumnFilter", 
@@ -31,7 +32,7 @@
           field: "Date",
           filter: "agDateColumnFilter", 
         },
-        { field: "Price"},
+        
         { field: "Time" },
         { field: "User" },
         { field: "Version" },
@@ -82,9 +83,10 @@
           Account: trade.account,
           Type: trade.type,
           "Stock Ticker": trade.stock_ticker,
+          Price: trade.price,
           Amount: trade.amount,
           Date: trade.date,
-          Price: trade.price,
+          
           Time: trade.time,
           User: trade.user,
           Version: trade.version,
