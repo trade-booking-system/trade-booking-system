@@ -36,7 +36,7 @@ def update_trade(trade_id: str, account: str, date: str, updated_type: str= None
 
 @router.get("/getTrades")
 async def get_trades(client: redis.Redis = Depends(get_redis_client)) -> list[Trade]:
-    return redis_utils.get_all_trades(client)
+    return redis_utils.query_trades(client)
 
 @router.get("/queryTrades")
 async def query_trades(account: str = "*", year: int = 0, month: int = 0, day: int = 0,

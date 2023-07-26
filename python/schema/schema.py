@@ -96,7 +96,7 @@ class ProfitLoss(BaseModel):
     ticker: str
 
     def get_total_pl(cls) -> float:
-        return cls.trade_pl + cls.ticker
+        return cls.trade_pl + cls.position_pl
 
 class TradeProfitLoss(BaseModel):
     account: str

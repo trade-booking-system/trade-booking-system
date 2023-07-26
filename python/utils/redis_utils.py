@@ -93,35 +93,18 @@ def get_price(client: Redis, ticker: str, date: date_obj) -> Price:
     return Price.parse_raw(price_json)
 
 def get_trades_by_day_and_account(client: Redis, account: str, date: date_obj) -> list[Trade]:
-    trades= list()
-    key = f"trades:{account}:{date.isoformat()}"
-    values= client.hgetall(key)
-    for _, history_json in values.items():
-        trade= History.parse_raw(history_json).get_current_trade()
-        trades.append(trade)
-    return trades
-
-def get_all_trades(client: Redis) -> list[Trade]:
-    trades= []
-    for key in client.scan_iter("trades:*"):
-        for _, json_object in client.hscan_iter(key):
-            trade_object= History.parse_raw(json_object).get_current_trade()
-            trades.append(trade_object)
-    return trades
+    return query_trades(client, account, str(date.year).zfill(4), str(date.month).zfill(2), str(date.day).zfill(2))
 
 def get_trades_by_day(client: Redis, date: date_obj) -> list[Trade]:
-    trades= list()
-    for key in client.scan_iter(f"trades:*:{date.isoformat()}"):
-        for _, history_json in client.hscan_iter(key):
-            trade= History.parse_raw(history_json).get_current_trade()
-            trades.append(trade)
-    return trades
+    return query_trades(client= client, year= str(date.year).zfill(4), month= str(date.month).zfill(2), day= str(date.day).zfill(2))
 
 def query_trades(client: Redis, account: str = "*", year: str = "*",
-                    month: str = "*", day: str = "*") -> Generator[Trade, None, None]:
+                    month: str = "*", day: str = "*") -> list[Trade]:
+    trades= list()
     for key in client.scan_iter(f"trades:{account}:{year}-{month}-{day}"):
         for _, json_object in client.hscan_iter(key):
-            yield History.parse_raw(json_object).get_current_trade()
+            trades.append(History.parse_raw(json_object).get_current_trade())
+    return trades
 
 def get_positions(client: Redis, account: str = "*") -> list[Position]:
     positions: list[Position] = []
@@ -129,22 +112,6 @@ def get_positions(client: Redis, account: str = "*") -> list[Position]:
         for _, value in client.hscan_iter(key):
             positions.append(Position.parse_raw(value))
     return positions
-
-def get_all_pl(client: Redis, pattern: str) -> dict[str, dict[str, str]]:
-    #Fetches all the fields and their values for the keys that match the provided pattern
-    keys = client.keys(pattern)
-    result = {key: client.hgetall(key) for key in keys}
-    return result
-
-def fetch_all_pl(client: Redis, account: str, date: date_obj) -> list[ProfitLoss]:
-    pl_list = []
-    for key in client.scan_iter(f"p&l:{account}:*"):
-        ticker = key.split(":")[2]
-        pl_object = get_pl(client, account, ticker, date)
-        if pl_object is not None:
-            pl_list.append(pl_object)
-    return pl_list
-
 
 def merge_trade(client: Redis, trade: Trade) -> TradeWithPl:
     pl = get_trade_pl(client, trade.id, trade.date)
@@ -163,4 +130,3 @@ def merge_position(client: Redis, position: Position, date: date_obj) -> Positio
         ).dict(exclude=set(["account"])), pnl_valid=False)
     else:
         return PositionWithPl(**position.dict(), **pl.dict(exclude=set(["account"])), pnl_valid=True)
-

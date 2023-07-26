@@ -60,12 +60,6 @@ def create_updated_trade(updated_amount, updated_type, updated_price, old_trade:
         return Trade(id= old_trade.id, account= old_trade.account, stock_ticker= old_trade.stock_ticker, user= old_trade.user,
                       version= version, type= updated_type, amount= updated_amount, price= updated_price)
 
-def query_trades(account: str, year: str, month: str, day: str, client: redis.Redis) -> list[Trade]:
-    trades = []
-    for trade_object in redis_utils.query_trades(client, account, year, month, day):
-        trades.append(trade_object)
-    return trades
-
 def get_trade_history(trade_id: str, account: str, date: str, client: redis.Redis) -> History:
     history = redis_utils.get_history(client, account, date_obj.fromisoformat(date), trade_id)
     if history == None:
@@ -91,7 +85,6 @@ def csv_to_json(data: bytes):
             raise HTTPException(status_code=400, detail="Invalid trade data in CSV file.")
 
     return trades
-
 
 def create_trade_from_row(row):
     return Trade(
@@ -123,7 +116,7 @@ def book_many_trades(client: redis.Redis, trades: list[dict], tickers: ValidTick
             type=trade_request['type'],
             stock_ticker=trade_request['stock_ticker'],
             amount=trade_request['amount'],
-            user="101010",
+            user="default user",
             price=trade_request['price']
         )
 
@@ -143,15 +136,3 @@ def book_many_trades(client: redis.Redis, trades: list[dict], tickers: ValidTick
         trade_responses.append(response)
 
     return trade_responses
-
-def get_pl(client: redis.Redis, account: str, ticker: str) -> ProfitLoss:
-    date = datetime.now().date().isoformat()
-    pl_json = redis_utils.get_pl(client, account, ticker, date)
-    if pl_json is None:
-        raise HTTPException(status_code=404, detail="profit loss data not found")
-    return ProfitLoss.parse_raw(pl_json)
-
-def get_all_pl(client: redis.Redis, account: str) -> list[ProfitLoss]:
-    date = datetime.now().date()
-    return redis_utils.fetch_all_pl(client, account, date)
-
