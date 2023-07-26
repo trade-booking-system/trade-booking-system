@@ -92,7 +92,7 @@ class PLListener(listener_base):
     @staticmethod
     def get_position_by_day(client: Redis, account: str, ticker: str, date: date_obj) -> Position:
         trading_day= market_calendar.get_most_recent_trading_day(date + timedelta(1))
-        if trading_day == market_calendar.get_most_recent_trading_day(datetime.now().date() + timedelta):
+        if trading_day == market_calendar.get_most_recent_trading_day(datetime.now().date() + timedelta(1)):
             return redis_utils.get_position(client, account, ticker)
         return redis_utils.get_position_snapshot(client, account, trading_day, ticker)
     
