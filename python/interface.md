@@ -53,11 +53,11 @@
 - Format: `{pnl json data}`
 
 ### tradeUpdates
-- Format: '{id}:{account}:{ticker}:{amount}:{price}'
+- Format: `{id}:{account}:{ticker}:{amount}:{price}:{date}`
 - Description: used to calculate trade p&l
 
 ### positionUpdates
-- Format: '{account}:{ticker}'
+- Format: `{account}:{ticker}`
 - Description: used to calculate position p&l
 
 ### pricesUpdates

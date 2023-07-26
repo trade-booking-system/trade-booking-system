@@ -94,7 +94,7 @@ def get_starting_date(client: Redis) -> date_obj:
     if mode == "rebuild":
         return redis_utils.get_startup_date(client)
     elif mode == "recover":
-        return datetime.now().date - timedelta(5)
+        return datetime.now().date() - timedelta(5)
 
 client = get_redis_client()
 tickers= ValidTickers("utils/ListOfStocks.txt").get_all_tickers()
