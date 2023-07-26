@@ -1,7 +1,7 @@
 from schema.schema import ProfitLoss, Price, TradeProfitLoss, Position
 from datetime import datetime, date as date_obj
 from utils import market_calendar
-from .listener import listener_base
+from listeners.listener import listener_base
 from redis import Redis
 from utils import redis_utils
 
@@ -63,7 +63,7 @@ class PLListener(listener_base):
         trade_pl= self.calculate_trade_pl(closing_price.price, price, amount)
         pl.trade_pl+= trade_pl
         redis_utils.set_pl(self.client, account, ticker, date, pl)
-        if closing_price == self.get_previous_closing_price(datetime.now().date()):
+        if closing_price == self.get_previous_closing_price(self.client, ticker, datetime.now().date()):
             self.client.publish("pnlPositionUpdatesWS", "pnl: " + pl.json())
 
         trade_pl_obj = TradeProfitLoss(
