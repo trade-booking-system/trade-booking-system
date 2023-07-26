@@ -1,5 +1,5 @@
 from schema.schema import ProfitLoss, Price, TradeProfitLoss, Position
-from datetime import datetime, date as date_obj
+from datetime import datetime, timedelta, date as date_obj
 from utils import market_calendar
 from listeners.listener import listener_base
 from redis import Redis
@@ -91,10 +91,10 @@ class PLListener(listener_base):
     
     @staticmethod
     def get_position_by_day(client: Redis, account: str, ticker: str, date: date_obj) -> Position:
-        current_date= datetime.now().date()
-        if current_date == date:
+        trading_day= market_calendar.get_most_recent_trading_day(date + timedelta(1))
+        if trading_day == market_calendar.get_most_recent_trading_day(datetime.now().date() + timedelta):
             return redis_utils.get_position(client, account, ticker)
-        return redis_utils.get_position_snapshot(client, account, date, ticker)
+        return redis_utils.get_position_snapshot(client, account, trading_day, ticker)
     
     # recover todays p&l
     def recover(self):
