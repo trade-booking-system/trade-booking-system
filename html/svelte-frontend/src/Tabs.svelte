@@ -27,6 +27,6 @@
 
 <style>
 .dropdown {
-    margin-bottom: 10%;
+    margin-bottom: 0%;
   }
 </style>

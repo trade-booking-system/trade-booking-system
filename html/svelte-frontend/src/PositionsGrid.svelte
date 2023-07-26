@@ -63,7 +63,7 @@
     const getPositionPromises = checkedAccounts.map(account => getPosition(account));
     const positionsArray = await Promise.all(getPositionPromises);
     positions = positionsArray.flat();
-    
+
     console.log("positions", positions);
 
     console.log("clearing row data");
@@ -96,9 +96,9 @@
         Quantity: position.amount,
         LastAggregationTime: position.last_aggregation_time,
         SystemLastAggregationProcessHost_Id: position.last_aggregation_host,
-        "Trade PL": position.trade_pl,
-        "Position PL": position.position_pl,
-        "Total PL": position.trade_pl + position.position_pl
+        "Trade PL": position.trade_pl.toFixed(2),
+        "Position PL": position.position_pl.toFixed(2),
+        "Total PL": (position.trade_pl + position.position_pl).toFixed(2)
       })
     })
 

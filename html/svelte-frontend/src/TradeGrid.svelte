@@ -83,14 +83,14 @@
           Account: trade.account,
           Type: trade.type,
           "Stock Ticker": trade.stock_ticker,
-          Price: trade.price,
+          Price: "$" + trade.price,
           Amount: trade.amount,
           Date: trade.date,
           
           Time: trade.time,
           User: trade.user,
           Version: trade.version,
-          "Trade PL": trade.trade_pl,
+          "Trade PL": trade.trade_pl.toFixed(2),
         });
       });
   }
