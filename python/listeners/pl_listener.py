@@ -63,8 +63,8 @@ class PLListener(listener_base):
         trade_pl= self.calculate_trade_pl(closing_price.price, price, amount)
         pl.trade_pl+= trade_pl
         redis_utils.set_pl(self.client, account, ticker, date, pl)
-        if closing_price == self.get_previous_closing_price(self.client, ticker, datetime.now().date()):
-            self.client.publish("pnlPositionUpdatesWS", "pnl: " + pl.json())
+
+        self.client.publish("pnlPositionUpdatesWS", "pnl: " + pl.json())
 
         trade_pl_obj = TradeProfitLoss(
             account= account, trade_id= id, trade_pl= trade_pl, closing_price= closing_price.price, date= date
@@ -85,7 +85,7 @@ class PLListener(listener_base):
     def get_previous_closing_price(client: Redis, ticker: str, date: date_obj) -> Price:
         date= market_calendar.get_most_recent_trading_day(date)
         price= redis_utils.get_price(client, ticker, date)
-        if not price.is_closing_price():
+        if price == None or not price.is_closing_price():
             return None
         return price
     
