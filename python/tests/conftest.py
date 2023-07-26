@@ -90,6 +90,8 @@ class FakeClient:
             
             def subscribe(self, **handlers):
                 for channel in handlers:
+                    if self.channels.get(channel) == None:
+                        self.channels[channel]= Channel()
                     self.channels[channel].add_handler(handlers[channel])
             
             def run_in_thread(self, daemon = True):
