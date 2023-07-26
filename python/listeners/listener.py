@@ -6,9 +6,9 @@ import signal
 import os
 
 class listener_base(ABC):
-    def __init__(self):
+    def __init__(self, client= get_redis_client()):
         self.queue= Queue()
-        self.client= get_redis_client()
+        self.client= client
         self.sub= self.client.pubsub(ignore_subscribe_messages= True)
         self.sub.subscribe(**self.get_handlers())
         self.queue_processor_thread= Thread(target= self.process_queue, daemon= True)

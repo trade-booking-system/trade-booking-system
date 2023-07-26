@@ -1,7 +1,7 @@
 from datetime import datetime, date as date_obj, time
 from schema import Position, Trade
 from apscheduler.schedulers.background import BackgroundScheduler
-from listener import listener_base
+from .listener import listener_base
 from utils import market_calendar
 from utils import redis_utils
 from redis import Redis
@@ -128,4 +128,5 @@ class PositionListener(listener_base):
                 after_four.append(trade)
         return before_four, after_four
 
-PositionListener().start()
+if "__main__" == __name__:
+    PositionListener().start()

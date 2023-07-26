@@ -1,7 +1,7 @@
 from schema.schema import ProfitLoss, Price, TradeProfitLoss, Position
 from datetime import datetime, date as date_obj
 from utils import market_calendar
-from listener import listener_base
+from .listener import listener_base
 from redis import Redis
 from utils import redis_utils
 
@@ -134,5 +134,6 @@ class PLListener(listener_base):
         dates= market_calendar.get_market_dates(redis_utils.get_startup_date(self.client), now.date())
         for date in dates:
             self.recover_days_pl(date)
-
-PLListener().start()
+            
+if "__main__" == __name__:
+    PLListener().start()

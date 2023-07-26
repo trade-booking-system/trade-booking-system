@@ -25,8 +25,8 @@ def test_put(test_server: System, trade: schema.Trade):
 def test_get(test_server: System, trade1: schema.Trade, trade2: schema.Trade):
     client = test_server.web
     redis = test_server.redis[0]
-    redis.hset("trades:a", "test1", schema.History(trades=[trade1]).json())
-    redis.hset("trades:a", "test2", schema.History(trades=[trade2]).json())
+    redis.hset("trades:a:2023-07-26", "test1", schema.History(trades=[trade1]).json())
+    redis.hset("trades:a:2023-07-26", "test2", schema.History(trades=[trade2]).json())
     response = client.get("/getTrades/")
     assert response.status_code == 200
     trades = response.json()
