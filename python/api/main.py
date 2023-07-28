@@ -2,10 +2,10 @@ from utils.redis_initializer import get_redis_client
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends
 from utils import redis_utils
-from api import positions
+from api import position_endpoints
+from api import pl_endpoints
+from api import trade_endpoints
 from api import websocket
-from api import pl_routes
-from api import routes
 
 @asynccontextmanager
 async def startup(app: FastAPI):
@@ -15,7 +15,7 @@ async def startup(app: FastAPI):
     client.shutdown()
 
 app = FastAPI(dependencies=[Depends(get_redis_client)], lifespan= startup)
-app.include_router(routes.router)
-app.include_router(positions.router, prefix="/positions")
+app.include_router(trade_endpoints.router)
+app.include_router(position_endpoints.router, prefix="/positions")
+app.include_router(pl_endpoints.router, prefix="/pl")
 app.include_router(websocket.router, prefix="/ws")
-app.include_router(pl_routes.router, prefix="/pl")

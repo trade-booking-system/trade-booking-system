@@ -117,6 +117,13 @@ def get_positions(client: Redis, account: str = "*") -> list[Position]:
             positions.append(Position.parse_raw(value))
     return positions
 
+def get_all_pl(client: Redis, account: str= "*", ticker: str= "*") -> list[ProfitLoss]:
+    pl: list[ProfitLoss]= list()
+    for key in client.scan_iter(f"p&l:{account}:{ticker}"):
+        for _, value in client.hscan_iter(key):
+            pl.append(ProfitLoss.parse_raw(value))
+    return pl
+
 def merge_trade(client: Redis, trade: Trade) -> TradeWithPl:
     pl = get_trade_pl(client, trade.id, trade.date)
     if pl == None:
