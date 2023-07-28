@@ -43,11 +43,11 @@ def has_closing_prices(dates: list[date_obj]) -> bool:
 
 def fill_in_closing_prices(start_date: date_obj= datetime.now().date(), end_date: date_obj= datetime.now().date()):
     print("filling in closing prices")
-    history= tickers_info.history(start=start_date, end= end_date + timedelta(1))
     dates= market_calendar.get_market_dates(start_date, end_date)
     has_prices= has_closing_prices(dates)
     runs= 0
     while has_prices != True and runs <= 5:
+        history= tickers_info.history(start=start_date, end= end_date + timedelta(1))
         has_prices= set_closing_prices(dates, history)
         runs+= 1
 
@@ -69,12 +69,13 @@ def set_closing_prices(dates: list[date_obj], history: pandas.DataFrame) -> bool
     return successful
 
 def get_closing_price(history: pandas.DataFrame, date: date_obj, stock_ticker: str) -> float:
-    ticker = history.loc[stock_ticker]
-    if not date in ticker.index:
-        return None
-    stock_info: pandas.Series= ticker.loc[date]
-    closing_price= stock_info.get("adjclose", None)
-    return closing_price
+    if stock_ticker in history.index:
+        ticker = history.loc[stock_ticker]
+        if date in ticker.index:
+            stock_info: pandas.Series= ticker.loc[date]
+            closing_price= stock_info.get("adjclose", None)
+            return closing_price
+    return None
 
 def termination_handler(signum, frame):
     scheduler.shutdown(wait= False)

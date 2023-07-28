@@ -102,6 +102,8 @@ class PLListener(listener_base):
     # recover todays p&l
     def recover(self):
         date = datetime.now().date()
+        for key in self.client.scan_iter("trade_p&l:"+ date.isoformat()):
+            self.client.delete(key)
         return self.recover_days_pl(date)
 
     def recover_days_pl(self, date):
@@ -135,6 +137,8 @@ class PLListener(listener_base):
     def rebuild(self):
         now= datetime.now()
         for key in self.client.scan_iter("p&l*"):
+            self.client.delete(key)
+        for key in self.client.scan_iter("trade_p&l*"):
             self.client.delete(key)
         dates= market_calendar.get_market_dates(redis_utils.get_startup_date(self.client), now.date())
         for date in dates:
