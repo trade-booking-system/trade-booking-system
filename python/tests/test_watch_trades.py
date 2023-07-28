@@ -20,7 +20,7 @@ async def test_watch_trades(ws_server: AsyncSystem, trades: list[schema.Trade]):
         ) for trade in trades
     ]
     async with ws_server.web as client:
-        redis = ws_server.redis[0]
+        redis = ws_server.redis
         redis._add_channel("tradeUpdatesWS")
         redis._add_channel("pnlTradeUpdatesWS")
         async with client.websocket_connect("/trades") as websocket:

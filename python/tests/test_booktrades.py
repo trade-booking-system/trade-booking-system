@@ -11,7 +11,7 @@ from .conftest import System, generate_trade, trade_to_dict, assert_trades_equal
 @pytest.mark.parametrize("trade", [generate_trade(x) for x in range(1000, 1025)])
 def test_put(test_server: System, trade: schema.Trade):
     client = test_server.web
-    redis = test_server.redis[0]
+    redis = test_server.redis
     response = client.put("/bookTrade/", json=trade_to_dict(trade))
     assert response.status_code == 200
     result = response.json()
@@ -24,7 +24,7 @@ def test_put(test_server: System, trade: schema.Trade):
                          [(generate_trade(x), generate_trade(x + 500)) for x in range(1025, 1050)])
 def test_get(test_server: System, trade1: schema.Trade, trade2: schema.Trade):
     client = test_server.web
-    redis = test_server.redis[0]
+    redis = test_server.redis
     redis.hset("trades:a:2023-07-26", "test1", schema.History(trades=[trade1]).json())
     redis.hset("trades:a:2023-07-26", "test2", schema.History(trades=[trade2]).json())
     response = client.get("/getTrades/")
@@ -42,7 +42,7 @@ def test_get(test_server: System, trade1: schema.Trade, trade2: schema.Trade):
 
 def test_query_trades(test_server: System):
     client = test_server.web
-    redis = test_server.redis[0]
+    redis = test_server.redis
     def try_pattern(client: TestClient, rules: dict[str, str]):
         response = client.get("/queryTrades/", params=rules)
         assert response.status_code == 200
@@ -85,7 +85,7 @@ def test_query_trades(test_server: System):
 @pytest.mark.parametrize("trade", [generate_trade(x) for x in range(3400, 3425)])
 def test_booktrade_channel(trade: schema.Trade, test_server: System):
     client = test_server.web
-    redis = test_server.redis[0]
+    redis = test_server.redis
     handled = False
     def handler(message):
         nonlocal handled
@@ -97,7 +97,7 @@ def test_booktrade_channel(trade: schema.Trade, test_server: System):
 
 def test_get_accounts(test_server: System):
     client = test_server.web
-    redis = test_server.redis[0]
+    redis = test_server.redis
     for i in range(25):
         trade = generate_trade(i + 500)
         account = "account" + str(i % 3)
