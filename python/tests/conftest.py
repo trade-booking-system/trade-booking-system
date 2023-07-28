@@ -103,19 +103,19 @@ class FakeClient:
 
 class AsyncSystem:
     web: AsyncioTestClient
-    redis: list[FakeClient]
+    redis: FakeClient
     def __init__(self, app: FastAPI):
-        self.redis = [FakeClient(), FakeClient()]
-        app.dependency_overrides[get_redis_client] = lambda: self.redis[0]
+        self.redis = FakeClient()
+        app.dependency_overrides[get_redis_client] = lambda: self.redis
         self.web = AsyncioTestClient(app=app, event_loop=get_event_loop())
 
 class System:
     web: TestClient
-    redis: list[FakeClient]
+    redis: FakeClient
 
     def __init__(self, app: FastAPI):
-        self.redis = [FakeClient(), FakeClient()]
-        app.dependency_overrides[get_redis_client] = lambda: self.redis[0]
+        self.redis = FakeClient()
+        app.dependency_overrides[get_redis_client] = lambda: self.redis
         self.web = TestClient(app)
 
 class FakePrices:

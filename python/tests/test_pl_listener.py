@@ -48,6 +48,3 @@ def test_price_listener():
     assert round(trade_pl1.trade_pl, 10) == -16.4
     assert round(trade_pl2.trade_pl, 10) == 6.54
     assert trade_pl1.closing_price == 192.75
-
-def get_position(client, account, ticker, _):
-    return redis_utils.get_position(client, account, ticker)

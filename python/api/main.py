@@ -12,6 +12,5 @@ app.include_router(positions.router, prefix="/positions")
 app.include_router(websocket.router, prefix="/ws")
 app.include_router(pl_routes.router, prefix="/pl")
 
-if __name__ == "api.main":
-    client= get_redis_client()
-    redis_utils.set_startup_date(client)
+client= get_redis_client()
+redis_utils.set_startup_date(client)

@@ -112,6 +112,7 @@ class PLListener(listener_base):
         pl: dict[str, int]= dict()
 
         trading_day= market_calendar.get_upcoming_trading_day(date)
+
         for trade in trades:
             closing_price= self.get_previous_closing_price(self.client, trade.stock_ticker, trading_day)
             if closing_price == None:
@@ -122,16 +123,21 @@ class PLListener(listener_base):
             trade_pl= self.calculate_trade_pl(closing_price.price, trade.price, trade.get_amount())
             amount+= trade_pl
             pl[key]= amount
-            redis_utils.set_trade_pl(self.client, trade.id, date, TradeProfitLoss(
+            trade_pl_obj = TradeProfitLoss(
                 account= trade.account, trade_id= trade.id, trade_pl=trade_pl, 
                 closing_price= closing_price.price, date= trading_day
-            ))
+            )
+
+            redis_utils.set_trade_pl(self.client, trade.id, date, trade_pl_obj)
+            self.client.publish("pnlTradeUpdatesWS", "pnl: " + trade_pl_obj.json())
 
         for key, trade_pl in pl.items():
             account, ticker= key.split(":")
             profit_loss= redis_utils.get_pl(self.client, account, ticker, date, ProfitLoss(account= account, ticker= ticker))
             profit_loss.trade_pl= trade_pl
             redis_utils.set_pl(self.client, account, ticker, trading_day, profit_loss)
+            if trading_day >= datetime.now().date():
+                self.client.publish("pnlPositionUpdatesWS", "pnl: " + profit_loss.json())
             print(f"recovered trade p&l: date: {date} account: {account} stock ticker: {ticker} profit loss: {profit_loss.trade_pl}")
 
     def rebuild(self):
