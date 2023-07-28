@@ -47,12 +47,12 @@ class PositionListener(listener_base):
         redis_utils.set_position(self.client, account, stock_ticker, position)
         self.client.publish("positionUpdatesWS", f"position:{position.json()}")
 
-    def take_snapshot(self, now= datetime.now()):
-        if not market_calendar.is_trading_day(now.date()):
+    def take_snapshot(self, date: date_obj= datetime.now().date()):
+        if not market_calendar.is_trading_day(date):
             return
         positions= redis_utils.get_positions(self.client)
         for position in positions:
-            redis_utils.set_position_snapshot(self.client, position.account, now.date(), position.stock_ticker, position)
+            redis_utils.set_position_snapshot(self.client, position.account, date, position.stock_ticker, position)
 
     def recover(self):
         now= datetime.now()

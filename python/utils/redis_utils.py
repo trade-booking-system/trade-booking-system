@@ -1,4 +1,3 @@
-from typing import Generator
 from redis import Redis
 from datetime import datetime, date as date_obj
 from schema.schema import (
@@ -55,6 +54,11 @@ def get_trade_pl(client: Redis, id: str, date: date_obj, default = None) -> Trad
     if pl_json == None:
         return default
     return TradeProfitLoss.parse_raw(pl_json)
+
+def set_startup_date(client: Redis):
+    key= "startupDate"
+    if client.get(key) == None:
+        client.set(key, datetime.now().date().isoformat())
 
 def get_startup_date(client: Redis) -> date_obj:
     startup_date= client.get("startupDate")

@@ -27,7 +27,6 @@ services:
       WS_GROUP: server websocket:8000;
   
   backend:
-    image: nginx-backend
     build:
       context: ./python
       dockerfile: Dockerfile.api

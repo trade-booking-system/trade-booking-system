@@ -1,5 +1,5 @@
 from schema.schema import ProfitLoss, Price, TradeProfitLoss, Position
-from datetime import datetime, timedelta, date as date_obj
+from datetime import datetime, date as date_obj
 from utils import market_calendar
 from listeners.listener import listener_base
 from redis import Redis
@@ -35,6 +35,8 @@ class PLListener(listener_base):
             self.update_position_pl(account, ticker, date)
 
     def update_position_pl(self, account: str, ticker: str, date: date_obj):
+        if not market_calendar.is_trading_day(date):
+            return
         price = redis_utils.get_price(self.client, ticker, date)
         closing_price= self.get_previous_closing_price(self.client, ticker, date)
         position= self.get_position_by_day(self.client, account, ticker, date)
@@ -55,19 +57,21 @@ class PLListener(listener_base):
         print(f"position p&l: account: {account} stock ticker: {ticker} profit loss: {pl.position_pl}")
 
     def update_trade_pl(self, id: str, account: str, ticker: str, amount: int, price: float, date: date_obj):
-        closing_price = self.get_previous_closing_price(self.client, ticker, date)
+        trading_day= market_calendar.get_upcoming_trading_day(date)
+        closing_price= self.get_previous_closing_price(self.client, ticker, trading_day)
         if closing_price == None:
             print(f"error: ticker {ticker} does not have a closing price")
             return
-        pl= redis_utils.get_pl(self.client, account, ticker, date, ProfitLoss(account= account, ticker= ticker))
+        pl= redis_utils.get_pl(self.client, account, ticker, trading_day, ProfitLoss(account= account, ticker= ticker))
         trade_pl= self.calculate_trade_pl(closing_price.price, price, amount)
         pl.trade_pl+= trade_pl
-        redis_utils.set_pl(self.client, account, ticker, date, pl)
+        redis_utils.set_pl(self.client, account, ticker, trading_day, pl)
 
-        self.client.publish("pnlPositionUpdatesWS", "pnl: " + pl.json())
+        if trading_day >= datetime.now().date():
+            self.client.publish("pnlPositionUpdatesWS", "pnl: " + pl.json())
 
         trade_pl_obj = TradeProfitLoss(
-            account= account, trade_id= id, trade_pl= trade_pl, closing_price= closing_price.price, date= date
+            account= account, trade_id= id, trade_pl= trade_pl, closing_price= closing_price.price, date= trading_day
         )
         redis_utils.set_trade_pl(self.client, id, date, trade_pl_obj)
         self.client.publish("pnlTradeUpdatesWS", "pnl: " + trade_pl_obj.json())
@@ -91,10 +95,9 @@ class PLListener(listener_base):
     
     @staticmethod
     def get_position_by_day(client: Redis, account: str, ticker: str, date: date_obj) -> Position:
-        trading_day= market_calendar.get_most_recent_trading_day(date + timedelta(1))
-        if trading_day == market_calendar.get_most_recent_trading_day(datetime.now().date() + timedelta(1)):
+        if date == datetime.now().date():
             return redis_utils.get_position(client, account, ticker)
-        return redis_utils.get_position_snapshot(client, account, trading_day, ticker)
+        return redis_utils.get_position_snapshot(client, account, date, ticker)
     
     # recover todays p&l
     def recover(self):
@@ -106,8 +109,9 @@ class PLListener(listener_base):
         trades= redis_utils.get_trades_by_day(self.client, date)
         pl: dict[str, int]= dict()
 
+        trading_day= market_calendar.get_upcoming_trading_day(date)
         for trade in trades:
-            closing_price= self.get_previous_closing_price(self.client, trade.stock_ticker, date)
+            closing_price= self.get_previous_closing_price(self.client, trade.stock_ticker, trading_day)
             if closing_price == None:
                 print(f"error: ticker {ticker} does not have a closing price")
                 return
@@ -118,14 +122,14 @@ class PLListener(listener_base):
             pl[key]= amount
             redis_utils.set_trade_pl(self.client, trade.id, date, TradeProfitLoss(
                 account= trade.account, trade_id= trade.id, trade_pl=trade_pl, 
-                closing_price= closing_price.price, date= date
+                closing_price= closing_price.price, date= trading_day
             ))
 
         for key, trade_pl in pl.items():
             account, ticker= key.split(":")
             profit_loss= redis_utils.get_pl(self.client, account, ticker, date, ProfitLoss(account= account, ticker= ticker))
             profit_loss.trade_pl= trade_pl
-            redis_utils.set_pl(self.client, account, ticker, date, profit_loss)
+            redis_utils.set_pl(self.client, account, ticker, trading_day, profit_loss)
             print(f"recovered trade p&l: date: {date} account: {account} stock ticker: {ticker} profit loss: {profit_loss.trade_pl}")
 
     def rebuild(self):
