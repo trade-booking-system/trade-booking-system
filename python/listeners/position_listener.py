@@ -1,4 +1,4 @@
-from datetime import datetime, date as date_obj, time
+from datetime import datetime, date as date_obj, time, timedelta
 from schema import Position, Trade
 from apscheduler.schedulers.background import BackgroundScheduler
 from listeners.listener import listener_base
@@ -24,12 +24,14 @@ class PositionListener(listener_base):
 
     def trade_updates_handler(self, msg):
         data: str= msg["data"]
-        account, stock_ticker, amount= data.split(":")
-        self.queue.put_nowait((self.update_position_and_notify, (account, stock_ticker, int(amount), datetime.now())))
+        account, stock_ticker, amount, date= data.split(":")
+        self.queue.put_nowait((self.update_position_and_snapshots, (account, stock_ticker, int(amount), date)))
 
-    def update_position_and_notify(self, account: str, stock_ticker: str, amount_added: int, now: datetime):
+    def update_position_and_snapshots(self, account: str, stock_ticker: str, amount_added: int, date: str):
+        now = datetime.now()
         self.update_position(account, stock_ticker, amount_added, now)
-        self.client.publish("positionUpdates", f"{account}:{stock_ticker}:{now.date().isoformat()}")
+        self.update_snapshots(account, stock_ticker, amount_added, date_obj.fromisoformat(date), now)
+        self.client.publish("positionUpdates", f"{account}:{stock_ticker}:{date}")
 
     def update_position(self, account: str, stock_ticker: str, amount_added: int, now: datetime):
         stock_tickers= self.cache.get(account, dict())
@@ -46,6 +48,19 @@ class PositionListener(listener_base):
         
         redis_utils.set_position(self.client, account, stock_ticker, position)
         self.client.publish("positionUpdatesWS", f"position:{position.json()}")
+
+    def update_snapshots(self, account: str, ticker: str, amount_added: int, start_date: date_obj, end_date: date_obj):
+        if start_date == end_date:
+            return
+        end_date= end_date - timedelta(1)
+        dates= market_calendar.get_market_dates(start_date, end_date)
+        for date in dates:
+            position_snapshot= redis_utils.get_position_snapshot(self.client, account, date, ticker)
+            if position_snapshot == None:
+                position_snapshot= Position(account= account, stock_ticker= ticker, amount= 0, 
+                                            last_aggregation_time= datetime.combine(date, time(16)), last_aggregation_host= "host")
+            position_snapshot.amount+= amount_added
+            redis_utils.set_position_snapshot(self.client, account, date, ticker, position_snapshot)
 
     def take_snapshot(self, date: date_obj= datetime.now().date()):
         if not market_calendar.is_trading_day(date):
@@ -76,8 +91,9 @@ class PositionListener(listener_base):
                 
         position = redis_utils.get_position(self.client, account, ticker)
         if position != None:
-            if now.date() != position.last_aggregation_time.date() or now.time() > time(16):
-                redis_utils.set_position_snapshot(self.client, account, now.date(), ticker, position)
+            last_aggr_date = position.last_aggregation_time.date()
+            if market_calendar.is_trading_day(last_aggr_date) and (now.date() != last_aggr_date or now.time() > time(16)):
+                    redis_utils.set_position_snapshot(self.client, account, last_aggr_date, ticker, position)
                         
         for trade in after_market_trades:
             self.update_position(account, ticker, trade.get_amount(), datetime.combine(date, trade.time))

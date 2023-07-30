@@ -1,10 +1,11 @@
-import redis
+from datetime import date
 from fastapi import APIRouter, Depends, UploadFile, File
 from utils import booktrade as tradebooker
 from utils.redis_initializer import get_redis_client
 from utils import redis_utils
 from utils.tickers import ValidTickers
 from schema import Trade, History, TradeWithPl
+import redis
 
 
 router= APIRouter()
@@ -30,7 +31,7 @@ async def book_trades(trades: list[dict], client: redis.Redis = Depends(get_redi
 
 
 @router.post("/updateTrade")
-def update_trade(trade_id: str, account: str, date: str, updated_type: str= None, updated_amount: int= None, 
+def update_trade(trade_id: str, account: str, date: date, updated_type: str= None, updated_amount: int= None, 
                  updated_price: int= None, client: redis.Redis = Depends(get_redis_client)) -> dict[str, str]:
     return tradebooker.update_trade(trade_id, account, date, updated_type, updated_amount, updated_price, client) 
 

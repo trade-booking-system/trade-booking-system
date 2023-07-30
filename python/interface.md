@@ -37,7 +37,7 @@
 ## Channels:
 
 ### tradesInfo
-- Format: `{account}:{ticker}:{amount}`
+- Format: `{account}:{ticker}:{amount}:{date}`
 - Description: used by position_listener to update positions
 
 ### tradeUpdatesWS

@@ -1,5 +1,5 @@
 from datetime import datetime, date as date_obj
-from schema import Trade, History, ProfitLoss
+from schema import Trade, History
 from utils.tickers import ValidTickers
 from fastapi import HTTPException
 from csv import DictReader
@@ -16,7 +16,7 @@ def booktrade(client: redis.Redis, trade: Trade, tickers: ValidTickers):
     history.trades.append(trade)
     redis_utils.set_history(client, trade.account, trade.date, trade.id, history)
     trade_amount = trade.get_amount()
-    client.publish("tradesInfo", f"{trade.account}:{trade.stock_ticker}:{trade_amount}")
+    client.publish("tradesInfo", f"{trade.account}:{trade.stock_ticker}:{trade_amount}:{trade.date.isoformat()}")
     client.publish("tradeUpdates", f"{trade.id}:{trade.account}:{trade.stock_ticker}:{trade_amount}:{trade.price}:{trade.date.isoformat()}")
     client.publish("tradeUpdatesWS", f"create: {trade.json()}")
     redis_utils.add_to_stocks(client, trade.account, trade.stock_ticker)
@@ -27,12 +27,10 @@ def booktrades_bulk(client: redis.Redis, trades: list[Trade]):
         booktrade(client, trade)
     return {"message": "trades booked successfully"}
 
-def update_trade(trade_id, account, date, updated_type, updated_amount, updated_price, client: redis.Redis):
-    key= f"trades:{account}:{date}"
-    json_history= client.hget(key, trade_id)
-    if json_history == None:
+def update_trade(trade_id: str, account: str, date: date_obj, updated_type: str, updated_amount: int, updated_price: float, client: redis.Redis):
+    history= redis_utils.get_history(client, account, date, trade_id)
+    if history == None:
         raise HTTPException(status_code= 400, detail= "trade does not exist")
-    history= History.parse_raw(json_history)
     old_trade= history.get_current_trade()
     if old_trade.date != datetime.now().date():
         raise HTTPException(status_code= 400, detail= "trade being updated was not created today")
