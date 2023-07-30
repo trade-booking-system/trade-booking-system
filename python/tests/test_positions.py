@@ -27,7 +27,7 @@ def test_get_positions(test_server: System, positions: list[schema.Position]):
             positions[i].account = "us"
         else:
             positions[i].account = "them"
-        positions[i].stock_ticker = "abc" + str(i % 3)
+        positions[i].stock_ticker = "ABC" + str(i % 3)
     for position in positions:
         redis.hset("positions:" + position.account, position.stock_ticker, position.json())
     response = web.get("/positions/us")
@@ -48,7 +48,7 @@ def test_get_position(test_server: System, positions: list[schema.Position]):
             positions[i].account = "us"
         else:
             positions[i].account = "them"
-        positions[i].stock_ticker = "abc" + str(i % 3)
+        positions[i].stock_ticker = "ABC" + str(i % 3)
     for position in positions:
         redis.hset("positions:" + position.account, position.stock_ticker, position.json())
     response = web.get("/positions/them/abc1")

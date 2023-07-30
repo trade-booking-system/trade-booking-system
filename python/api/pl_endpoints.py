@@ -11,7 +11,7 @@ router= APIRouter()
 
 @router.get("/profitLoss")
 async def get_profit_loss(account: str, ticker: str, date: date= datetime.now().date(), client: redis.Redis = Depends(get_redis_client)) -> ProfitLoss:
-    pl = redis_utils.get_pl(client, account, ticker, date)
+    pl = redis_utils.get_pl(client, account, ticker.upper(), date)
     if pl is None:
         raise HTTPException(status_code=404, detail="profit loss data not found")
     return pl
@@ -25,4 +25,4 @@ async def get_trade_profit_loss(id: str, date: date= datetime.now().date(), clie
 
 @router.get("/allProfitLoss")
 async def get_all_profit_loss(account: str= "*", ticker: str= "*", client: redis.Redis = Depends(get_redis_client)) -> list[ProfitLoss]:
-    return redis_utils.get_all_pl(client, account, ticker)
+    return redis_utils.get_all_pl(client, account, ticker.upper())

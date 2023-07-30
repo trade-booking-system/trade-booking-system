@@ -29,7 +29,7 @@ class PositionListener(listener_base):
 
     def update_position_and_notify(self, account: str, stock_ticker: str, amount_added: int, now: datetime):
         self.update_position(account, stock_ticker, amount_added, now)
-        self.client.publish("positionUpdates", f"{account}:{stock_ticker}")
+        self.client.publish("positionUpdates", f"{account}:{stock_ticker}:{now.date().isoformat()}")
 
     def update_position(self, account: str, stock_ticker: str, amount_added: int, now: datetime):
         stock_tickers= self.cache.get(account, dict())
@@ -64,22 +64,24 @@ class PositionListener(listener_base):
             
             dates = market_calendar.get_dates(last_aggregation_time.date(), now.date())
             for date in dates:
-                trades= self.get_trades_by_ticker_and_date(account, ticker, date, trades_cache)
-                if date == last_aggregation_time.date():
-                    trades= [trade for trade in trades if last_aggregation_time.time() < trade.time]
-                market_trades, after_market_trades= self.split_trades_by_time(trades)
-                for trade in market_trades:
-                    self.update_position(account, ticker, trade.get_amount(), datetime.combine(date, trade.time))
-                
-                position = redis_utils.get_position(self.client, account, ticker)
-                if position != None:
-                    if now.date() != position.last_aggregation_time.date() or now.time() > time(16):
-                        redis_utils.set_position_snapshot(self.client, account, now.date(), ticker, position)
-                        
-                for trade in after_market_trades:
-                    self.update_position(account, ticker, trade.get_amount(), datetime.combine(date, trade.time))
+                self.recover_days_position(date, trades_cache, account, ticker, last_aggregation_time, now)
 
-        self.client.publish("pricesUpdates", "updated")
+    def recover_days_position(self, date: date_obj, trades_cache: dict[str, list[Trade]], account: str, ticker: str, last_aggregation_time: datetime, now: datetime):
+        trades= self.get_trades_by_ticker_and_date(account, ticker, date, trades_cache)
+        if date == last_aggregation_time.date():
+            trades= [trade for trade in trades if last_aggregation_time.time() < trade.time]
+        market_trades, after_market_trades= self.split_trades_by_time(trades)
+        for trade in market_trades:
+            self.update_position(account, ticker, trade.get_amount(), datetime.combine(date, trade.time))
+                
+        position = redis_utils.get_position(self.client, account, ticker)
+        if position != None:
+            if now.date() != position.last_aggregation_time.date() or now.time() > time(16):
+                redis_utils.set_position_snapshot(self.client, account, now.date(), ticker, position)
+                        
+        for trade in after_market_trades:
+            self.update_position(account, ticker, trade.get_amount(), datetime.combine(date, trade.time))
+        self.client.publish("positionUpdates", f"{account}:{ticker}:{date.isoformat()}")
 
     def get_trades_by_ticker_and_date(self, account: str, ticker: str, date: date_obj, cache: dict[str, Trade]) -> list[Trade]:
         days_trades= self.get_trades_by_day(account, date, cache)

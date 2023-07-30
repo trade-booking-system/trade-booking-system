@@ -1,5 +1,5 @@
 from redis import Redis
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from schema import PositionResponse, PositionWithPl
 from utils.redis_initializer import get_redis_client
@@ -24,4 +24,7 @@ async def get_account_positions(account: str, client: Redis = Depends(get_redis_
 
 @router.get("/{account}/{ticker}")
 async def get_ticker_position(account: str, ticker: str, client: Redis = Depends(get_redis_client)) -> PositionWithPl:
-    return redis_utils.merge_position(client, redis_utils.get_position(client, account, ticker), datetime.now().date())
+    position = redis_utils.get_position(client, account, ticker.upper())
+    if position == None:
+        raise HTTPException(status_code= 400, detail= "position does not exist")
+    return redis_utils.merge_position(client, position, datetime.now().date())
