@@ -111,7 +111,7 @@ class PLListener(listener_base):
     def recover_days_pl(self, date):
         self.update_all_position_pl(date)
         trades= redis_utils.get_trades_by_day(self.client, date)
-
+        
         trading_day= market_calendar.get_upcoming_trading_day(date)
 
         pl= self.calculate_days_pl(date, trading_day, trades)
@@ -144,19 +144,20 @@ class PLListener(listener_base):
         for key, trade_pl in pl.items():
             account, ticker= key.split(":")
             profit_loss= redis_utils.get_pl(self.client, account, ticker, trading_day, ProfitLoss(account= account, ticker= ticker))
-            profit_loss.trade_pl= trade_pl
+            profit_loss.trade_pl+= trade_pl
             redis_utils.set_pl(self.client, account, ticker, trading_day, profit_loss)
             if trading_day >= now.date():
                 self.client.publish("pnlPositionUpdatesWS", "pnl: " + profit_loss.json())
             print(f"recovered trade p&l: trading day: {trading_day} account: {account} stock ticker: {ticker} profit loss: {profit_loss.trade_pl}")
 
     def rebuild(self):
-        now= datetime.now()
         for key in self.client.scan_iter("p&l*"):
             self.client.delete(key)
         for key in self.client.scan_iter("trade_p&l*"):
             self.client.delete(key)
-        dates= market_calendar.get_market_dates(redis_utils.get_startup_date(self.client), market_calendar.get_upcoming_trading_day(now.date()))
+        now= datetime.now()
+        startup_date = redis_utils.get_startup_date(self.client)
+        dates= market_calendar.get_dates(startup_date, market_calendar.get_upcoming_trading_day(now.date()))
         for date in dates:
             self.recover_days_pl(date)
             
