@@ -93,7 +93,7 @@ def schedule_jobs(scheduler: BlockingScheduler, starting_date: date_obj):
 def get_starting_date(client: Redis) -> date_obj:
     mode= os.getenv("RECOVERY_MODE")
     if mode == "rebuild":
-        return redis_utils.get_startup_date(client)
+        return redis_utils.get_startup_date(client) - timedelta(5)
     elif mode == "recover":
         return datetime.now().date() - timedelta(5)
 
