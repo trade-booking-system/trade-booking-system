@@ -50,6 +50,8 @@ class ConnectionManager():
             account = data["account"]
             if func(self.client, data) != None:
                 data = data | func(self.client, data).dict()
+            else:
+                data["pnl_valid"] = False
             for key, value in data.items():
                 if isinstance(value, (datetime, time, date)):
                     data[key] = str(value)
