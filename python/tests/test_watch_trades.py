@@ -26,7 +26,6 @@ async def test_watch_trades(ws_server: AsyncSystem, trades: list[schema.Trade]):
         async with client.websocket_connect("/trades") as websocket:
             for (trade, pnl, trade_type) in zip(trades, pnls, types):
                 set_trade_pl(redis, trade.id, trade.date, pnl)
-                print("P&L:", get_trade_pl(redis, trade.id, trade.date))
                 redis.publish("tradeUpdatesWS", f"{trade_type}: {trade.json()}")
                 data = await websocket.receive_json()
-                assert data == {"type": trade_type, "payload": trade_to_dict(trade) | pnl_to_dict(pnl)}
+                assert data == {"type": trade_type, "payload": trade_to_dict(trade) | pnl_to_dict(pnl) | {"pnl_valid": True}}
