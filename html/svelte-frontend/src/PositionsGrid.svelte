@@ -23,17 +23,18 @@
           field: "Quantity", 
           filter: "agNumberColumnFilter",
         },
-        { field: "LastAggregationTime" },
-        { field: "SystemLastAggregationProcessHost_Id" },
-        { field: "Trade PL",
+        { field: "Total PL", 
           filter: "agNumberColumnFilter",
         },
         { field: "Position PL",
           filter: "agNumberColumnFilter",
         },
-        { field: "Total PL", 
+        { field: "Trade PL",
           filter: "agNumberColumnFilter",
-        }
+        },
+        
+        { field: "LastAggregationTime" },
+        { field: "SystemLastAggregationProcessHost_Id" },
       ]
     }
   ];
@@ -89,19 +90,31 @@
   function populateRowData(){
     console.log("now populating row data");
     positions.forEach(position => {
-      console.log("populating RowData")
-      rowData.push({
-        Account: position.account,
-        Ticker: position.stock_ticker,
-        Quantity: position.amount,
-        LastAggregationTime: position.last_aggregation_time,
-        SystemLastAggregationProcessHost_Id: position.last_aggregation_host,
-        "Trade PL": position.trade_pl.toFixed(2),
-        "Position PL": position.position_pl.toFixed(2),
-        "Total PL": (position.trade_pl + position.position_pl).toFixed(2)
-      })
+      if(position.pnl_valid == true){
+        console.log("populating RowData")
+        rowData.push({
+          Account: position.account,
+          Ticker: position.stock_ticker,
+          Quantity: position.amount,
+          LastAggregationTime: position.last_aggregation_time,
+          SystemLastAggregationProcessHost_Id: position.last_aggregation_host,
+          "Trade PL": position.trade_pl.toFixed(2),
+          "Position PL": position.position_pl.toFixed(2),
+          "Total PL": (position.trade_pl + position.position_pl).toFixed(2)
+        })
+      } else{
+        rowData.push({
+          Account: position.account,
+          Ticker: position.stock_ticker,
+          Quantity: position.amount,
+          LastAggregationTime: position.last_aggregation_time,
+          SystemLastAggregationProcessHost_Id: position.last_aggregation_host,
+          "Trade PL": "-",
+          "Position PL": "-",
+          "Total PL": "-"
+        })
+      }
     })
-
   }
 
   const gridOptions = {

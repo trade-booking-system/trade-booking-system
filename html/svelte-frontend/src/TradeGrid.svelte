@@ -10,13 +10,13 @@
     {
       headerName: "Trades",
       children: [
-        { field: "id", },
+        
         { 
           field: "Account", 
           filter: true,
         },
         { 
-          field: "Type",
+          field: "Buy/Sell",
           filter: true,
         },
         { 
@@ -28,15 +28,18 @@
           field: "Amount",
           filter: "agNumberColumnFilter", 
         },
+        { field: "Trade PL"},
         { 
           field: "Date",
           filter: "agDateColumnFilter", 
         },
         
         { field: "Time" },
+        { field: "id", },
+        
         { field: "User" },
         { field: "Version" },
-        { field: "Trade PL"}
+        
       ]
     }
   ];
@@ -77,22 +80,39 @@
 
   function populateRowData(){
     console.log("populating trade row data");
-      trades.forEach(trade => {
+    trades.forEach(trade => {
+      if(trade.pnl_valid == true){
         rowData.push({
           id: trade.id,
           Account: trade.account,
-          Type: trade.type,
+          "Buy/Sell": trade.type,
           "Stock Ticker": trade.stock_ticker,
-          Price: "$" + trade.price,
+          Price: "$" + trade.price.toLocaleString('en-US'),
           Amount: trade.amount,
           Date: trade.date,
           
           Time: trade.time,
           User: trade.user,
           Version: trade.version,
-          "Trade PL": trade.trade_pl.toFixed(2),
+          "Trade PL": trade.trade_pl.toFixed(2).toLocaleString('en-US'),
         });
-      });
+      } else{
+        rowData.push({
+          id: trade.id,
+          Account: trade.account,
+          "Buy/Sell": trade.type,
+          "Stock Ticker": trade.stock_ticker,
+          Price: "$" + trade.price.toLocaleString('en-US'),
+          Amount: trade.amount,
+          Date: trade.date,
+          
+          Time: trade.time,
+          User: trade.user,
+          Version: trade.version,
+          "Trade PL": "-",
+        })
+      }
+    });
   }
 
   async function getTrades(account){
