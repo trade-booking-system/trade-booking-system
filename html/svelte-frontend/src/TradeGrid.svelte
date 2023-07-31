@@ -88,14 +88,14 @@
           Account: trade.account,
           "Buy/Sell": trade.type,
           "Stock Ticker": trade.stock_ticker,
-          Price: "$" + trade.price.toLocaleString('en-US'),
+          Price: "$" + trade.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}),
           Amount: trade.amount,
           Date: trade.date,
           
           Time: trade.time,
           User: trade.user,
           Version: trade.version,
-          "Trade PL": trade.trade_pl.toFixed(2).toLocaleString('en-US'),
+          "Trade PL": trade.trade_pl.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}),
         });
       } else{
         rowData.push({
@@ -103,7 +103,7 @@
           Account: trade.account,
           "Buy/Sell": trade.type,
           "Stock Ticker": trade.stock_ticker,
-          Price: "$" + trade.price.toLocaleString('en-US'),
+          Price: "$" + trade.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}),
           Amount: trade.amount,
           Date: trade.date,
           

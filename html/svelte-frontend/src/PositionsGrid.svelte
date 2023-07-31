@@ -90,7 +90,7 @@
   function populateRowData(){
     console.log("now populating row data");
     positions.forEach(position => {
-      if(position.pnl_valid == true || position.pnl_valid == null){
+      if(position.pnl_valid == true){
         console.log("populating RowData")
         rowData.push({
           Account: position.account,
@@ -98,9 +98,9 @@
           Quantity: position.amount,
           LastAggregationTime: position.last_aggregation_time,
           SystemLastAggregationProcessHost_Id: position.last_aggregation_host,
-          "Trade PL": position.trade_pl.toFixed(2),
-          "Position PL": position.position_pl.toFixed(2),
-          "Total PL": (position.trade_pl + position.position_pl).toFixed(2)
+          "Trade PL": position.trade_pl.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}),
+          "Position PL": position.position_pl.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}),
+          "Total PL": (position.trade_pl + position.position_pl).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})
         })
       } else{
         rowData.push({
