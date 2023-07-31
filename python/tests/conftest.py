@@ -58,6 +58,9 @@ class FakeClient:
         if name not in self.data:
             self.data[name] = {}
         self.data[name][key] = value
+
+    def delete(self, key: str):
+        del self.data[key]
     
     def hscan_iter(self, name):
         return self.data[name].items()

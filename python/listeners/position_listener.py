@@ -1,4 +1,5 @@
 from datetime import datetime, date as date_obj, time, timedelta
+from utils.redis_initializer import get_redis_client
 from schema import Position, Trade
 from apscheduler.schedulers.background import BackgroundScheduler
 from listeners.listener import listener_base
@@ -7,8 +8,8 @@ from utils import redis_utils
 from redis import Redis
 
 class PositionListener(listener_base):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, client= get_redis_client()):
+        super().__init__(client)
         self.cache: dict[str, dict[str, int]] = {}
         self.scheduler= BackgroundScheduler()
         self.scheduler.add_job(self.take_snapshot, "cron", day_of_week= "0-4", hour= 16)
