@@ -27,7 +27,7 @@ def test_get(test_server: System, trade1: schema.Trade, trade2: schema.Trade):
     redis = test_server.redis
     redis.hset("trades:a:2023-07-26", "test1", schema.History(trades=[trade1]).json())
     redis.hset("trades:a:2023-07-26", "test2", schema.History(trades=[trade2]).json())
-    response = client.get("/getTrades/")
+    response = client.get("/queryTrades")
     assert response.status_code == 200
     trades = response.json()
     assert len(trades) == 2
