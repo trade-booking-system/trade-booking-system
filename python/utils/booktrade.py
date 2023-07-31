@@ -90,7 +90,7 @@ def create_trade_from_row(row):
         type=row["buyOrSell"],
         stock_ticker=row["tickers"],
         amount=int(row["shares"]),
-        user=row.get("user", "101010"),
+        user=row.get("user", "default user"),
         price=float(row["price"]) if row["price"] else None
     )
 

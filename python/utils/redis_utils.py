@@ -1,5 +1,6 @@
 from redis import Redis
 from datetime import datetime, date as date_obj
+from utils import market_calendar
 from schema.schema import (
     Trade, ProfitLoss, TradeProfitLoss, Position, Price, History, TradeWithPl, PositionWithPl
 )
@@ -134,7 +135,7 @@ def merge_trade(client: Redis, trade: Trade) -> TradeWithPl:
         return TradeWithPl(**trade.dict(), **pl.dict(exclude=set(["account", "date"])), pnl_valid=True)
 
 def merge_position(client: Redis, position: Position, date: date_obj) -> PositionWithPl:
-    pl = get_pl(client, position.account, position.stock_ticker, date)
+    pl = get_pl(client, position.account, position.stock_ticker, market_calendar.get_upcoming_trading_day(date))
     if pl == None:
         return PositionWithPl(**position.dict(), **ProfitLoss(
             account=position.account, ticker=position.stock_ticker

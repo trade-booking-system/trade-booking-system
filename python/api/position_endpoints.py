@@ -9,21 +9,21 @@ from datetime import datetime
 router = APIRouter()
 
 @router.get("/")
-async def get_all_accounts_positions(client: Redis = Depends(get_redis_client)) -> PositionResponse:
+async def get_all_positions(client: Redis = Depends(get_redis_client)) -> PositionResponse:
     positions: list[PositionWithPl] = []
     for position in redis_utils.get_positions(client, "*"):
         positions.append(redis_utils.merge_position(client, position, datetime.now().date()))
     return PositionResponse(positions=positions, count=len(positions))
 
 @router.get("/{account}")
-async def get_account_positions(account: str, client: Redis = Depends(get_redis_client)) -> PositionResponse:
+async def get_positions_by_account(account: str, client: Redis = Depends(get_redis_client)) -> PositionResponse:
     positions: list[PositionWithPl] = []
     for position in redis_utils.get_positions(client, account):
         positions.append(redis_utils.merge_position(client, position, datetime.now().date()))
     return PositionResponse(positions=positions, count=len(positions))
 
 @router.get("/{account}/{ticker}")
-async def get_ticker_position(account: str, ticker: str, client: Redis = Depends(get_redis_client)) -> PositionWithPl:
+async def get_position(account: str, ticker: str, client: Redis = Depends(get_redis_client)) -> PositionWithPl:
     position = redis_utils.get_position(client, account, ticker.upper())
     if position == None:
         raise HTTPException(status_code= 400, detail= "position does not exist")

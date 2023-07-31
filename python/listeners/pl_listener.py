@@ -1,5 +1,5 @@
 from schema.schema import ProfitLoss, Price, TradeProfitLoss, Position, Trade
-from datetime import datetime, date as date_obj
+from datetime import datetime, timedelta, date as date_obj
 from utils import market_calendar
 from listeners.listener import listener_base
 from redis import Redis
@@ -103,7 +103,10 @@ class PLListener(listener_base):
     def recover(self):
         date = datetime.now().date()
         self.client.delete("trade_p&l:"+ date.isoformat())
-        return self.recover_days_pl(date)
+        end_date= market_calendar.get_upcoming_trading_day(date)
+        start_date= market_calendar.get_most_recent_trading_day(end_date) + timedelta(1)
+        for date in market_calendar.get_dates(start_date, end_date):
+            self.recover_days_pl(date)
 
     def recover_days_pl(self, date):
         self.update_all_position_pl(date)
@@ -153,7 +156,7 @@ class PLListener(listener_base):
             self.client.delete(key)
         for key in self.client.scan_iter("trade_p&l*"):
             self.client.delete(key)
-        dates= market_calendar.get_market_dates(redis_utils.get_startup_date(self.client), now.date())
+        dates= market_calendar.get_market_dates(redis_utils.get_startup_date(self.client), market_calendar.get_upcoming_trading_day(now.date()))
         for date in dates:
             self.recover_days_pl(date)
             

@@ -31,7 +31,7 @@ class PositionListener(listener_base):
     def update_position_and_snapshots(self, account: str, stock_ticker: str, amount_added: int, date: str):
         now = datetime.now()
         self.update_position(account, stock_ticker, amount_added, now)
-        self.update_snapshots(account, stock_ticker, amount_added, date_obj.fromisoformat(date), now)
+        self.update_snapshots(account, stock_ticker, amount_added, date_obj.fromisoformat(date), now.date())
         self.client.publish("positionUpdates", f"{account}:{stock_ticker}:{date}")
 
     def update_position(self, account: str, stock_ticker: str, amount_added: int, now: datetime):

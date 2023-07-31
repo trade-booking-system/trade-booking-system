@@ -35,10 +35,6 @@ def update_trade(trade_id: str, account: str, date: date, updated_type: str= Non
                  updated_price: int= None, client: redis.Redis = Depends(get_redis_client)) -> dict[str, str]:
     return tradebooker.update_trade(trade_id, account, date, updated_type, updated_amount, updated_price, client) 
 
-@router.get("/getTrades")
-async def get_trades(client: redis.Redis = Depends(get_redis_client)) -> list[Trade]:
-    return redis_utils.query_trades(client)
-
 @router.get("/queryTrades")
 async def query_trades(account: str = "*", year: int = 0, month: int = 0, day: int = 0,
                        client: redis.Redis = Depends(get_redis_client)) -> list[TradeWithPl]:
