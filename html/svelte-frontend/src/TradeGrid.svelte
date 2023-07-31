@@ -81,6 +81,7 @@
   function populateRowData(){
     console.log("populating trade row data");
     trades.forEach(trade => {
+      console.log("trade being pushed", trade);
       if(trade.pnl_valid == true){
         rowData.push({
           id: trade.id,

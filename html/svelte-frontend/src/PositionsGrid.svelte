@@ -90,7 +90,7 @@
   function populateRowData(){
     console.log("now populating row data");
     positions.forEach(position => {
-      if(position.pnl_valid == true){
+      if(position.pnl_valid == true || position.pnl_valid == null){
         console.log("populating RowData")
         rowData.push({
           Account: position.account,
