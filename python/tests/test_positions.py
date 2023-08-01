@@ -91,7 +91,7 @@ def test_update_snapshots_and_update_position():
     assert redis_utils.get_position_snapshot(client, account, date(2023, 7, 24), ticker).amount == 26
     assert redis_utils.get_position(client, account, ticker).amount == 26
 
-    listener.update_snapshots(account, ticker, -10, date(2023, 7, 19), date(2023, 7, 25))
+    listener.update_snapshots(account, ticker, -10, date(2023, 7, 19), time(15), date(2023, 7, 25), time(15))
 
     assert redis_utils.get_position_snapshot(client, account, date(2023, 7, 18), ticker) == None
     assert redis_utils.get_position_snapshot(client, account, date(2023, 7, 19), ticker).amount == -10

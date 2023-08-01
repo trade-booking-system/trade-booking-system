@@ -1,4 +1,4 @@
-from datetime import datetime, date as date_obj, time, timedelta
+from datetime import datetime, date as date_obj, time as time_obj, timedelta
 from utils.redis_initializer import get_redis_client
 from schema import Position, Trade
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -6,6 +6,7 @@ from listeners.listener import listener_base
 from utils import market_calendar
 from utils import redis_utils
 from redis import Redis
+import json
 
 class PositionListener(listener_base):
     def __init__(self, client= get_redis_client()):
@@ -25,14 +26,14 @@ class PositionListener(listener_base):
 
     def trade_updates_handler(self, msg):
         data: str= msg["data"]
-        account, stock_ticker, amount, date= data.split(":")
-        self.queue.put_nowait((self.update_position_and_snapshots, (account, stock_ticker, int(amount), date)))
+        trade_info= json.loads(data)
+        self.queue.put_nowait((self.update_position_and_snapshots, trade_info))
 
-    def update_position_and_snapshots(self, account: str, stock_ticker: str, amount_added: int, date: str):
+    def update_position_and_snapshots(self, account: str, ticker: str, amount_added: int, date: str, time: str):
         now = datetime.now()
-        self.update_position(account, stock_ticker, amount_added, now)
-        self.update_snapshots(account, stock_ticker, amount_added, date_obj.fromisoformat(date), now.date())
-        self.client.publish("positionUpdates", f"{account}:{stock_ticker}:{date}")
+        self.update_position(account, ticker, amount_added, now)
+        self.update_snapshots(account, ticker, amount_added, date_obj.fromisoformat(date), time_obj.fromisoformat(time), now.date(), now.time())
+        redis_utils.publish_position_update(self.client, account, ticker, date)
 
     def update_position(self, account: str, stock_ticker: str, amount_added: int, now: datetime):
         stock_tickers= self.cache.get(account, dict())
@@ -50,16 +51,23 @@ class PositionListener(listener_base):
         redis_utils.set_position(self.client, account, stock_ticker, position)
         self.client.publish("positionUpdatesWS", f"position:{position.json()}")
 
-    def update_snapshots(self, account: str, ticker: str, amount_added: int, start_date: date_obj, end_date: date_obj):
-        if start_date == end_date:
+    def update_snapshots(self, account: str, ticker: str, amount_added: int, start_date: date_obj, start_time: time_obj,  end_date: date_obj, end_time: time_obj):
+        closing_time = time_obj(16)
+        if start_time >= closing_time:
+            start_time= start_time + timedelta(1)
+
+        if end_time < closing_time:
+            end_date= end_date - timedelta(1)
+
+        if start_date > end_date:
             return
-        end_date= end_date - timedelta(1)
+        
         dates= market_calendar.get_market_dates(start_date, end_date)
         for date in dates:
             position_snapshot= redis_utils.get_position_snapshot(self.client, account, date, ticker)
             if position_snapshot == None:
                 position_snapshot= Position(account= account, stock_ticker= ticker, amount= 0, 
-                                            last_aggregation_time= datetime.combine(date, time(16)), last_aggregation_host= "host")
+                                            last_aggregation_time= datetime.combine(date, time_obj(16)), last_aggregation_host= "host")
             position_snapshot.amount+= amount_added
             redis_utils.set_position_snapshot(self.client, account, date, ticker, position_snapshot)
 
@@ -92,13 +100,12 @@ class PositionListener(listener_base):
                 
         position = redis_utils.get_position(self.client, account, ticker)
         if position != None:
-            last_aggr_date = position.last_aggregation_time.date()
-            if market_calendar.is_trading_day(last_aggr_date) and (now.date() != last_aggr_date or now.time() > time(16)):
-                    redis_utils.set_position_snapshot(self.client, account, last_aggr_date, ticker, position)
+            if market_calendar.is_trading_day(date) and (now.date() != date or now.time() > time_obj(16)):
+                redis_utils.set_position_snapshot(self.client, account, date, ticker, position)
                         
         for trade in after_market_trades:
             self.update_position(account, ticker, trade.get_amount(), datetime.combine(date, trade.time))
-        self.client.publish("positionUpdates", f"{account}:{ticker}:{date.isoformat()}")
+        redis_utils.publish_position_update(self.client, account, ticker, date.isoformat())
 
     def get_trades_by_ticker_and_date(self, account: str, ticker: str, date: date_obj, cache: dict[str, Trade]) -> list[Trade]:
         days_trades= self.get_trades_by_day(account, date, cache)
@@ -118,7 +125,7 @@ class PositionListener(listener_base):
         position= redis_utils.get_position(client, account, ticker)
         if position != None:
              return position.last_aggregation_time
-        return datetime.combine(redis_utils.get_startup_date(client), time())
+        return datetime.combine(redis_utils.get_startup_date(client), time_obj())
 
     def rebuild(self):
         now= datetime.now()
@@ -131,7 +138,7 @@ class PositionListener(listener_base):
             market_trades, after_market_trades= self.split_trades_by_time(trades)
             for trade in market_trades:
                 self.update_position(trade.account, trade.stock_ticker, trade.get_amount(), datetime.combine(date, trade.time))
-            if date != now.date() or time(16) < now.time():
+            if date != now.date() or time_obj(16) < now.time():
                 self.take_snapshot(date)
             for trade in after_market_trades:
                 self.update_position(trade.account, trade.stock_ticker, trade.get_amount(), datetime.combine(date, trade.time))
@@ -141,7 +148,7 @@ class PositionListener(listener_base):
         before_four: list[Trade]= list()
         after_four: list[Trade]= list()
         for trade in trades:
-            if trade.time < time(hour= 16):
+            if trade.time < time_obj(hour= 16):
                 before_four.append(trade)
             else:
                 after_four.append(trade)

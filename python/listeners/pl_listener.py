@@ -1,9 +1,10 @@
 from schema.schema import ProfitLoss, Price, TradeProfitLoss, Position, Trade
-from datetime import datetime, timedelta, date as date_obj
+from datetime import datetime, timedelta, time as time_obj, date as date_obj
 from utils import market_calendar
 from listeners.listener import listener_base
 from redis import Redis
 from utils import redis_utils
+import json
 
 class PLListener(listener_base):
 
@@ -16,17 +17,19 @@ class PLListener(listener_base):
 
     def position_updates_handler(self, msg):
         data: str= msg["data"]
-        account, ticker, date= data.split(":")
-        self.queue.put_nowait((self.update_position_pl, (account, ticker, date_obj.fromisoformat(date))))
+        position_update= json.loads(data)
+        position_update["date"]= date_obj.fromisoformat(position_update["date"])
+        self.queue.put_nowait((self.update_position_pl, position_update))
 
     def trade_updates_handler(self, msg):
         data: str= msg["data"]
-        id, account, ticker, amount, price, date= data.split(":")
-        self.queue.put_nowait((self.update_trade_pl, (id, account, ticker, int(amount), float(price), date_obj.fromisoformat(date))))
+        trade_update= json.loads(data)
+        trade_update["date"]= date_obj.fromisoformat(trade_update["date"])
+        self.queue.put_nowait((self.update_trade_pl, trade_update))
 
     def price_updates_handler(self, msg):
         if msg["data"] == "updated":
-            self.queue.put_nowait((self.update_all_position_pl, (datetime.now().date(), )))
+            self.queue.put_nowait((self.update_all_position_pl, {"date": datetime.now().date()}))
 
     def update_all_position_pl(self, date: date_obj):
         stocks= redis_utils.get_stocks(self.client)
@@ -111,7 +114,7 @@ class PLListener(listener_base):
     def recover_days_pl(self, date):
         self.update_all_position_pl(date)
         trades= redis_utils.get_trades_by_day(self.client, date)
-        
+
         trading_day= market_calendar.get_upcoming_trading_day(date)
 
         pl= self.calculate_days_pl(date, trading_day, trades)

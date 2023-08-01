@@ -22,7 +22,7 @@ class listener_base(ABC):
     def process_queue(self):
         while True:
             func, args= self.queue.get()
-            func(*args)
+            func(**args)
             self.queue.task_done()
 
     def termination_handler(self, signum, frame):

@@ -1,9 +1,10 @@
 from redis import Redis
-from datetime import datetime, date as date_obj
+from datetime import datetime, date as date_obj, time as time_obj
 from utils import market_calendar
 from schema.schema import (
     Trade, ProfitLoss, TradeProfitLoss, Position, Price, History, TradeWithPl, PositionWithPl
 )
+import json
 
 
 def set_position(client: Redis, account: str, ticker: str, position: Position):
@@ -142,3 +143,32 @@ def merge_position(client: Redis, position: Position, date: date_obj) -> Positio
         ).dict(exclude=set(["account"])), pnl_valid=False)
     else:
         return PositionWithPl(**position.dict(), **pl.dict(exclude=set(["account"])), pnl_valid=True)
+
+def publish_trade_info(client: Redis, account: str, ticker: str, amount: int, date: date_obj, time: time_obj):
+    trade_info= {
+        "account": account,
+        "ticker": ticker,
+        "amount_added": amount,
+        "date": date.isoformat(),
+        "time": time.isoformat()
+    }
+    client.publish("tradesInfo", json.dumps(trade_info))
+
+def publish_trade_update(client: Redis, id: str, account: str, ticker: str, amount: int, price: float, date: date_obj):
+    trade_update= {
+        "id": id,
+        "account": account,
+        "ticker": ticker,
+        "amount": amount,
+        "price": price,
+        "date": date.isoformat()
+    }
+    client.publish("tradeUpdates", json.dumps(trade_update))
+
+def publish_position_update(client: Redis, account: str, ticker: str, date: str):
+    position_update= {
+        "account": account,
+        "ticker": ticker,
+        "date": date
+    }
+    client.publish("positionUpdates", json.dumps(position_update))

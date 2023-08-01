@@ -6,8 +6,8 @@ from csv import DictReader
 from pydantic import ValidationError
 from io import StringIO
 from uuid import uuid4
-import redis
 from utils import redis_utils
+import redis
 
 def booktrade(client: redis.Redis, trade: Trade, tickers: ValidTickers):
     if not tickers.is_valid_ticker(trade.stock_ticker):
@@ -16,8 +16,8 @@ def booktrade(client: redis.Redis, trade: Trade, tickers: ValidTickers):
     history.trades.append(trade)
     redis_utils.set_history(client, trade.account, trade.date, trade.id, history)
     trade_amount = trade.get_amount()
-    client.publish("tradesInfo", f"{trade.account}:{trade.stock_ticker}:{trade_amount}:{trade.date.isoformat()}")
-    client.publish("tradeUpdates", f"{trade.id}:{trade.account}:{trade.stock_ticker}:{trade_amount}:{trade.price}:{trade.date.isoformat()}")
+    redis_utils.publish_trade_info(client, trade.account, trade.stock_ticker, trade_amount, trade.date, trade.time)
+    redis_utils.publish_trade_update(client, trade.id, trade.account, trade.stock_ticker, trade_amount, trade.price, trade.date)
     client.publish("tradeUpdatesWS", f"create: {trade.json()}")
     redis_utils.add_to_stocks(client, trade.account, trade.stock_ticker)
     return {"message" : "trade booked successfully", "id" : trade.id}
@@ -38,10 +38,10 @@ def update_trade(trade_id: str, account: str, date: date_obj, updated_type: str,
     history.add_updated_trade(trade)
     if updated_amount != None or updated_type != None:
         # undo previous version of trade and add new trade
-        client.publish("tradesInfo", f"{trade.account}:{trade.stock_ticker}:{trade.get_amount() - old_trade.get_amount()}")
+        redis_utils.publish_trade_info(client, trade.account, trade.stock_ticker, trade.get_amount() - old_trade.get_amount(), trade.date, trade.time)
 
-    client.publish("tradeUpdates", f"{trade.id}:{trade.account}:{trade.stock_ticker}:{-old_trade.get_amount()}:{old_trade.price}:{trade.date.isoformat()}")
-    client.publish("tradeUpdates", f"{trade.id}:{trade.account}:{trade.stock_ticker}:{trade.get_amount()}:{trade.price}:{trade.date.isoformat()}")
+    redis_utils.publish_trade_update(client, trade.id, trade.account, trade.stock_ticker, -old_trade.get_amount(), old_trade.price, trade.date)
+    redis_utils.publish_trade_update(client, trade.id, trade.account, trade.stock_ticker, trade.get_amount(), trade.price, trade.date)
 
     client.publish("tradeUpdatesWS", f"update: {trade.json()}")
     redis_utils.set_history(client, trade.account, trade.date, trade.id, history)
