@@ -32,7 +32,7 @@ async def book_trades(trades: list[dict], client: redis.Redis = Depends(get_redi
 
 @router.post("/updateTrade")
 def update_trade(trade_id: str, account: str, date: date, updated_type: str= None, updated_amount: int= None, 
-                 updated_price: int= None, client: redis.Redis = Depends(get_redis_client)) -> dict[str, str]:
+                 updated_price: float= None, client: redis.Redis = Depends(get_redis_client)) -> dict[str, str]:
     return tradebooker.update_trade(trade_id, account, date, updated_type, updated_amount, updated_price, client) 
 
 @router.get("/queryTrades")
