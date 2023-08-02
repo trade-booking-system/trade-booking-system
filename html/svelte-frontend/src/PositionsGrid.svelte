@@ -16,7 +16,7 @@
           filter: true,
         },
         { 
-          field: "Ticker",
+          field: "Stock Ticker",
           filter: true,
         },
         { 
@@ -94,7 +94,7 @@
         console.log("populating RowData")
         rowData.push({
           Account: position.account,
-          Ticker: position.stock_ticker,
+          "Stock Ticker": position.stock_ticker,
           Quantity: position.amount,
           LastAggregationTime: position.last_aggregation_time,
           SystemLastAggregationProcessHost_Id: position.last_aggregation_host,
@@ -105,7 +105,7 @@
       } else{
         rowData.push({
           Account: position.account,
-          Ticker: position.stock_ticker,
+          "Stock Ticker": position.stock_ticker,
           Quantity: position.amount,
           LastAggregationTime: position.last_aggregation_time,
           SystemLastAggregationProcessHost_Id: position.last_aggregation_host,

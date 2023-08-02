@@ -25,7 +25,7 @@
         },
         { field: "Price"},
         { 
-          field: "Amount",
+          field: "Quantity",
           filter: "agNumberColumnFilter", 
         },
         { field: "Trade PL"},
@@ -79,9 +79,8 @@
   }
 
   function populateRowData(){
-    console.log("populating trade row data");
+    console.log("populating trade row data", trades);
     trades.forEach(trade => {
-      console.log("trade being pushed", trade);
       if(trade.pnl_valid == true){
         rowData.push({
           id: trade.id,
@@ -89,7 +88,7 @@
           "Buy/Sell": trade.type,
           "Stock Ticker": trade.stock_ticker,
           Price: "$" + trade.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}),
-          Amount: trade.amount,
+          Quantity: trade.amount,
           Date: trade.date,
           
           Time: trade.time,
@@ -98,13 +97,14 @@
           "Trade PL": trade.trade_pl.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}),
         });
       } else{
+        console.log("trade pnl data bad", trade);
         rowData.push({
           id: trade.id,
           Account: trade.account,
           "Buy/Sell": trade.type,
           "Stock Ticker": trade.stock_ticker,
           Price: "$" + trade.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}),
-          Amount: trade.amount,
+          Quantity: trade.amount,
           Date: trade.date,
           
           Time: trade.time,
@@ -153,12 +153,17 @@
         ws.onmessage = (updatedData) => {
           let jsonData = JSON.parse(updatedData.data);
           let newTrade = jsonData.payload;
+          console.log("trade json data", newTrade);
           if (jsonData.type == "create") {
             trades.push(newTrade)
           } else {
-            let index = trades.findIndex((trade) => {trade.id == newTrade.id});
+            let index = trades.findIndex((trade) => {
+              return trade.id == newTrade.id
+            });
             if (index > -1) {
               trades[index] = newTrade;
+            } else{
+              trades.push(newTrade);
             }
           }
           rowData = [];
