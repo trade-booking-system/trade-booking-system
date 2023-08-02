@@ -57,10 +57,12 @@ def get_trade_pl(client: Redis, id: str, date: date_obj, default = None) -> Trad
         return default
     return TradeProfitLoss.parse_raw(pl_json)
 
-def set_startup_date(client: Redis):
-    key= "startupDate"
-    if client.get(key) == None:
-        client.set(key, datetime.now().date().isoformat())
+def set_startup_date(client: Redis, date: date_obj = None) -> None:
+    key = "startupDate"
+    if client.get(key) is None:
+        if date is None:
+            date = datetime.now().date()
+        client.set(key, date.isoformat())
 
 def get_startup_date(client: Redis) -> date_obj:
     startup_date= client.get("startupDate")
@@ -69,7 +71,14 @@ def get_startup_date(client: Redis) -> date_obj:
     return date_obj.fromisoformat(startup_date)
 
 def get_stocks(client: Redis) -> list[str]:
-    return client.smembers("stocks")
+    stocks = client.smembers("stocks")
+    if stocks is None:
+        # either throw an error or return an empty list
+        raise ValueError("Failed to get stocks from Redis.")
+        # or return an empty list
+        return []
+    return list(stocks)
+
 
 def add_to_stocks(client: Redis, account: str, ticker: str):
     value= account+":"+ticker

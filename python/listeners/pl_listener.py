@@ -41,8 +41,13 @@ class PLListener(listener_base):
         if not market_calendar.is_trading_day(date):
             return
         price = redis_utils.get_price(self.client, ticker, date)
+        print(ticker)
+        print(date)
         closing_price= self.get_previous_closing_price(self.client, ticker, date)
         position= self.get_position_by_day(self.client, account, ticker, date)
+        print(closing_price)
+        print(price)
+        print(position)
         if price == None:
             print(f"error: ticker: {ticker} does not have a live price")
             return
@@ -126,7 +131,7 @@ class PLListener(listener_base):
             closing_price= self.get_previous_closing_price(self.client, trade.stock_ticker, trading_day)
             if closing_price == None:
                 print(f"error: ticker {trade.stock_ticker} does not have a closing price")
-                return
+                continue  # Skip the current iteration and proceed to the next trade
             key= trade.account+":"+trade.stock_ticker
             amount= pl.get(key, 0)
             trade_pl= self.calculate_trade_pl(closing_price.price, trade.price, trade.get_amount())
@@ -141,6 +146,7 @@ class PLListener(listener_base):
             redis_utils.set_trade_pl(self.client, trade.id, date, trade_pl_obj)
             self.client.publish("pnlTradeUpdatesWS", "pnl: " + trade_pl_obj.json())
         return pl
+
 
     def set_days_pl(self, pl: dict[str, int], trading_day: date_obj):
         now = datetime.now()
