@@ -49,7 +49,7 @@ def test_rebuild_listener():
 
     account = "account-1"
 
-    client.set("startupDate", day1)
+    client.set("startupDate", day1.isoformat())
 
     redis_utils.set_price(client, ticker, day1, Price(price= 187.75, stock_ticker= ticker, last_updated= time(16, 0)))
     redis_utils.set_price(client, ticker, day2, Price(price= 190.75, stock_ticker= ticker, last_updated= time(16, 0)))
