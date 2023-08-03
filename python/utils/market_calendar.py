@@ -1,6 +1,7 @@
-from datetime import date, timedelta
+from datetime import date, time, timedelta
 import pandas_market_calendars as market_calendar
 
+closing_time: time= time(16)
 cal: market_calendar.MarketCalendar= market_calendar.get_calendar("NYSE")
 
 def get_most_recent_trading_day(date: date) -> date:

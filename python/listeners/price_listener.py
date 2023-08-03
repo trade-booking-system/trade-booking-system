@@ -46,7 +46,7 @@ def fill_in_closing_prices(start_date: date_obj= datetime.now().date(), end_date
     dates= market_calendar.get_market_dates(start_date, end_date)
     has_prices= has_closing_prices(dates)
     runs= 0
-    while has_prices != True and runs <= 5:
+    while has_prices != True and runs < 5:
         history= tickers_info.history(start=start_date, end= end_date + timedelta(1))
         has_prices= set_closing_prices(dates, history)
         runs+= 1

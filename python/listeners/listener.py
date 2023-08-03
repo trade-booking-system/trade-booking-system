@@ -14,7 +14,7 @@ class listener_base(ABC):
         self.queue_processor_thread= Thread(target= self.process_queue, daemon= True)
 
     def start(self):
-        self.thread= self.sub.run_in_thread()
+        self.subscriber_thread= self.sub.run_in_thread()
         self.startup()
         self.queue_processor_thread.start()
         signal.signal(signal.SIGTERM, self.termination_handler)
@@ -26,8 +26,8 @@ class listener_base(ABC):
             self.queue.task_done()
 
     def termination_handler(self, signum, frame):
-        self.thread.stop()
-        self.thread.join()
+        self.subscriber_thread.stop()
+        self.subscriber_thread.join()
         self.queue.join()
         self.sub.close()
         self.client.close()

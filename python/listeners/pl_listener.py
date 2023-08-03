@@ -100,7 +100,7 @@ class PLListener(listener_base):
     def get_position_by_day(client: Redis, account: str, ticker: str, date: date_obj) -> Position:
         now= datetime.now()
         if date == now.date():
-            if now.time() >= time_obj(16):
+            if now.time() >= market_calendar.closing_time:
                 return None
             return redis_utils.get_position(client, account, ticker)
         return redis_utils.get_position_snapshot(client, account, date, ticker)

@@ -52,11 +52,10 @@ class PositionListener(listener_base):
         self.client.publish("positionUpdatesWS", f"position:{position.json()}")
 
     def update_snapshots(self, account: str, ticker: str, amount_added: int, start_date: date_obj, start_time: time_obj,  end_date: date_obj, end_time: time_obj):
-        closing_time = time_obj(16)
-        if start_time >= closing_time:
+        if start_time >= market_calendar.closing_time:
             start_time= start_time + timedelta(1)
 
-        if end_time < closing_time:
+        if end_time < market_calendar.closing_time:
             end_date= end_date - timedelta(1)
 
         if start_date > end_date:
@@ -67,7 +66,7 @@ class PositionListener(listener_base):
             position_snapshot= redis_utils.get_position_snapshot(self.client, account, date, ticker)
             if position_snapshot == None:
                 position_snapshot= Position(account= account, stock_ticker= ticker, amount= 0, 
-                                            last_aggregation_time= datetime.combine(date, time_obj(16)), last_aggregation_host= "host")
+                                            last_aggregation_time= datetime.combine(date, market_calendar.closing_time), last_aggregation_host= "host")
             position_snapshot.amount+= amount_added
             redis_utils.set_position_snapshot(self.client, account, date, ticker, position_snapshot)
 
@@ -138,7 +137,7 @@ class PositionListener(listener_base):
             market_trades, after_market_trades= self.split_trades_by_time(trades)
             for trade in market_trades:
                 self.update_position(trade.account, trade.stock_ticker, trade.get_amount(), datetime.combine(date, trade.time))
-            if date != now.date() or time_obj(16) < now.time():
+            if date != now.date() or market_calendar.closing_time < now.time():
                 self.take_snapshot(date)
             for trade in after_market_trades:
                 self.update_position(trade.account, trade.stock_ticker, trade.get_amount(), datetime.combine(date, trade.time))
@@ -148,7 +147,7 @@ class PositionListener(listener_base):
         before_four: list[Trade]= list()
         after_four: list[Trade]= list()
         for trade in trades:
-            if trade.time < time_obj(hour= 16):
+            if trade.time < market_calendar.closing_time:
                 before_four.append(trade)
             else:
                 after_four.append(trade)
