@@ -3,7 +3,7 @@ import pytest
 import schema
 from .conftest import AsyncSystem, generate_trades, trade_to_dict
 
-from utils.redis_utils import set_trade_pl, get_trade_pl
+from utils.redis_utils import set_trade_pl
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("trades", [generate_trades(6, x) for x in range(6000, 6050, 10)])

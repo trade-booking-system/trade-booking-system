@@ -53,7 +53,7 @@ class PositionListener(listener_base):
 
     def update_snapshots(self, account: str, ticker: str, amount_added: int, start_date: date_obj, start_time: time_obj,  end_date: date_obj, end_time: time_obj):
         if start_time >= market_calendar.closing_time:
-            start_time= start_time + timedelta(1)
+            start_date= start_date + timedelta(1)
 
         if end_time < market_calendar.closing_time:
             end_date= end_date - timedelta(1)
