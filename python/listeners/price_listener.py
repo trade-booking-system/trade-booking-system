@@ -86,7 +86,7 @@ def schedule_jobs(scheduler: BlockingScheduler, starting_date: date_obj):
     current_date= datetime.now().date()
     price_updates_trigger= OrTrigger(triggers= [CronTrigger(day_of_week= "0-4", hour= "10-15", minute= "*"), CronTrigger(day_of_week= "0-4", hour= 9, minute= "30-59")])
     closing_price_updates_trigger= OrTrigger(triggers= [CronTrigger(day_of_week= "0-4", hour= "16"), CronTrigger(day_of_week= "0-4", hour= 23, minute= 50)])
-    scheduler.add_job(func= fill_in_closing_prices, args= [starting_date - timedelta(1), current_date - timedelta(1)])
+    scheduler.add_job(func= fill_in_closing_prices, args= [starting_date - timedelta(1), current_date])
     scheduler.add_job(func= update_stock_prices, trigger= price_updates_trigger)
     scheduler.add_job(func= fill_in_closing_prices, trigger= closing_price_updates_trigger)
 
