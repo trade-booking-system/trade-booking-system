@@ -90,8 +90,7 @@ def create_trade_from_row(row):
         type=row["buyOrSell"],
         stock_ticker=row["tickers"],
         amount=int(row["shares"]),
-        user=row.get("user", "default user"),
-        price=float(row["price"]) if row["price"] else None
+        price=float(row["price"])
     )
 
 def trade_to_dict(trade: Trade):
@@ -104,31 +103,22 @@ def trade_to_dict(trade: Trade):
     }
 
 def book_many_trades(client: redis.Redis, trades: list[dict], tickers: ValidTickers):
-
     trade_responses = []
     request_group = str(uuid4())
 
     for trade_request in trades:
-        trade = Trade(
-            account=trade_request['account'],
-            type=trade_request['type'],
-            stock_ticker=trade_request['stock_ticker'],
-            amount=trade_request['amount'],
-            user="default user",
-            price=trade_request['price']
-        )
-
-        tradebooked = booktrade(client, trade, tickers)
+        trade = Trade(**trade_request)
+        booktrade(client, trade, tickers)
 
         response = {
-            'id': tradebooked['id'],
+            'id': trade.id,
             'booked_at': datetime.now().isoformat(),
             'request_group': request_group,
-            'accounts': trade_request['account'],
-            'buyOrSell': trade_request['type'],
-            'tickers': trade_request['stock_ticker'],
-            'shares': trade_request['amount'],
-            'price': trade_request['price']
+            'accounts': trade.account,
+            'buyOrSell': trade.type,
+            'tickers': trade.stock_ticker,
+            'shares': trade.amount,
+            'price': trade.price
         }
 
         trade_responses.append(response)

@@ -18,8 +18,8 @@ class Trade(BaseModel):
     amount: int
     date: date | None
     time: time | None
-    user: str
-    price: float | None
+    user: str= "default user"
+    price: float
     version: int= 1
 
     def get_amount(cls) -> int:
