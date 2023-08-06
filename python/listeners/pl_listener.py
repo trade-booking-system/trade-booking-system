@@ -1,5 +1,5 @@
 from schema.schema import ProfitLoss, Price, TradeProfitLoss, Position, Trade
-from datetime import datetime, timedelta, time as time_obj, date as date_obj
+from datetime import datetime, timedelta, date as date_obj
 from utils import market_calendar
 from listeners.listener import listener_base
 from redis import Redis

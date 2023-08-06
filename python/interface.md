@@ -12,7 +12,6 @@
 - `booktrade`: books a trade and notifies 2 services
 - `booktrades_bulk`: books a list of trades
 - `update_trade`: updates a trade and notifies 2 services (can only update trade on the same day it was booked)
-- `get_trades`: gets all booked trades
 - `query_trades`: gets trades with a specific account, year, month, and day
 - `get_trade_history`: gets the full history of a specific trade
 - `get_accounts`: gets a list of accounts that have trades
@@ -30,6 +29,9 @@
 - `MarketCalander`: deals with getting valid market dates
 - `get_most_recent_trading_day`: returns the most recent date where the market was open
 - `is_trading_day`: returns true if the market was open on the specified date
+- `get_dates`: returns a generator which return all dates from start to end date (includes start and end date)
+- `get_market_dates`: get_dates but only with dates where the market is open
+- `get_upcoming_trading_day`: returns todays date if market is open else returns the most upcoming date that the markets open
 
 ### websocket
 - listens to positionUpdates or tradeUpdates
@@ -37,8 +39,20 @@
 ## Channels:
 
 ### tradesInfo
-- Format: `{account}:{ticker}:{amount}:{date}:{time}`
+- Format: `json data (account, ticker, amount, date, time)`
 - Description: used by position_listener to update positions
+
+### tradeUpdates
+- Format: `json data (id, account, ticker, amount, price, date)`
+- Description: used to calculate trade p&l
+
+### positionUpdates
+- Format: `json data (account, ticker, date)`
+- Description: used to calculate position p&l
+
+### pricesUpdates
+- Format: `updated`
+- Description: notifies pl_listener that it should update position p&l for each stock
 
 ### tradeUpdatesWS
 - Format: `{type}:{json data}`
@@ -52,22 +66,11 @@
 ### pnlPositionUpdatesWS
 - Format: `{pnl json data}`
 
-### tradeUpdates
-- Format: `{id}:{account}:{ticker}:{amount}:{price}:{date}`
-- Description: used to calculate trade p&l
-
-### positionUpdates
-- Format: `{account}:{ticker}:{date}`
-- Description: used to calculate position p&l
-
-### pricesUpdates
-- Format: `updated`
-- Description: notifies pl_listener that it should update position p&l for each stock
-
 ## Structures
 
 ### startup date
 - Name: `startupDate`
+- Data: `date`
 
 ### stocks
 - Type: set
@@ -80,6 +83,12 @@
 - Key: date
 - Value: Profit Loss (JSON)
 
+### trade p&l
+- Type: hash
+- Name: `trade_p&l:{date}`
+- Key: id
+- Value: Trade Profit Loss (JSON)
+
 ### trades
 - Type: hash
 - Name: `trades:{account}:{date}`
@@ -89,6 +98,12 @@
 ### positions
 - Type: hash
 - Name: `positions:{account}`
+- Key: ticker
+- Value: Position (JSON)
+
+### position snapshot
+- Type: hash
+- Name: `positionsSnapshots:{account}:{date}`
 - Key: ticker
 - Value: Position (JSON)
 
