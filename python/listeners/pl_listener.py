@@ -74,7 +74,7 @@ class PLListener(listener_base):
             self.client.publish("pnlPositionUpdatesWS", "pnl: " + pl.json())
 
         trade_pl_obj = TradeProfitLoss(
-            account= account, trade_id= id, trade_pl= trade_pl, closing_price= closing_price.price, date= trading_day
+            account= account, trade_id= id, trade_pl= trade_pl, closing_price= closing_price.price, trading_date= trading_day, date= date
         )
         redis_utils.set_trade_pl(self.client, id, date, trade_pl_obj)
         self.client.publish("pnlTradeUpdatesWS", "pnl: " + trade_pl_obj.json())
@@ -138,7 +138,7 @@ class PLListener(listener_base):
 
             trade_pl_obj = TradeProfitLoss(
                 account= trade.account, trade_id= trade.id, trade_pl=trade_pl, 
-                closing_price= closing_price.price, date= trading_day
+                closing_price= closing_price.price, trading_date= trading_day, date= date
             )
 
             redis_utils.set_trade_pl(self.client, trade.id, date, trade_pl_obj)

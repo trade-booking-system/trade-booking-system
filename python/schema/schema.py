@@ -103,6 +103,7 @@ class TradeProfitLoss(BaseModel):
     trade_id: str
     trade_pl: float = 0
     closing_price: float = 0
+    trading_date: date= None
     date: date
 
 class TradeWithPl(Trade, TradeProfitLoss):

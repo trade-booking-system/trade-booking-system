@@ -135,8 +135,7 @@ def merge_trade(client: Redis, trade: Trade) -> TradeWithPl:
         return TradeWithPl(**trade.dict(), **TradeProfitLoss(
             account=trade.account, trade_id=trade.id, date=date_obj(1, 1, 1)
         ).dict(exclude=set(["account", "date"])), pnl_valid=False)
-    else:
-        return TradeWithPl(**trade.dict(), **pl.dict(exclude=set(["account", "date"])), pnl_valid=True)
+    return TradeWithPl(**trade.dict(), **pl.dict(exclude=set(["account", "date"])), pnl_valid=True)
 
 def merge_position(client: Redis, position: Position, date: date_obj) -> PositionWithPl:
     pl = get_pl(client, position.account, position.stock_ticker, market_calendar.get_upcoming_trading_day(date))
@@ -144,8 +143,7 @@ def merge_position(client: Redis, position: Position, date: date_obj) -> Positio
         return PositionWithPl(**position.dict(), **ProfitLoss(
             account=position.account, ticker=position.stock_ticker
         ).dict(exclude=set(["account"])), pnl_valid=False)
-    else:
-        return PositionWithPl(**position.dict(), **pl.dict(exclude=set(["account"])), pnl_valid=True)
+    return PositionWithPl(**position.dict(), **pl.dict(exclude=set(["account"])), pnl_valid=True)
 
 def publish_trade_info(client: Redis, account: str, ticker: str, amount: int, date: date_obj, time: time_obj):
     trade_info= {
