@@ -19,7 +19,7 @@ class PLListener(listener_base):
         data: str= msg["data"]
         position_update= json.loads(data)
         position_update["date"]= date_obj.fromisoformat(position_update["date"])
-        self.queue.put_nowait((self.update_position_pl, position_update))
+        self.queue.put_nowait((self.fill_in_position_pl, position_update))
 
     def trade_updates_handler(self, msg):
         data: str= msg["data"]
@@ -37,9 +37,12 @@ class PLListener(listener_base):
             account, ticker= stock_info.split(":")
             self.update_position_pl(account, ticker, date)
 
+    def fill_in_position_pl(self, account: str, ticker: str, date: date_obj, end_date: date_obj= datetime.now().date()):
+        dates= market_calendar.get_market_dates(date, end_date)
+        for market_date in dates:
+            self.update_position_pl(account, ticker, market_date)
+
     def update_position_pl(self, account: str, ticker: str, date: date_obj):
-        if not market_calendar.is_trading_day(date):
-            return
         price = redis_utils.get_price(self.client, ticker, date)
         closing_price= self.get_previous_closing_price(self.client, ticker, date)
         position= self.get_position_by_day(self.client, account, ticker, date)
@@ -115,10 +118,11 @@ class PLListener(listener_base):
             self.recover_days_pl(date)
 
     def recover_days_pl(self, date):
-        self.update_all_position_pl(date)
         trades= redis_utils.get_trades_by_day(self.client, date)
-
         trading_day= market_calendar.get_upcoming_trading_day(date)
+
+        if trading_day == date:
+            self.update_all_position_pl(date)
 
         pl= self.calculate_days_pl(date, trading_day, trades)
         self.set_days_pl(pl, trading_day)
